@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Main application. Read, Load config
+
 import os,sys, sqlite3
 import pygtk,gtk, gobject
 import ConfigParser

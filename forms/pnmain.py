@@ -21,19 +21,6 @@ from forms import pnote_new
 from utils import *
 
 class pnmain:
-  # Not in use now, give as example
-  #def match_func(self, completion, key, iter):
-        #model = completion.get_model()
-        #if re.search(key,model[iter][0] ):
-            #return True
-        #return False
-        #return model[iter][0].startswith(key)
-        #text = model.get_value(iter, column)
-        #try:
-          #if text.startswith(key):
-            #return True
-          #return False
-        #except: return False
   
   def __init__(self, dbpath, pnote_app=None):
     self.app = pnote_app
@@ -56,7 +43,7 @@ class pnmain:
     "do_export": self.do_export, \
     "do_export_selected": self.do_export_selected, \
     "do_import": self.do_import, \
-    "do_print_preview": self.do_print_preview, \
+    "do_export_html": self.do_export_html, \
     "do_send_mail": self.do_send_mail, \
     "do_print": self.do_print, \
     "bt_clear_button_press": self.bt_clear_button_press, \
@@ -66,6 +53,7 @@ class pnmain:
     "on_result_list_start_interactive_search": self.on_result_list_start_interactive_search, \
     "on_result_list_key_press": self.on_result_list_key_press, \
     'on_setup_mail': lambda o: MailPref(self.app).run() ,\
+    'do_export_selected_html': self.do_export_selected_html,\
     }
     statusbar = self.statusbar = self.wTree.get_widget("statusbar")
     msgid = statusbar.push(1, " welcome to pnote")
@@ -152,8 +140,9 @@ class pnmain:
     
   def do_import(self,obj, data=None):    pass
 
-  def do_print_preview(self, obj, data=None):    pass
-
+  def do_export_html(self, obj, data=None):    pass
+  def do_export_selected_html(self,o): pass
+  
   def get_list_notes_from_selection(self):
     list_notes = []
     def func(model, path, iter):
@@ -248,10 +237,6 @@ if __name__ == "__main__":
       os.exit()
     except:
      dbpath = '/home/sk/tmp/clt.db'
-     #m=gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_INFO, gtk.BUTTONS_CLOSE, "No database path supplied\nUse temporary one " + dbpath)
-     #m.set_title("Information")
-     #m.run()
-     #m.destroy()
      app = pnmain(dbpath)
      app.w.show_all()
      gtk.main()
