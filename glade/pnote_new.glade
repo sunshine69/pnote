@@ -243,6 +243,7 @@
                         <property name="can_focus">True</property>
                         <property name="wrap_mode">word-char</property>
                         <property name="left_margin">1</property>
+                        <signal name="delete_from_cursor" handler="on_content_delete_from_cursor"/>
                       </widget>
                     </child>
                   </widget>
@@ -401,6 +402,30 @@
         <property name="label" translatable="yes">Insert End Update mark</property>
         <property name="use_underline">True</property>
         <signal name="activate" handler="on_end_update"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkMenuItem" id="menuitem2">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Save to text file</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="do_save_txt"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkMenuItem" id="menuitem5">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Save to HTML</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="do_save_html"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkMenuItem" id="menuitem4">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Insert from text file</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="do_insert_from"/>
       </widget>
     </child>
     <child>

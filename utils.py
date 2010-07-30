@@ -8,27 +8,31 @@ from Crypto.Cipher import Blowfish
 def get_text_from_user(title='Input text', msg = 'Enter text:', default_txt = '', size = -1, show_char = True, completion = True):
     d = gtk.Dialog(title, None, 0, (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT, gtk.STOCK_OK, gtk.RESPONSE_ACCEPT) )
     l = gtk.Label(msg)
-    e = gtk.Entry(); e.set_visibility(show_char)
-    if not size == '':
-      try: e.set_size_request(size ,-1)
-      except: e.set_size_request(-1 ,-1)
-    e.set_text(default_txt)
-    recent_filter_cmd = get_config_key('data','recent_filter_cmd', '')
-    maxcount_recent_filter_cmd = get_config_key('data','maxcount_recent_filter_cmd',  '20')
-    if completion:
-      pn_completion = PnCompletion(recent_filter_cmd, '<|>' , int(maxcount_recent_filter_cmd))
-      e.set_completion(pn_completion.completion)
     d.vbox.pack_start(l)
-    d.vbox.pack_end(e)
     l.show()
-    e.show()
+    if default_txt != None:
+      e = gtk.Entry(); e.set_visibility(show_char)
+      e.connect('activate', lambda o: d.response(gtk.RESPONSE_ACCEPT) )
+      if not size == '':
+        try: e.set_size_request(size ,-1)
+        except: e.set_size_request(-1 ,-1)
+      e.set_text(default_txt)
+      recent_filter_cmd = get_config_key('data','recent_filter_cmd', '')
+      maxcount_recent_filter_cmd = get_config_key('data','maxcount_recent_filter_cmd',  '20')
+      if completion:
+        pn_completion = PnCompletion(recent_filter_cmd, '<|>' , int(maxcount_recent_filter_cmd))
+        e.set_completion(pn_completion.completion)
+      d.vbox.pack_end(e)
+      e.show()
     r = d.run()
     retval = None
     if r == gtk.RESPONSE_ACCEPT:
-      retval = e.get_text().strip()
-      if completion:
-        pn_completion.add_entry(retval)
-        if not save_config_key('data', 'recent_filter_cmd', pn_completion.get_list_str()): print "Error saving config"
+      if default_txt != None:
+        retval = e.get_text().strip()
+        if completion:
+          pn_completion.add_entry(retval)
+          if not save_config_key('data', 'recent_filter_cmd', pn_completion.get_list_str()): print "Error saving config"
+      else: retval = 0
     else: retval = None
     d.destroy()
     return retval
@@ -38,26 +42,19 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
     if note == None: print "Need to pass me a note"; return
     mail_server = get_config_key('data','mail_server', 'newhost')
     if mail_server == 'newhost':
-      #smtphost = get_text_from_user('Information required', 'Enter you smtp server:port[25]', '')
-      #if smtphost == None: message_box('error', 'You need to provide mail server information'); return
-      #save_config_key('data','mail_server',smtphost)
-      #tmp_l =  smtphost.split(':')
-      #host =tmp_l[0].strip()
-      #try: port = tmp_l[1].strip()
-      #except: port = '25'
-      #save_config_key('data', 'smtp_port', port)
       response = MailPref(note.app).run()
       if response == 1: message_box('error','You need to setup mail first. rerun it to reconfigure'); return
       mail_server = get_config_key('data','mail_server')
     port = get_config_key('data', 'mail_port')
-    mail_user = get_config_key('data', 'mail_user')
-    if note.app.cipherkey == None:
-      note.app.cipherkey = get_text_from_user('Password required','Enter password to lock/unlock config file',show_char=False, completion = False, default_txt = 'none')
-      if note.app.cipherkey == 'none': note.app.cipherkey = None; message_box('error', 'Aborted');  return 1
-    mail_passwd = BFCipher(note.app.cipherkey).decrypt( base64.b64decode( get_config_key('data', 'mail_passwd') ) )
-    if mail_passwd == None: message_box('error', 'Wrong password!'); return 1
     mail_use_ssl = (True if get_config_key('data', 'mail_use_ssl').strip() == 'yes' else False )
     mail_use_auth = (True if get_config_key('data', 'mail_use_auth').strip() == 'yes' else False )
+    if mail_use_auth:
+      mail_user = get_config_key('data', 'mail_user')
+      if note.app.cipherkey == None:
+        note.app.cipherkey = get_text_from_user('Password required','Enter password to lock/unlock config file',show_char=False, completion = False, default_txt = 'none')
+        if note.app.cipherkey == 'none': note.app.cipherkey = None; message_box('error', 'Aborted');  return 1
+      mail_passwd = BFCipher(note.app.cipherkey).decrypt( base64.b64decode( get_config_key('data', 'mail_passwd') ) )
+      if mail_passwd == None: message_box('error', 'Wrong password!'); return 1
     import smtplib
     import mimetypes
     from optparse import OptionParser
@@ -119,7 +116,7 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
         if mail_use_ssl: mailer =  smtplib.SMTP_SSL(mail_server, port)
         else: mailer = smtplib.SMTP(mail_server, port)
         #mailer.connect(mail_server, port)
-        if mail_use_auth: mailer.login(mail_user, mail_passwd)
+        if mail_use_auth: mailer.login(pnmail_user, mail_passwd)
         mailer.sendmail(me, to.split(';'), outer.as_string())
         mailer.quit()
       except Exception as ex: print "send_note_as_mail Error: " , ex
@@ -504,22 +501,25 @@ class EContent:
     }
     self.econtent = self.wTree.get_widget('tv_econtent')
     self.econtent.set_size_request(int(get_config_key('pnote_new', 'econtent.w', '300' ) ), int(get_config_key('pnote_new', 'econtent.h', '200') ) )
+    self.load_content()
+    self.wTree.signal_autoconnect(evtmap)
+
+  def load_content(self):
     buf = self.econtent.get_buffer()
     if self.app.cipherkey == None or self.app.cipherkey == '':
       self.app.cipherkey = get_text_from_user(title='Input', msg='Enter password to lock/unlock:', show_char=False, completion=False )
-      if self.app.cipherkey == None or self.app.cipherkey == '': return True
-    if not note.econtent == '':
+      if self.app.cipherkey == None or self.app.cipherkey == '': self.econtent.set_editable(False); return
+    if not self.note.econtent == '':
       bf = BFCipher(self.app.cipherkey)
       try:
-        tex = bf.decrypt(note.econtent)
+        tex = bf.decrypt(self.note.econtent)
         if tex == None:
           self.app.cipherkey = None
           message_box('!!', 'Wrong password!')
-          return True
+          self.econtent.set_editable(False); return
         buf.insert_at_cursor(tex)
       except Exception, ex : print ex[0]
-    self.wTree.signal_autoconnect(evtmap)
-
+    
   def on_bt_save_clicked(self,o=None):
     buf = self.econtent.get_buffer()
     bf = BFCipher(self.app.cipherkey)
@@ -552,7 +552,7 @@ class NoteSearch:
     note_search_history = get_config_key('data','note_search_history',  '')
     self.pn_completion = PnCompletion(note_search_history, '<|>' , int(note_search_history_size))
     self.e_kword.set_completion(self.pn_completion.completion)
-    self.found_iter1 = self.found_iter2 = None
+    self.found_m1 = self.found_m2 = None
     buf = self.note.content.get_buffer()
     self.cur_iter = buf.get_iter_at_mark(buf.get_insert())
     self.wTree.signal_autoconnect(evtmap)
@@ -563,17 +563,18 @@ class NoteSearch:
     try:
       if self.cbox_backward.get_active():
         self.note.note_search_backword = True
-        if self.found_iter1 != None:
-          buf.place_cursor(self.found_iter1)
+        if self.found_m1 != None:
+          buf.place_cursor(buf.get_iter_at_mark(self.found_m1))
           self.cur_iter = buf.get_iter_at_mark(buf.get_insert())
-        self.found_iter1, self.found_iter2 = self.cur_iter.backward_search(kword, gtk.TEXT_SEARCH_TEXT_ONLY, limit=None)
+        found_iter1, found_iter2 = self.cur_iter.backward_search(kword, gtk.TEXT_SEARCH_TEXT_ONLY, limit=None)
       else:
         self.note.note_search_backword = False
-        if self.found_iter2 != None:
-          buf.place_cursor(self.found_iter2)
+        if self.found_m2 != None:
+          buf.place_cursor(buf.get_iter_at_mark(self.found_m2))
           self.cur_iter = buf.get_iter_at_mark(buf.get_insert())
-        self.found_iter1, self.found_iter2 = self.cur_iter.forward_search(kword, gtk.TEXT_SEARCH_TEXT_ONLY, limit=None)
-      self.note.content.scroll_to_iter(self.found_iter2, 0)
-      buf.select_range(self.found_iter1, self.found_iter2)
+        found_iter1, found_iter2 = self.cur_iter.forward_search(kword, gtk.TEXT_SEARCH_TEXT_ONLY, limit=None)
+      self.note.content.scroll_to_iter(found_iter2, 0)
+      buf.select_range(found_iter1, found_iter2)
+      self.found_m1 , self.found_m2 = buf.create_mark(None, found_iter1), buf.create_mark(None, found_iter2)
       self.pn_completion.add_entry(kword)
     except: pass

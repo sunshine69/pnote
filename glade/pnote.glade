@@ -82,11 +82,25 @@
                     </child>
                     <child>
                       <widget class="GtkImageMenuItem" id="imagemenuitem5">
-                        <property name="label">gtk-print-preview</property>
+                        <property name="label">Export to HTML</property>
                         <property name="visible">True</property>
+                        <property name="use_stock">False</property>
+                        <signal name="activate" handler="do_export_html"/>
+                        <child internal-child="image">
+                          <widget class="GtkImage" id="image1">
+                            <property name="visible">True</property>
+                            <property name="xalign">0.49000000953674316</property>
+                            <property name="stock">gtk-missing-image</property>
+                          </widget>
+                        </child>
+                      </widget>
+                    </child>
+                    <child>
+                      <widget class="GtkMenuItem" id="menuitem4">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">Export selected to HTML</property>
                         <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
-                        <signal name="activate" handler="do_print_preview"/>
+                        <signal name="activate" handler="do_export_selected_html"/>
                       </widget>
                     </child>
                     <child>
@@ -174,20 +188,6 @@
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-go-up</property>
                 <signal name="clicked" handler="do_send_mail"/>
-              </widget>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
-              <widget class="GtkToolButton" id="toolbutton5">
-                <property name="visible">True</property>
-                <property name="tooltip" translatable="yes">Print preview</property>
-                <property name="label" translatable="yes">Print Preview</property>
-                <property name="use_underline">True</property>
-                <property name="stock_id">gtk-print-preview</property>
-                <signal name="clicked" handler="do_print_preview"/>
               </widget>
               <packing>
                 <property name="expand">False</property>

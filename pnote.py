@@ -22,6 +22,7 @@ class pnote:
    
   def __init__(self, dbpath=None):
     self.cipherkey = None
+    self.filechooser_dir = os.getcwd()
     ic=gtk.status_icon_new_from_file('icons/cookie.png')
     ic.connect("popup-menu", self.icon_popup_menu)
     ic.connect("activate", lambda o: pnote_new.PnoteNew(self).w.show_all() )

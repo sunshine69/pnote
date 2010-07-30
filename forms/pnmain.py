@@ -131,16 +131,16 @@ class pnmain:
     self.save_config()
     gtk.main_quit()
     
-  def do_show_pref(self, obj, data=None):
-    Preference().w.show_all()
+  def do_show_pref(self, obj, data=None): Preference().w.show_all()
     
-  def do_export(self,obj, data=None):    pass
+  def do_export(self,obj, data=None): pass
     
   def do_export_selected(self, obj, data=None):    pass
     
   def do_import(self,obj, data=None):    pass
 
   def do_export_html(self, obj, data=None):    pass
+  
   def do_export_selected_html(self,o): pass
   
   def get_list_notes_from_selection(self):

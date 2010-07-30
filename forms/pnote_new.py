@@ -3,7 +3,7 @@
 
 # A new note
 
-import os, sqlite3, time, shlex, subprocess, cPickle, random
+import os, sqlite3, time, shlex, subprocess, cPickle, random, StringIO
 # from datetime import datetime # tzinfo, timedelta
 
 try:
@@ -58,6 +58,10 @@ class PnoteNew:
     'on_filter_selection_newnote': lambda o: self.on_filter_selection(o, 'NEW_NOTE') ,\
     'on_pnote_new_key_press_event': self.on_pnote_new_key_press_event,\
     'on_insert_img': lambda o: self.insert_pixbuf_at_cursor() ,\
+    'do_save_txt': lambda o: self.do_save_insert_txt(do='save'), \
+    'do_insert_from': lambda o: self.do_save_insert_txt(do='insert') ,\
+    'on_content_delete_from_cursor': self.on_content_delete_from_cursor,\
+    'do_save_html': self.do_save_html ,\
     }
     statusbar = self.statusbar = self.wTree.get_widget("statusbar")
     self.bt_ro = self.wTree.get_widget('bt_ro')
@@ -83,7 +87,6 @@ class PnoteNew:
     self.dbcon = self.app.dbcon
     # Create a tag table and add it with fixed list of attribute tags to be use later
     tag_tab = content.get_buffer().get_tag_table()
-    self.format_tab = [] # list of 3-tuples markname, markname, 'tagnames|property'
     tag_highlight = gtk.TextTag('highlight')
     tag_highlight.set_property('background_gdk' ,  gtk.gdk.color_parse('#FFD900') )
     tag_underline = gtk.TextTag("underline")
@@ -107,6 +110,7 @@ class PnoteNew:
     self.note_search_backword = False
     self.pixbuf_dict_fromdb = dict()
     self.pixbuf_dict = dict()
+    self.format_tab = [] # list of 3-tuples markname, markname, 'tagnames|property'
     if not note_id == None:
       dbc = self.dbcon.cursor()
       sql = "select * from {0}.lsnote WHERE note_id = {1}".format(self.dbname, self.note_id)
@@ -145,7 +149,57 @@ class PnoteNew:
     content.grab_focus()
     
   def on_bt_send_clicked(self, o=None): send_note_as_mail(self)
+  
+  def do_save_html(self, o=None):
+    htmltext = "<html><head><title>{0}</title></head><body>{1}</body></html>".format(self.title.get_text(),  self.dump_to_html() )
+    self.do_save_insert_txt(do='save', text = htmltext )
+    
+  def dump_to_html(self): # TODO For now Just like this
+    buf = self.content.get_buffer()
+    return "<PRE>{0}</PRE>".format(buf.get_text(buf.get_start_iter(), buf.get_end_iter() ) )
+    #stringIO = StringIO()
+    #itr = buf.get_start_iter()
+    #while True:
+      #marks = itr.get_marks()
+      #for mark in marks:
+        #for format_sec in self.format_tab:
+          #if mark in format_sec:
+            
+  
+  def do_save_insert_txt(self, do='save', text = None, urlpath = None):
+    if urlpath == None:
+      chooser = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+      chooser.set_current_folder(self.app.filechooser_dir)
+      ffilter = gtk.FileFilter(); ffilter.add_pattern('*.txt'); ffilter.set_name('txt')
+      ffilter1 = gtk.FileFilter(); ffilter1.add_pattern('*.*'); ffilter1.set_name('All files')
+      for ff in [ffilter, ffilter1]: chooser.add_filter(ff)
+      res = chooser.run()
+      if res == gtk.RESPONSE_OK:
+        urlpath =  chooser.get_filename()
+        self.app.filechooser_dir = chooser.get_current_folder()
+      chooser.destroy()
+    if os.path.isfile(urlpath):
+        buf = self.content.get_buffer()
+        if do == 'save':
+          if get_text_from_user('Warning',"Over-writting existing file?\n\n", default_txt = None) != 0: return True
+          if text == None:
+            text = buf.get_text(buf.get_start_iter(), buf.get_end_iter())
+          with open(urlpath,'wb') as fp: fp.write( text )
+        else:
+          with  open(urlpath,'rb') as fp: buf.insert_at_cursor(fp.read())
 
+  def on_content_delete_from_cursor(self,o, delete_type, count ):
+    buf = self.content.get_buffer()
+    cur_iter = buf.get_iter_at_mark(buf.get_insert())
+    if cur_iter.get_pixbuf() == None: return False
+    mymarks = cur_iter.get_marks()
+    for mykey in dict.keys(self.pixbuf_dict):
+      for mark in mymarks:
+        if mark in self.pixbuf_dict[mykey]:
+          self.pixbuf_dict[mykey].remove(mark)
+          if len(self.pixbuf_dict[mykey]) == 0: del self.pixbuf_dict[mykey]
+    return False
+              
   def load_pixbuf(self):
     buf = self.content.get_buffer()
     for urlpath in dict.keys(self.pixbuf_dict_fromdb):
@@ -163,8 +217,13 @@ class PnoteNew:
   def insert_pixbuf_at_cursor(self, urlpath=None):
     if urlpath == None:
       chooser = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_OPEN, buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+      chooser.set_current_folder(self.app.filechooser_dir)
+      ffilter = gtk.FileFilter();ffilter.add_pixbuf_formats(); ffilter.set_name('Images')
+      chooser.add_filter(ffilter)
       res = chooser.run()
-      if res == gtk.RESPONSE_OK: urlpath =  chooser.get_filename()
+      if res == gtk.RESPONSE_OK:
+        urlpath =  chooser.get_filename()
+        self.app.filechooser_dir = chooser.get_current_folder()
       chooser.destroy()
     if os.path.isfile(urlpath):
       try: pixbuff = gtk.gdk.pixbuf_new_from_file(urlpath)
@@ -369,8 +428,11 @@ class PnoteNew:
     elif evt.button == 3:
       chooser = gtk.FileChooserDialog(title="Select file to add to path",action=gtk.FILE_CHOOSER_ACTION_OPEN, buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
       chooser.set_select_multiple(True)
+      chooser.set_current_folder(self.app.filechooser_dir)
       res = chooser.run()
-      if res == gtk.RESPONSE_OK: self.url.set_text( self.url.get_text() + "<|>" + chooser.get_filename() )
+      if res == gtk.RESPONSE_OK:
+        self.url.set_text( self.url.get_text() + "<|>" + chooser.get_filename() )
+        self.app.filechooser_dir = chooser.get_current_folder()
       chooser.destroy()
       
   def on_bt_cancel_activate(self,  evt, data=None):
