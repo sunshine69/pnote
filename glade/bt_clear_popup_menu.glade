@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<glade-interface>
+  <!-- interface-requires gtk+ 2.16 -->
+  <!-- interface-naming-policy project-wide -->
+  <widget class="GtkMenu" id="bt_clear_popup_menu">
+    <property name="visible">True</property>
+    <child>
+      <widget class="GtkMenuItem" id="list_todo">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">list TODO</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="list_todo_activate_cb"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkMenuItem" id="list_urgent">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">list URGENT</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="list_urgent_activate_cb"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkMenuItem" id="list_important">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">list IMPORTANT</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="list_important_activate_cb"/>
+      </widget>
+    </child>
+  </widget>
+</glade-interface>

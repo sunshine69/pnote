@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<glade-interface>
+  <!-- interface-requires gtk+ 2.16 -->
+  <!-- interface-naming-policy project-wide -->
+  <widget class="GtkMenu" id="icon_menu">
+    <property name="visible">True</property>
+    <child>
+      <widget class="GtkMenuItem" id="show_main">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">show search window</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="icon_menu_show_main"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkMenuItem" id="recent_notes">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">recent notes</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="show_recent_notes"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkMenuItem" id="exit_app">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Exit</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="do_app_exit"/>
+      </widget>
+    </child>
+  </widget>
+</glade-interface>
