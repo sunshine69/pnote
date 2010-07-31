@@ -192,7 +192,7 @@ class pnmain:
           kwlist = [ x for x in kwlist if not x == '' ]
           for i in xrange(len(kwlist)):
               kw = kwlist[i].strip()
-              sqlcmd += (r" AND " if (i > 0) else " WHERE ") + r" (url like '%" + kw + r"%' OR title like '%" + kw + "%' OR content like '%" + kw + "%' ) "
+              sqlcmd += (r" AND " if (i > 0) else " WHERE ") + r" (title like '%" + kw + r"%' OR url like '%" + kw + "%' OR content like '%" + kw + "%' ) "
 
       if sqlcmd.startswith('select '): sqlcmd += " order by timestamp desc, note_id desc LIMIT " + get_config_key('data', 'SELECT_LIMIT', '250')
       dbc = self.dbcon.cursor()

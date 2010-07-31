@@ -219,7 +219,7 @@ if __name__ == '__main__':
         #global s
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
-        s.bind((source_ip, source_port))
+        #s.bind((source_ip, source_port))
         
         NatType, exIP, exPort = GetNATType(s, source_ip, source_port)
         print "NAT Type:", NatType

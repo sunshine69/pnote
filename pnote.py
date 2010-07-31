@@ -6,7 +6,8 @@
 import os,sys, sqlite3
 import pygtk,gtk, gobject
 import ConfigParser
-sys.path.append(os.getcwd())
+sys.path.append(sys.path[0])
+os.chdir(sys.path[0])
 
 # Can not import * here not sure why
 # This u do not need to put one pnmain more when instantiate the object. forms.pnmain means read file pnmain.py under forms dir when sourcing it, import symbol pnmain (which is a class; that is why when instantiate can use symbol pnmain only
