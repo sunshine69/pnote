@@ -144,7 +144,9 @@ class PnoteNew:
       self.wTree.get_widget('bt_cancel').set_label('_Close')
       self.start_time = 0
       dbc.close()
-    else: self.start_time = int(time.time())
+    else:
+      self.start_time = int(time.time())
+      self.datelog.set_text(time.strftime("%d-%m-%Y %H:%M"))
     self.wTree.signal_autoconnect(evtmap)
     content.grab_focus()
     
@@ -430,7 +432,9 @@ class PnoteNew:
       chooser.set_current_folder(self.app.filechooser_dir)
       res = chooser.run()
       if res == gtk.RESPONSE_OK:
-        self.url.set_text( self.url.get_text() + "<|>" + chooser.get_filename() )
+        fname = chooser.get_filename()
+        oldname = self.url.get_text()
+        self.url.set_text( (fname if oldname == '' else oldname + '<|>' + fname )  )
         self.app.filechooser_dir = chooser.get_current_folder()
       chooser.destroy()
       
@@ -475,8 +479,7 @@ class PnoteNew:
       sql = ''
       texbuf = self.content.get_buffer()
       tex = texbuf.get_text(texbuf.get_start_iter(), texbuf.get_end_iter() )
-      if self.title.get_text() == '': self.title.set_text(tex[0:50].replace("\n", ' ').replace("\r",' ') )
-      if self.datelog.get_text() == '': self.datelog.set_text(time.strftime("%d-%m-%Y %H:%M"))
+      if self.title.get_text() == '': self.title.set_text(tex[0:50].split("\n")[0].replace("\r",' ') )
       try:
         dbc = self.dbcon.cursor()
         if self.note_id == None:
