@@ -7,7 +7,7 @@ from Crypto.Cipher import Blowfish
 
 def get_text_from_user(title='Input text', msg = 'Enter text:', default_txt = '', size = -1, show_char = True, completion = True):
     d = gtk.Dialog(title, None, 0, (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT, gtk.STOCK_OK, gtk.RESPONSE_ACCEPT) )
-    l = gtk.Label(msg)
+    l = gtk.Label(msg); l.set_line_wrap(True)
     d.vbox.pack_start(l)
     l.show()
     if default_txt != None:

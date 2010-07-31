@@ -44,6 +44,9 @@ class pnote:
     self.db_setup()
 
   def change_passwd(self):
+    if self.cipherkey == None:
+      if get_text_from_user('CRITICAL WARNING', "It seems you failed to unlock this field before. Changing password now AND if the password is not the same as the old correct one you will LOSE old information\nIf you still want to try to enter password to unlock this field, click Cancel, and then click Cancel in the popup window. Then click the lock button again\nIf you really want to DISCARD old information and reset to use newpass then click OK now", default_txt = None) != 0:
+        message_box('Break', 'Aborted'); return
     newpass = get_text_from_user('New pass:', 'Enter new password:',show_char=False, completion = False, default_txt = 'none')
     if newpass != 'none': self.cipherkey = newpass
     else: message_box('Warning!','Password not changed')

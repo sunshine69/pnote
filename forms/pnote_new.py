@@ -168,7 +168,7 @@ class PnoteNew:
   
   def do_save_insert_txt(self, do='save', text = None, urlpath = None):
     if urlpath == None:
-      chooser = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+      chooser = gtk.FileChooserDialog(title='Type new file name or select file',action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
       chooser.set_current_folder(self.app.filechooser_dir)
       ffilter = gtk.FileFilter(); ffilter.add_pattern('*.txt'); ffilter.set_name('txt')
       ffilter1 = gtk.FileFilter(); ffilter1.add_pattern('*.*'); ffilter1.set_name('All files')
@@ -178,15 +178,14 @@ class PnoteNew:
         urlpath =  chooser.get_filename()
         self.app.filechooser_dir = chooser.get_current_folder()
       chooser.destroy()
-    if os.path.isfile(urlpath):
-        buf = self.content.get_buffer()
-        if do == 'save':
+    buf = self.content.get_buffer()
+    if do == 'save':
+      if os.path.isfile(urlpath):
           if get_text_from_user('Warning',"Over-writting existing file?\n\n", default_txt = None) != 0: return True
-          if text == None:
-            text = buf.get_text(buf.get_start_iter(), buf.get_end_iter())
-          with open(urlpath,'wb') as fp: fp.write( text )
-        else:
-          with  open(urlpath,'rb') as fp: buf.insert_at_cursor(fp.read())
+      if text == None: text = buf.get_text(buf.get_start_iter(), buf.get_end_iter())
+      with open(urlpath,'wb') as fp: fp.write( text )
+    else:
+      with  open(urlpath,'rb') as fp: buf.insert_at_cursor(fp.read())
 
   def on_content_delete_from_cursor(self,o, delete_type, count ):
     buf = self.content.get_buffer()
