@@ -116,7 +116,7 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
         if mail_use_ssl: mailer =  smtplib.SMTP_SSL(mail_server, port)
         else: mailer = smtplib.SMTP(mail_server, port)
         #mailer.connect(mail_server, port)
-        if mail_use_auth: mailer.login(pnmail_user, mail_passwd)
+        if mail_use_auth: mailer.login(mail_user, mail_passwd)
         mailer.sendmail(me, to.split(';'), outer.as_string())
         mailer.quit()
       except Exception as ex: print "send_note_as_mail Error: " , ex
