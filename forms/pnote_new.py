@@ -432,9 +432,10 @@ class PnoteNew:
       chooser.set_current_folder(self.app.filechooser_dir)
       res = chooser.run()
       if res == gtk.RESPONSE_OK:
-        fname = chooser.get_filename()
-        oldname = self.url.get_text()
-        self.url.set_text( (fname if oldname == '' else oldname + '<|>' + fname )  )
+        fnames = chooser.get_filenames()
+        for fname in fnames:
+          oldname = self.url.get_text()
+          self.url.set_text( (fname if oldname == '' else oldname + '<|>' + fname )  )
         self.app.filechooser_dir = chooser.get_current_folder()
       chooser.destroy()
       

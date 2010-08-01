@@ -67,7 +67,7 @@ class pnote:
         if not alert_mail_to  == 'none':
           alert_count = row['alert_count']
           if alert_count == 0:
-            send_note_as_mail(note = self.note_list[dbname+str(note_id)], mail_from = 'kieusnz@yahoo.co.nz', to = alert_mail_to )
+            send_note_as_mail(note = self.note_list[dbname+str(note_id)], mail_from = get_config_key('data', 'mail_from'), to = alert_mail_to )
             sql1 = "update {0}.lsnote set alert_count = {1} where note_id = {2}".format(dbname, alert_count + 1, note_id)
             self.dbcon.execute(sql1)
             self.dbcon.commit()
