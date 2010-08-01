@@ -174,7 +174,7 @@ class PnoteNew:
       chooser.set_current_folder(self.app.filechooser_dir)
       ffilter = gtk.FileFilter(); ffilter.add_pattern('*.txt'); ffilter.set_name('txt')
       ffilter1 = gtk.FileFilter(); ffilter1.add_pattern('*.*'); ffilter1.set_name('All files')
-      for ff in [ffilter, ffilter1]: chooser.add_filter(ff)
+      for ff in [ffilter1, ffilter]: chooser.add_filter(ff)
       res = chooser.run()
       if res == gtk.RESPONSE_OK:
         urlpath =  chooser.get_filename()

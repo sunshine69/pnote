@@ -54,6 +54,7 @@ class pnmain:
     "on_result_list_key_press": self.on_result_list_key_press, \
     'on_setup_mail': lambda o: MailPref(self.app).run() ,\
     'do_export_selected_html': self.do_export_selected_html,\
+    'on_toolbar_menu': self.on_toolbar_menu,\
     }
     statusbar = self.statusbar = self.wTree.get_widget("statusbar")
     msgid = statusbar.push(1, " welcome to pnote")
@@ -81,6 +82,19 @@ class pnmain:
     result_list.set_search_column(0)
     self.wTree.signal_autoconnect(evtmap)
     self.keyword.grab_focus()
+
+  def on_toolbar_menu(self,evt=None): 
+    #list_flags = get_config_key('data', 'list_flags', 'TODO|IMPORTANT|URGENT').split('|')
+    #menu_flags  = gtk.Menu()
+    #for fl in list_flags:
+      #if not fl == '':
+        #menuitem1 = gtk.MenuItem('List ' + fl)
+        #tmpstr = "lambda m,o: o.do_search( 'FLAGS:' + '{0}' ) ".format(fl)
+        #menuitem1.connect('activate', eval(tmpstr), self )
+        #menu_flags.append(menuitem1)
+        #menuitem1.show()
+    #menu_flags.popup(None, None, None, evt.button, evt.time, data=None)
+    print "PASS"
   
   def on_result_list_key_press(self, o=None, e=None, d=None):
     #print gtk.gdk.keyval_name(e.keyval)

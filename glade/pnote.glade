@@ -208,6 +208,18 @@
                 <property name="homogeneous">True</property>
               </packing>
             </child>
+            <child>
+              <widget class="GtkMenuToolButton" id="toolbutton5">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Mode [Note]</property>
+                <property name="use_underline">True</property>
+                <signal name="clicked" handler="on_toolbar_menu"/>
+              </widget>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
           </widget>
           <packing>
             <property name="expand">False</property>
