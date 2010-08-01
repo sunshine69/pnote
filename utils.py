@@ -67,50 +67,58 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
     from email.mime.text import MIMEText
     COMMASPACE = ', '
     buf = note.content.get_buffer()
-    outer = MIMEMultipart()
-    #msg = MIMEText( buf.get_text(buf.get_start_iter(), buf.get_end_iter()) )
-    outer['Subject'] = (note.title.get_text() if subject == '' else subject)
-    outer.attach( MIMEText(buf.get_text(buf.get_start_iter(), buf.get_end_iter()) , 'plain') )
-    outer.preamble = 'You will not see this in a MIME-aware mail reader.\n'
     if mail_from == '':
-      me = get_config_key('data', 'mail_from', 'none')
-      if me == 'none': me = get_text_from_user('From', 'From: '); save_config_key('data', 'mail_from', me)
+          me = get_config_key('data', 'mail_from', 'none')
+          if me == 'none': me = get_text_from_user('From', 'From: '); save_config_key('data', 'mail_from', me)
     else: me = mail_from
-    outer['From'] = me
     if to == '':
       to = get_text_from_user('To: ', 'Recipient address separated by ; ', size = 300)
       if to == None: message_box('error', 'Recipients required'); return
-    outer['To'] = to
-    paths = note.url.get_text().split('<|>')
-    for path in paths:
-      filename = os.path.split(path)[1]
-      if os.path.isfile(path):
-        ctype, encoding = mimetypes.guess_type(path)
-        if ctype is None or encoding is not None: ctype = 'application/octet-stream'
-        maintype, subtype = ctype.split('/', 1)
-        if maintype == 'text':
-            fp = open(path)
-            # Note: we should handle calculating the charset
-            msg = MIMEText(fp.read(), _subtype=subtype)
-            fp.close()
-        elif maintype == 'image':
-            fp = open(path, 'rb')
-            msg = MIMEImage(fp.read(), _subtype=subtype)
-            fp.close()
-        elif maintype == 'audio':
-            fp = open(path, 'rb')
-            msg = MIMEAudio(fp.read(), _subtype=subtype)
-            fp.close()
-        else:
-            fp = open(path, 'rb')
-            msg = MIMEBase(maintype, subtype)
-            msg.set_payload(fp.read())
-            fp.close()
-            # Encode the payload using Base64
-            encoders.encode_base64(msg)
-        msg.add_header('Content-Disposition', 'attachment', filename=filename)
-        outer.attach(msg)
-    
+    pathstr = note.url.get_text()
+    if pathstr != '':
+        paths = pathstr.split('<|>')
+        outer = MIMEMultipart()
+        #msg = MIMEText( buf.get_text(buf.get_start_iter(), buf.get_end_iter()) )
+        outer['Subject'] = (note.title.get_text() if subject == '' else subject)
+        outer.attach( MIMEText(buf.get_text(buf.get_start_iter(), buf.get_end_iter()) , 'plain') )
+        outer.preamble = 'You will not see this in a MIME-aware mail reader.\n'
+        outer['From'] = me
+        outer['To'] = to
+        for path in paths:
+          filename = os.path.split(path)[1]
+          if os.path.isfile(path):
+            ctype, encoding = mimetypes.guess_type(path)
+            if ctype is None or encoding is not None: ctype = 'application/octet-stream'
+            maintype, subtype = ctype.split('/', 1)
+            if maintype == 'text':
+                fp = open(path)
+                # Note: we should handle calculating the charset
+                msg = MIMEText(fp.read(), _subtype=subtype)
+                fp.close()
+            elif maintype == 'image':
+                fp = open(path, 'rb')
+                msg = MIMEImage(fp.read(), _subtype=subtype)
+                fp.close()
+            elif maintype == 'audio':
+                fp = open(path, 'rb')
+                msg = MIMEAudio(fp.read(), _subtype=subtype)
+                fp.close()
+            else:
+                fp = open(path, 'rb')
+                msg = MIMEBase(maintype, subtype)
+                msg.set_payload(fp.read())
+                fp.close()
+                # Encode the payload using Base64
+                encoders.encode_base64(msg)
+            msg.add_header('Content-Disposition', 'attachment', filename=filename)
+            outer.attach(msg)
+    else:
+      print "DEBUG"
+      outer = MIMEText(buf.get_text(buf.get_start_iter(), buf.get_end_iter() ))
+      outer['Subject'] = (note.title.get_text() if subject == '' else subject)
+      outer['From'] = me
+      outer['To'] = to
+      
     def fork_send():
       try:
         if mail_use_ssl: mailer =  smtplib.SMTP_SSL(mail_server, port)
