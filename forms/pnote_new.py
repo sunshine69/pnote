@@ -84,7 +84,7 @@ class PnoteNew:
     content = self.content = self.wTree.get_widget('content')
     content.get_buffer().connect('modified-changed', self.content_changed_cb)
     url = self.url = self.wTree.get_widget('url')
-    self.dbcon = self.app.dbcon
+    self.dbcon = self.app.db_setup()
     # Create a tag table and add it with fixed list of attribute tags to be use later
     tag_tab = content.get_buffer().get_tag_table()
     tag_highlight = gtk.TextTag('highlight')
@@ -131,8 +131,7 @@ class PnoteNew:
         self.reminder_ticks = row['reminder_ticks']
         self.alert_count = row['alert_count']
         self.pixbuf_dict_fromdb = cPickle.loads(row['pixbuf_dict'])
-        if not self.reminder_ticks == 0:
-          bt_reminder.set_active(True)
+        if not self.reminder_ticks == 0: bt_reminder.set_active(True)
         self.app.note_list[self.dbname+str(note_id)] = self
         self.load_pixbuf()# before format
         self.load_format_tag(row['format_tag'])

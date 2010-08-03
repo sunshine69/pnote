@@ -24,10 +24,7 @@ class pnote:
   def __init__(self, dbpath=None):
     self.cipherkey = None
     self.filechooser_dir = os.getcwd()
-    ic=gtk.status_icon_new_from_file('icons/cookie.png')
-    ic.connect("popup-menu", self.icon_popup_menu)
-    ic.connect("activate", lambda o: pnote_new.PnoteNew(self).w.show_all() )
-    gobject.timeout_add_seconds(int(get_config_key('data', 'reminder_timer_interval', '60') ), self.query_note_reminder )
+    self.working_mode = get_config_key('global', 'working_mode', 'note')
     if dbpath == None:
       dbpath = get_config_key('data', 'main_db_path')
       if dbpath == '':
@@ -35,6 +32,7 @@ class pnote:
         if not os.path.isfile(dbpath): dbpath = run_setup(dbpath)
     self.dbpath = dbpath
     self.dbpaths = { 'main': dbpath }
+    self.dbcon = None
     self.note_list = {}
     dbpathstr = get_config_key('data', 'db_paths', 'None')
     if not dbpathstr == 'None':
@@ -42,8 +40,18 @@ class pnote:
       for p in dbpathstr.split('|'):
         if (not p == '') and (not p == 'None') and (not p == None): self.dbpaths['sub' + str(i)] = p
         i += 1
-    self.db_setup()
+    
+    ic=gtk.status_icon_new_from_file('icons/cookie.png')
+    ic.connect("popup-menu", self.icon_popup_menu)
+    ic.connect("activate", lambda o: pnote_new.PnoteNew(self).w.show_all() )
+    self.load_list_imap_acct()
+    gobject.timeout_add_seconds(int(get_config_key('data', 'reminder_timer_interval', '60') ), self.query_note_reminder )
 
+  def load_list_imap_acct(self):
+    list_imap_account_str = get_config_key('global', 'list_imap_account','')
+    if list_imap_account_str != '': self.list_imap_account_dict = cPickle.loads(base64.b64decode( list_imap_account_str ) )
+    else: self.list_imap_account_dict = dict()
+    
   def change_passwd(self):
     if self.cipherkey == None:
       if get_text_from_user('CRITICAL WARNING', "It seems you failed to unlock this field before. Changing password now AND if the password is not the same as the old correct one you will LOSE old information\nIf you still want to try to enter password to unlock this field, click Cancel, and then click Cancel in the popup window. Then click the lock button again\nIf you really want to DISCARD old information and reset to use newpass then click OK now", default_txt = None) != 0:
@@ -54,8 +62,9 @@ class pnote:
     
   def query_note_reminder(self):
     for dbname in dict.keys(self.dbpaths):
+      dbcon = self.db_setup()
       sql = "select note_id, alert_count from {0}.lsnote where reminder_ticks > 0 AND reminder_ticks <= {1}".format(dbname, int(time.time()) )
-      cur = self.dbcon.cursor()
+      cur = dbcon.cursor()
       cur.execute(sql)
       while (True):
         row = cur.fetchone()
@@ -69,8 +78,8 @@ class pnote:
           if alert_count == 0:
             send_note_as_mail(note = self.note_list[dbname+str(note_id)], mail_from = get_config_key('data', 'mail_from'), to = alert_mail_to )
             sql1 = "update {0}.lsnote set alert_count = {1} where note_id = {2}".format(dbname, alert_count + 1, note_id)
-            self.dbcon.execute(sql1)
-            self.dbcon.commit()
+            dbcon.execute(sql1)
+            dbcon.commit()
       cur.close()
     return True
           
@@ -86,6 +95,7 @@ class pnote:
     """
     is called by other window/object in the application pnmain, PnoteNew etc
     """
+    if self.dbcon != None: return self.dbcon
     try:
       dbcon = sqlite3.connect(self.dbpath)
       #dbc = dbcon.cursor()
@@ -96,9 +106,7 @@ class pnote:
           if not dbname == 'main': dbcon.execute("attach database (?) as (?)", (self.dbpaths[dbname], dbname ))
       self.dbcon = dbcon
       return dbcon
-    except Exception as e:
-          print e
-          return False
+    except Exception as e: print e; return False
         
   def icon_popup_menu(self, status_icon, button, activate_time, data=None):
     # popup menu

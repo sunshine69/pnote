@@ -211,9 +211,11 @@
             <child>
               <widget class="GtkMenuToolButton" id="toolbutton5">
                 <property name="visible">True</property>
-                <property name="label" translatable="yes">Mode [Note]</property>
+                <property name="tooltip" translatable="yes">Click to set mode to NoteDB. Click the menu to select another</property>
+                <property name="label" translatable="yes">NoteDB</property>
                 <property name="use_underline">True</property>
-                <signal name="clicked" handler="on_toolbar_menu"/>
+                <signal name="clicked" handler="on_toolbar_menu_clicked"/>
+                <signal name="show_menu" handler="on_toolbar_menu"/>
               </widget>
               <packing>
                 <property name="expand">False</property>

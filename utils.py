@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import pygtk,gtk
-import os, ConfigParser, random, sqlite3, time, threading, base64
+import os, ConfigParser, random, sqlite3, time, threading, base64, cPickle
 from random import randrange
 from Crypto.Cipher import Blowfish
 
@@ -113,7 +113,6 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
             msg.add_header('Content-Disposition', 'attachment', filename=filename)
             outer.attach(msg)
     else:
-      print "DEBUG"
       outer = MIMEText(buf.get_text(buf.get_start_iter(), buf.get_end_iter() ))
       outer['Subject'] = (note.title.get_text() if subject == '' else subject)
       outer['From'] = me
@@ -123,7 +122,6 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
       try:
         if mail_use_ssl: mailer =  smtplib.SMTP_SSL(mail_server, port)
         else: mailer = smtplib.SMTP(mail_server, port)
-        #mailer.connect(mail_server, port)
         if mail_use_auth: mailer.login(mail_user, mail_passwd)
         mailer.sendmail(me, to.split(';'), outer.as_string())
         mailer.quit()
@@ -449,49 +447,114 @@ class MailPref:
     self.app = app
     self.wTree = gtk.glade.XML('glade/mail_pref.glade')
     self.w = self.wTree.get_widget('window1')
-    self.e_smpt_server = self.wTree.get_widget('e_smpt_server')
+    table1 = self.wTree.get_widget('table1')
+    self.e_smpt_server = gtk.combo_box_entry_new_text();  self.e_smpt_server.show()
+    table1.attach(self.e_smpt_server, 1, 2, 0, 1)
     self.e_port = self.wTree.get_widget('e_port')
     self.cbox_use_auth = self.wTree.get_widget('cbox_use_auth')
     self.e_username = self.wTree.get_widget('e_username')
     self.e_passwd = self.wTree.get_widget('e_passwd')
     self.cbox_use_ssl = self.wTree.get_widget('cbox_use_ssl')
     self.cbox_forked_mail = self.wTree.get_widget('cbox_forked_mail')
-    evtmap = { 'on_button2_clicked': self.on_button2_clicked,\
+    self.bt_del_imap = self.wTree.get_widget('bt_del_imap')
+    self.cbox_is_imap_server = self.wTree.get_widget('cbox_is_imap_server')
+    self.bt_cancel = self.wTree.get_widget('bt_cancel')
+    self.bt_del_imap.set_sensitive(False)
+    evtmap = { 'on_bt_save_clicked': self.on_bt_save_clicked,\
     'on_button1_clicked':self.on_button1_clicked,\
     'destroy': lambda o: self.destroy() ,\
-    'on_cbox_use_ssl_toggled': self.on_cbox_use_ssl_toggled,\
+    'on_cbox_is_imap_server_toggled': self.on_cbox_is_imap_server_toggled,\
+    'on_bt_del_imap_clicked': self.on_bt_del_imap_clicked,\
     }
-    self.e_smpt_server.set_text(get_config_key('data', 'mail_server') )
+    self.load_smtp_config()
+    self.response = 1
+    self.wTree.signal_autoconnect(evtmap)
+    self.e_smpt_server.connect("changed", lambda o: self.list_server_changed(control = 'changed') )
+    self.e_smpt_server.child.connect("activate", lambda o: self.list_server_changed(control = 'activate') )
+
+  def on_cbox_is_imap_server_toggled(self,o=None):
+    flag = self.cbox_is_imap_server.get_active()
+    if flag:
+      self.bt_del_imap.set_sensitive(True)
+      self.load_server_list()
+    else: self.load_smtp_config()
+    
+  def load_server_list(self):
+    self.e_smpt_server.get_model().clear()
+    for account_name in dict.keys(self.app.list_imap_account_dict): self.e_smpt_server.append_text(account_name)
+    self.e_smpt_server.set_active(0)
+    
+  def on_bt_del_imap_clicked(self,o=None):
+    if (self.cbox_is_imap_server.get_active()):
+      imap_server = self.e_smpt_server.get_active_text().strip()
+      try:
+        del self.app.list_imap_account_dict[imap_server]
+        save_config_key('global', 'list_imap_account', base64.b64encode(cPickle.dumps(self.app.list_imap_account_dict, cPickle.HIGHEST_PROTOCOL)  ) )
+        self.app.load_list_imap_acct()
+        self.e_smpt_server.remove_text(self.e_smpt_server.get_active())
+        self.e_smpt_server.child.set_text('')
+      except: pass
+    
+  def list_server_changed(self,control=None):
+    if (self.cbox_is_imap_server.get_active()):
+      imap_server = self.e_smpt_server.get_active_text().strip()
+      if control == 'activate': imap_account = self.app.list_imap_account_dict.get(imap_server,['','',False,''] )
+      else: imap_account = self.app.list_imap_account_dict.get(imap_server )
+      if imap_account != None:
+        self.e_port.set_text(imap_account[3] )
+        self.e_username.set_text(imap_account[0])
+        self.cbox_use_ssl.set_active(imap_account[2])
+        self.bt_cancel.set_label('Cancel')
+    else: self.load_smtp_config()
+    self.bt_cancel.set_label('Cancel')
+    
+  def run(self): self.w.show_all(); return self.response
+  
+  def load_smtp_config(self):
+    self.e_smpt_server.get_model().clear()
+    self.e_smpt_server.child.set_text(get_config_key('data', 'mail_server', '') )
+    #self.e_smpt_server.set_active(0)
     self.e_port.set_text(get_config_key('data', 'mail_port', '25') )
     self.e_username.set_text(get_config_key('data', 'mail_user') )
     self.e_passwd.set_text('')
+    self.e_passwd.set_visibility(False)
     self.cbox_use_ssl.set_active( (False if (get_config_key('data', 'mail_use_ssl', 'no') == 'no' ) else True )  )
     self.cbox_use_auth.set_active( (False if (get_config_key('data', 'mail_use_auth', 'no') == 'no' ) else True )  )
     self.cbox_forked_mail.set_active( (False if (get_config_key('data', 'mail_forked_send', 'no') == 'no' ) else True )  )
-    self.response = 1
-    self.wTree.signal_autoconnect(evtmap)
-
-  def run(self): self.w.show_all(); return self.response
-  def on_cbox_use_ssl_toggled(self,o=None): self.e_port.set_text( ('465' if self.cbox_use_ssl.get_active() else '25' ) )
-  def on_button1_clicked(self,o=None): self.response = 1; self.w.destroy()
-  def on_button2_clicked(self,o=None):
-    save_config_key('data', 'mail_server', self.e_smpt_server.get_text().strip())
-    save_config_key('data', 'mail_port', self.e_port.get_text().strip())
-    save_config_key('data', 'mail_user', self.e_username.get_text().strip())
-    newpass = self.e_passwd.get_text()
+    
+  def on_button1_clicked(self,o=None): self.response = 1; self.destroy()
+  def on_bt_save_clicked(self,o=None):
+    newpass = self.e_passwd.get_text(); encpass64 = None
     if newpass != '':
       if self.app.cipherkey == None:
         self.app.cipherkey = get_text_from_user('Password required','Enter password to lock/unlock config file', show_char=False, completion = False, default_txt = 'none')
         if self.app.cipherkey == 'none': self.app.cipherkey = None; message_box('error', 'Aborted');  return 1
       encpass = BFCipher(self.app.cipherkey).encrypt(newpass.strip() )
       encpass64 = base64.b64encode(encpass)
-      save_config_key('data', 'mail_passwd', encpass64 )
-    save_config_key('data', 'mail_use_ssl', ( 'yes' if  self.cbox_use_ssl.get_active() else 'no' ) )
-    save_config_key('data', 'mail_use_auth', ( 'yes' if  self.cbox_use_auth.get_active() else 'no' ) )
-    save_config_key('data', 'mail_forked_send', ( 'yes' if  self.cbox_forked_mail.get_active() else 'no' ) )
+    if (self.cbox_is_imap_server.get_active()):
+      imap_server = self.e_smpt_server.get_active_text().strip()
+      self.e_smpt_server.append_text(imap_server)
+      imap_account = self.app.list_imap_account_dict.get(imap_server, ['','',False,''])
+      imap_account[0] = self.e_username.get_text().strip()
+      if encpass64 != None: imap_account[1] = encpass64
+      imap_account[2] = ( True if  self.cbox_use_ssl.get_active() else False )
+      imap_account[3] = self.e_port.get_text().strip()
+      self.app.list_imap_account_dict[imap_server] = imap_account
+      save_config_key('global', 'list_imap_account', base64.b64encode(cPickle.dumps(self.app.list_imap_account_dict, cPickle.HIGHEST_PROTOCOL)  ) )
+      self.load_server_list()
+    else:
+      save_config_key('data', 'mail_server', self.e_smpt_server.get_active_text().strip())
+      save_config_key('data', 'mail_port', self.e_port.get_text().strip())
+      save_config_key('data', 'mail_user', self.e_username.get_text().strip())
+      if encpass64 != None: save_config_key('data', 'mail_passwd', encpass64 )
+      save_config_key('data', 'mail_use_ssl', ( 'yes' if  self.cbox_use_ssl.get_active() else 'no' ) )
+      save_config_key('data', 'mail_use_auth', ( 'yes' if  self.cbox_use_auth.get_active() else 'no' ) )
+      save_config_key('data', 'mail_forked_send', ( 'yes' if  self.cbox_forked_mail.get_active() else 'no' ) )
+      self.load_smtp_config()
+    self.app.load_list_imap_acct()
     self.response = 0
-    self.destroy()
-
+    self.bt_cancel.set_label('Close')
+    
 class EContent:
   
   def destroy(self):

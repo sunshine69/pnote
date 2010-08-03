@@ -23,32 +23,22 @@
         <child>
           <widget class="GtkTable" id="table1">
             <property name="visible">True</property>
+            <property name="border_width">5</property>
             <property name="n_rows">7</property>
             <property name="n_columns">2</property>
             <child>
               <widget class="GtkLabel" id="label2">
                 <property name="visible">True</property>
-                <property name="label" translatable="yes">Mail (smtp) server:</property>
+                <property name="label" translatable="yes">Mail (or imap) server:</property>
               </widget>
               <packing>
                 <property name="y_options"></property>
               </packing>
             </child>
             <child>
-              <widget class="GtkEntry" id="e_smpt_server">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="invisible_char">&#x25CF;</property>
-              </widget>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="right_attach">2</property>
-              </packing>
-            </child>
-            <child>
               <widget class="GtkLabel" id="label3">
                 <property name="visible">True</property>
-                <property name="label" translatable="yes">SMTP port:</property>
+                <property name="label" translatable="yes">Port:</property>
               </widget>
               <packing>
                 <property name="top_attach">1</property>
@@ -70,17 +60,8 @@
               </packing>
             </child>
             <child>
-              <widget class="GtkLabel" id="label4">
-                <property name="visible">True</property>
-                <property name="label" translatable="yes">Use authentication: </property>
-              </widget>
-              <packing>
-                <property name="top_attach">2</property>
-                <property name="bottom_attach">3</property>
-              </packing>
-            </child>
-            <child>
               <widget class="GtkCheckButton" id="cbox_use_auth">
+                <property name="label" translatable="yes">Use authentication</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
@@ -105,6 +86,7 @@
             </child>
             <child>
               <widget class="GtkEntry" id="e_username">
+                <property name="width_request">250</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="invisible_char">&#x25CF;</property>
@@ -190,9 +172,26 @@
                 <property name="bottom_attach">7</property>
               </packing>
             </child>
+            <child>
+              <widget class="GtkCheckButton" id="cbox_is_imap_server">
+                <property name="label" translatable="yes">Is Imap server</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="draw_indicator">True</property>
+                <signal name="toggled" handler="on_cbox_is_imap_server_toggled"/>
+              </widget>
+              <packing>
+                <property name="top_attach">2</property>
+                <property name="bottom_attach">3</property>
+                <property name="x_options">GTK_EXPAND</property>
+              </packing>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
           </widget>
           <packing>
-            <property name="fill">False</property>
             <property name="position">1</property>
           </packing>
         </child>
@@ -200,12 +199,11 @@
           <widget class="GtkHBox" id="hbox1">
             <property name="visible">True</property>
             <child>
-              <widget class="GtkButton" id="button1">
-                <property name="label">gtk-cancel</property>
+              <widget class="GtkButton" id="bt_cancel">
+                <property name="label">Cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
                 <signal name="clicked" handler="on_button1_clicked"/>
               </widget>
               <packing>
@@ -213,16 +211,29 @@
               </packing>
             </child>
             <child>
-              <widget class="GtkButton" id="button2">
-                <property name="label">gtk-ok</property>
+              <widget class="GtkButton" id="bt_del_imap">
+                <property name="label" translatable="yes">Delete account</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-                <signal name="clicked" handler="on_button2_clicked"/>
+                <property name="focus_on_click">False</property>
+                <signal name="clicked" handler="on_bt_del_imap_clicked"/>
               </widget>
               <packing>
                 <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="GtkButton" id="bt_save">
+                <property name="label">Save</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="tooltip" translatable="yes">Click to save data as Outgoing mail account</property>
+                <signal name="clicked" handler="on_bt_save_clicked"/>
+              </widget>
+              <packing>
+                <property name="position">2</property>
               </packing>
             </child>
           </widget>

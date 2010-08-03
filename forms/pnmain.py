@@ -16,7 +16,7 @@ try:
 except:
  pass
 
-import sqlite3, types
+import sqlite3, types, cPickle, base64
 from forms import pnote_new
 from utils import *
 
@@ -25,7 +25,7 @@ class pnmain:
   def __init__(self, dbpath, pnote_app=None):
     self.app = pnote_app
     self.dbpath = dbpath
-    self.dbcon = self.app.dbcon
+    self.dbcon = self.app.db_setup()
     self.DEBUG = True
     self.kwcount = 0
     gladefile = "glade/pnote.glade"
@@ -55,6 +55,7 @@ class pnmain:
     'on_setup_mail': lambda o: MailPref(self.app).run() ,\
     'do_export_selected_html': self.do_export_selected_html,\
     'on_toolbar_menu': self.on_toolbar_menu,\
+    'on_toolbar_menu_clicked': self.on_toolbar_menu_clicked,\
     }
     statusbar = self.statusbar = self.wTree.get_widget("statusbar")
     msgid = statusbar.push(1, " welcome to pnote")
@@ -64,9 +65,9 @@ class pnmain:
     result_list.set_headers_visible(True)
     renderer = gtk.CellRendererText()
     #col1 = gtk.TreeViewColumn("ID", renderer, text=0)
-    col2 = gtk.TreeViewColumn("Title", renderer,text=1)
+    col2 = gtk.TreeViewColumn('Title'  , renderer,text=1)
     col3 = gtk.TreeViewColumn("Date", renderer,text=2)
-    col4 = gtk.TreeViewColumn("Database", renderer,text=3)
+    col4 = gtk.TreeViewColumn( "Database", renderer,text=3)
     #col1.set_resizable(True)
     col2.set_resizable(True)
     col3.set_resizable(True)
@@ -80,21 +81,29 @@ class pnmain:
     result_list.append_column(col4)
     result_list.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
     result_list.set_search_column(0)
+    self.bt_menu = self.wTree.get_widget('toolbutton5'); self.bt_menu.set_menu(gtk.Menu())
     self.wTree.signal_autoconnect(evtmap)
     self.keyword.grab_focus()
 
-  def on_toolbar_menu(self,evt=None): 
-    #list_flags = get_config_key('data', 'list_flags', 'TODO|IMPORTANT|URGENT').split('|')
-    #menu_flags  = gtk.Menu()
-    #for fl in list_flags:
-      #if not fl == '':
-        #menuitem1 = gtk.MenuItem('List ' + fl)
-        #tmpstr = "lambda m,o: o.do_search( 'FLAGS:' + '{0}' ) ".format(fl)
-        #menuitem1.connect('activate', eval(tmpstr), self )
-        #menu_flags.append(menuitem1)
-        #menuitem1.show()
-    #menu_flags.popup(None, None, None, evt.button, evt.time, data=None)
-    print "PASS"
+  def on_toolbar_menu(self,bt=None):
+    thismenu = gtk.Menu()
+    list_imap_account = self.app.list_imap_account_dict
+    for fl in dict.keys(list_imap_account):
+        if not fl == '':
+          menuitem1 = gtk.MenuItem(fl)
+          tmpstr = "lambda m,o: o.do_set_working_mode( '{0}' ) ".format(fl)
+          menuitem1.connect('activate', eval(tmpstr), self )
+          thismenu.append(menuitem1)
+          menuitem1.show()
+    bt.set_menu(thismenu)
+    
+  def do_set_working_mode(self, modestr=''):
+    self.bt_menu.set_label(modestr.split('.')[1] )
+    print "PASS", modestr
+    
+  def on_toolbar_menu_clicked(self,o=None):
+    self.bt_menu.set_label('NoteDB')
+    self.app.working_mode = 'note'
   
   def on_result_list_key_press(self, o=None, e=None, d=None):
     #print gtk.gdk.keyval_name(e.keyval)
@@ -227,7 +236,8 @@ class pnmain:
     if not keyword == '': self.pn_completion.add_entry(keyword)
       
   def do_search_cb(self, obj, data=None):
-      self.do_search(self.keyword.get_text())
+      if (self.app.working_mode == 'note'): self.do_search(self.keyword.get_text())
+      elif (self.app.working_mode == 'imap4'): print "imap4"
 
   def on_result_list_row_activated(self, obj, path, view_col, data=None):
     model = obj.get_model()
