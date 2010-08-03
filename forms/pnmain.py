@@ -60,7 +60,7 @@ class pnmain:
     statusbar = self.statusbar = self.wTree.get_widget("statusbar")
     msgid = statusbar.push(1, " welcome to pnote")
     result_list = self.result_list = self.wTree.get_widget("result_list")
-    result_list_model = self.result_list_model = gtk.ListStore(int, str,str,str) # first col str as using int causing problems; data returning from db sometimes as str. pysqlite buggy?
+    result_list_model = self.result_list_model = gtk.ListStore(int, str,str,str)
     result_list.set_model(result_list_model)
     result_list.set_headers_visible(True)
     renderer = gtk.CellRendererText()
@@ -91,19 +91,19 @@ class pnmain:
     for fl in dict.keys(list_imap_account):
         if not fl == '':
           menuitem1 = gtk.MenuItem(fl)
-          tmpstr = "lambda m,o: o.do_set_working_mode( '{0}' ) ".format(fl)
+          tmpstr = "lambda m,o: o.do_set_search_mode( '{0}' ) ".format(fl)
           menuitem1.connect('activate', eval(tmpstr), self )
           thismenu.append(menuitem1)
           menuitem1.show()
     bt.set_menu(thismenu)
     
-  def do_set_working_mode(self, modestr=''):
+  def do_set_search_mode(self, modestr=''):
     self.bt_menu.set_label(modestr.split('.')[1] )
-    print "PASS", modestr
+    self.search_mode = modestr
     
   def on_toolbar_menu_clicked(self,o=None):
     self.bt_menu.set_label('NoteDB')
-    self.app.working_mode = 'note'
+    self.search_mode = 'note'
   
   def on_result_list_key_press(self, o=None, e=None, d=None):
     #print gtk.gdk.keyval_name(e.keyval)

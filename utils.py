@@ -649,3 +649,18 @@ class NoteSearch:
       self.found_m1 , self.found_m2 = buf.create_mark(None, found_iter1), buf.create_mark(None, found_iter2)
       self.pn_completion.add_entry(kword)
     except: pass
+
+class PnImap:
+  def __init__(self, imapcon):
+    self.conn = imapcon
+    self.conn.select(readonly=1)
+  def search_new_mail(self):
+    conn = self.conn
+    (retcode, msgIDs) = conn.search(None, '(UNSEEN UNDELETED)') # msgIDs is like ['1 23 4 56 5']
+    if retcode == 'OK':
+      for msgID in msgIDs[0].split(' '):
+        print 'Processing :', message
+        try:
+          (ret, mesginfo) = conn.fetch( message, '(BODY[HEADER.FIELDS (SUBJECT FROM)])' )
+          if ret == 'OK': print mesginfo,'\n',30*'-'
+        except: pass    
