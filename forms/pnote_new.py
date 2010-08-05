@@ -3,8 +3,9 @@
 
 # A new note
 
-import os, sqlite3, time, shlex, subprocess, cPickle, random, StringIO
+import os, sqlite3, time, shlex, subprocess, cPickle, random, StringIO, stat
 # from datetime import datetime # tzinfo, timedelta
+from tempfile import *
 
 try:
  import pygtk 
@@ -62,6 +63,8 @@ class PnoteNew:
     'do_insert_from': lambda o: self.do_save_insert_txt(do='insert') ,\
     'on_content_delete_from_cursor': self.on_content_delete_from_cursor,\
     'do_save_html': self.do_save_html ,\
+    'on_run_as_script': lambda o: self.on_run_as_script(isselection = 'no'),\
+    'on_run_selection_as_script': lambda o: self.on_run_as_script(isselection = 'yes'),\
     }
     statusbar = self.statusbar = self.wTree.get_widget("statusbar")
     self.bt_ro = self.wTree.get_widget('bt_ro')
@@ -111,6 +114,7 @@ class PnoteNew:
     self.pixbuf_dict_fromdb = dict()
     self.pixbuf_dict = dict()
     self.format_tab = [] # list of 3-tuples markname, markname, 'tagnames|property'
+    self.tmpfile = []
     if not note_id == None:
       dbc = self.dbcon.cursor()
       sql = "select * from {0}.lsnote WHERE note_id = {1}".format(self.dbname, self.note_id)
@@ -150,7 +154,28 @@ class PnoteNew:
     content.grab_focus()
     
   def on_bt_send_clicked(self, o=None): send_note_as_mail(self)
-  
+  def on_run_as_script(self, isselection = 'yes'):
+    f = NamedTemporaryFile(delete=False)
+    buf = self.content.get_buffer()
+    if isselection == 'yes':
+      try:
+        st, en = buf.get_selection_bounds()
+        text = buf.get_text(st,en)
+      except: pass
+    else: text = buf.get_text(buf.get_start_iter(), buf.get_end_iter())
+    f.write(text)
+    f.close()
+    os.chmod(f.name, stat.S_IEXEC+stat.S_IREAD+stat.S_IWRITE )
+    self.tmpfile.append(f.name)
+    #os.system("cat " + f.name)
+    #os .system("ls -lha " + f.name)
+    #p1 = subprocess.Popen(shlex.split(f.name), stdin = subprocess.PIPE, stdout = subprocess.PIPE )
+    #result = p1.communicate()[0]
+    #new_note = PnoteNew(self.app, None, self.dbname)
+    #new_note.content.get_buffer().set_text(result)
+    #new_note.w.show_all()
+    os.system("xterm -hold -e " + f.name)
+
   def do_save_html(self, o=None):
     htmltext = "<html><head><title>{0}</title></head><body>{1}</body></html>".format(self.title.get_text(),  self.dump_to_html() )
     self.do_save_insert_txt(do='save', text = htmltext )
@@ -512,6 +537,8 @@ class PnoteNew:
     save_config_key('pnote_new', 'window_size', self.window_size)
     
   def destroy(self, obj=None, data=None):
+    for tmpf in self.tmpfile:
+      if os.path.isfile(tmpf): os.unlink(tmpf)
     if not data == None: pass
     else: self.do_save({'NO_SAVE_SIZE':1}) # If saved here, race condition will reset size to default
     try: del self.app.note_list[self.dbname + str(self.note_id)]

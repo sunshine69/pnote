@@ -456,6 +456,22 @@
       </widget>
     </child>
     <child>
+      <widget class="GtkMenuItem" id="menuitem6">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Run this note as a script</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_run_as_script"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkMenuItem" id="menuitem7">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Run selection as script</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_run_selection_as_script"/>
+      </widget>
+    </child>
+    <child>
       <widget class="GtkMenuItem" id="menuitem12">
         <property name="visible">True</property>
         <property name="label" translatable="yes">Filter selection using custom command to a New note</property>
