@@ -345,7 +345,7 @@ class PnoteNew:
         del self.app.note_list[self.dbname + str(self.note_id)]
       except Exception as e:  print e
       self.content.get_buffer().set_modified(False)
-      self.w.destroy()
+      self.destroy()
       
     d.destroy()
         
@@ -537,6 +537,7 @@ class PnoteNew:
     save_config_key('pnote_new', 'window_size', self.window_size)
     
   def destroy(self, obj=None, data=None):
+    print "destroy called"
     for tmpf in self.tmpfile:
       if os.path.isfile(tmpf): os.unlink(tmpf)
     if not data == None: pass

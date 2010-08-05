@@ -260,43 +260,40 @@ class PnCompletion():
 
 class FormatNote:
   def do_format(self, o=None):
-    buf = self.PnoteNew.content.get_buffer()
-    try: s,e = buf.get_selection_bounds()
-    except: return
     tag_names = []
     if self.cb_underline.get_active():
-      buf.apply_tag_by_name('underline', s,e)
+      self.buf.apply_tag_by_name('underline', self.s,self.e)
       tag_names.append('underline')
     if self.cb_strike.get_active():
-      buf.apply_tag_by_name('strikethrough', s,e)
+      self.buf.apply_tag_by_name('strikethrough', self.s,self.e)
       tag_names.append('strikethrough')
     if self.fontcolorset:
       color = self.bt_fontcolor.get_color()
       tagn = 'tag' + str(random.randint(0,100000) )
       tag = gtk.TextTag(tagn)
       tag.set_property('foreground-gdk', color)
-      buf.get_tag_table().add(tag)
-      buf.apply_tag(tag, s, e)
+      self.buf.get_tag_table().add(tag)
+      self.buf.apply_tag(tag, self.s, self.e)
       tag_names.append(tagn + '|foreground-gdk|' + color.to_string())
     if self.bgcolorset:
       color = self.bt_bgcolor.get_color()
       tagn = str(random.randint(0,100000) )
       tag = gtk.TextTag(tagn)
       tag.set_property('background_gdk', color)
-      buf.get_tag_table().add(tag)
-      buf.apply_tag(tag, s, e)
+      self.buf.get_tag_table().add(tag)
+      self.buf.apply_tag(tag, self.s, self.e)
       tag_names.append(tagn + '|background_gdk|' + color.to_string())
     if self.fontset:
       font_desc = self.bt_font.get_font_name()
       tagn = 'tag' + str(random.randint(0,100000) )
       tag = gtk.TextTag(tagn)
       tag.set_property('font', font_desc)
-      buf.get_tag_table().add(tag)
-      buf.apply_tag(tag, s,e)
+      self.buf.get_tag_table().add(tag)
+      self.buf.apply_tag(tag, self.s,self.e)
       tag_names.append(tagn + '|font|'+ font_desc)
-    m1, m2 =  buf.create_mark(None, s , False), buf.create_mark(None, e, False )
+    m1, m2 =  self.buf.create_mark(None, self.s , False), self.buf.create_mark(None, self.e, False )
     self.PnoteNew.format_tab.append( [ m1, m2, tag_names] )
-    buf.set_modified(True)
+    self.buf.set_modified(True)
     self.w.destroy()
       
   def do_cancel(self, o=None): self.w.destroy()
@@ -304,17 +301,14 @@ class FormatNote:
   def on_bt_bgcolor_color_set(self, o=None): self.bgcolorset = True
   def on_bt_font_font_set(self, o=None): self.fontset = True
   def on_bt_clear_clicked(self, o=None, d=None):
-    buf = self.PnoteNew.content.get_buffer()
     if d == None:
-      try: ( s,e ) = buf.get_selection_bounds()
-      except: return
-      m1, m2 =  buf.create_mark(None, s ), buf.create_mark(None, e ) 
+      m1, m2 =  self.buf.create_mark(None, self.s ), self.buf.create_mark(None, self.e ) 
       self.PnoteNew.format_tab.append( [ m1, m2, ['None']] )
     elif d == 'CLEAR_ALL':
-      s,e  =  buf.get_start_iter(), buf.get_end_iter() 
+      s,e  =  self.buf.get_start_iter(), self.buf.get_end_iter() 
       self.PnoteNew.format_tab = []
-    buf.remove_all_tags(s,e)
-    buf.set_modified(True)
+    self.buf.remove_all_tags(s,e)
+    self.buf.set_modified(True)
     self.w.destroy()
   def on_bt_clear_all_clicked(self,o=None): self.on_bt_clear_clicked(None, 'CLEAR_ALL')
 
@@ -339,6 +333,9 @@ class FormatNote:
       'on_bt_clear_clicked': self.on_bt_clear_clicked, \
       'on_bt_clear_all_clicked': self.on_bt_clear_all_clicked,\
     }
+    self.buf = self.PnoteNew.content.get_buffer()
+    try: self.s,self.e = self.buf.get_selection_bounds()
+    except: return
     self.wTree.signal_autoconnect(evtmap)
 
 class NoteInfo:
