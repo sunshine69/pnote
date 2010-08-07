@@ -66,7 +66,7 @@ class pnmain:
     renderer = gtk.CellRendererText()
     #col1 = gtk.TreeViewColumn("ID", renderer, text=0)
     col2 = gtk.TreeViewColumn('Title'  , renderer,text=1)
-    col3 = gtk.TreeViewColumn("Date", renderer,text=2)
+    col3 = gtk.TreeViewColumn("Last Update", renderer,text=2)
     col4 = gtk.TreeViewColumn( "Database", renderer,text=3)
     #col1.set_resizable(True)
     col2.set_resizable(True)
@@ -127,6 +127,7 @@ class pnmain:
     for fl in list_flags:
       if not fl == '':
         menuitem1 = gtk.MenuItem('List ' + fl)
+	myself = self
         tmpstr = "lambda m,o: o.do_search( 'FLAGS:' + '{0}' ) ".format(fl)
         menuitem1.connect('activate', eval(tmpstr), self )
         menu_flags.append(menuitem1)
@@ -226,7 +227,7 @@ class pnmain:
               row = dbc.fetchone()
               if (row == None): break
               rcount+=1
-              try: self.result_list_model.append([(row['note_id']),(row['title']),(row['datelog']), dbname])
+              try: self.result_list_model.append([(row['note_id']),(row['title']),time.strftime("%d %B %Y %H:%M", time.gmtime(row['timestamp'])) , dbname])
               except Exception as e: print e[0]
         else: self.dbcon.commit()        
       except Exception as e: print e # sql exec error

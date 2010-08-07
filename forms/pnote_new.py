@@ -66,7 +66,7 @@ class PnoteNew:
     'on_run_as_script': lambda o: self.on_run_as_script(isselection = 'no'),\
     'on_run_selection_as_script': lambda o: self.on_run_as_script(isselection = 'yes'),\
     }
-    statusbar = self.statusbar = self.wTree.get_widget("statusbar")
+    #statusbar = self.statusbar = self.wTree.get_widget("statusbar")
     self.bt_ro = self.wTree.get_widget('bt_ro')
     bt_flag = self.wTree.get_widget('bt_flag')
     bt_flag.set_image(gtk.image_new_from_file('icons/clear_left.png'))
