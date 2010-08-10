@@ -227,7 +227,7 @@ class pnmain:
               row = dbc.fetchone()
               if (row == None): break
               rcount+=1
-              try: self.result_list_model.append([(row['note_id']),(row['title']),time.strftime("%d %B %Y %H:%M", time.gmtime(row['timestamp'])) , dbname])
+              try: self.result_list_model.append([(row['note_id']),(row['title']),time.strftime("%d %b %Y %H:%M", time.gmtime(row['timestamp'])) , dbname])
               except Exception as e: print e[0]
         else: self.dbcon.commit()        
       except Exception as e: print e # sql exec error

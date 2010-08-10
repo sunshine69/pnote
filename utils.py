@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import pygtk,gtk
+import pygtk,gtk,pango
 import os, ConfigParser, random, sqlite3, time, threading, base64, cPickle
 from random import randrange
 from Crypto.Cipher import Blowfish
@@ -259,40 +259,61 @@ class PnCompletion():
         keyword_list.remove(keyword_list.get_iter_first())
 
 class FormatNote:
+  
+  def add_tag_to_table(self, tagname, tag_property, value = '', mark1=None, mark2=None):
+    format_tab = self.PnoteNew.format_tab
+    if tagname not in format_tab:
+      format_tab[tagname] = [ {tag_property: value} , [ (mark1, mark2) ] ]
+    else:
+      format_tab[tagname][0][tag_property]=value
+      format_tab[tagname][1].append( (mark1, mark2) )
+  
+  def create_unique_tagname(self):
+    tagn = 'tag' + str(random.randint(0,100000) )
+    while tagn in self.PnoteNew.format_tab: tagn = 'tag' + str(random.randint(0,100000) )
+    return tagn
+    
   def do_format(self, o=None):
-    tag_names = []
+    m1, m2 =  self.buf.create_mark(None, self.s , False), self.buf.create_mark(None, self.e, False )
     if self.cb_underline.get_active():
-      self.buf.apply_tag_by_name('underline', self.s,self.e)
-      tag_names.append('underline')
+      tagn = self.create_unique_tagname()
+      tag = gtk.TextTag(tagn)
+      tag.set_property('underline', pango.UNDERLINE_SINGLE )
+      self.buf.get_tag_table().add(tag)
+      self.buf.apply_tag(tag, self.s,self.e)
+      self.add_tag_to_table(tagn, 'underline', pango.UNDERLINE_SINGLE, m1, m2)
     if self.cb_strike.get_active():
-      self.buf.apply_tag_by_name('strikethrough', self.s,self.e)
-      tag_names.append('strikethrough')
+      tagn = self.create_unique_tagname()
+      tag = gtk.TextTag(tagn)
+      tag.set_property('strikethrough', True )
+      self.buf.get_tag_table().add(tag)
+      self.buf.apply_tag(tag, self.s,self.e)
+      self.add_tag_to_table(tagn, 'strikethrough', True, m1, m2)
     if self.fontcolorset:
       color = self.bt_fontcolor.get_color()
-      tagn = 'tag' + str(random.randint(0,100000) )
+      tagn = self.create_unique_tagname()
       tag = gtk.TextTag(tagn)
       tag.set_property('foreground-gdk', color)
       self.buf.get_tag_table().add(tag)
       self.buf.apply_tag(tag, self.s, self.e)
-      tag_names.append(tagn + '|foreground-gdk|' + color.to_string())
+      self.add_tag_to_table(tagn,'foreground-gdk', color, m1, m2 )
     if self.bgcolorset:
       color = self.bt_bgcolor.get_color()
-      tagn = str(random.randint(0,100000) )
+      tagn = self.create_unique_tagname()
       tag = gtk.TextTag(tagn)
       tag.set_property('background_gdk', color)
       self.buf.get_tag_table().add(tag)
       self.buf.apply_tag(tag, self.s, self.e)
-      tag_names.append(tagn + '|background_gdk|' + color.to_string())
+      self.add_tag_to_table(tagn,'background_gdk', color, m1, m2 )
     if self.fontset:
       font_desc = self.bt_font.get_font_name()
-      tagn = 'tag' + str(random.randint(0,100000) )
+      tagn = self.create_unique_tagname()
       tag = gtk.TextTag(tagn)
       tag.set_property('font', font_desc)
       self.buf.get_tag_table().add(tag)
       self.buf.apply_tag(tag, self.s,self.e)
-      tag_names.append(tagn + '|font|'+ font_desc)
-    m1, m2 =  self.buf.create_mark(None, self.s , False), self.buf.create_mark(None, self.e, False )
-    self.PnoteNew.format_tab.append( [ m1, m2, tag_names] )
+      self.add_tag_to_table(tagn,'font', font_desc, m1, m2 )
+      
     self.buf.set_modified(True)
     self.w.destroy()
       
@@ -302,12 +323,14 @@ class FormatNote:
   def on_bt_font_font_set(self, o=None): self.fontset = True
   def on_bt_clear_clicked(self, o=None, d=None):
     if d == None:
-      m1, m2 =  self.buf.create_mark(None, self.s ), self.buf.create_mark(None, self.e ) 
-      self.PnoteNew.format_tab.append( [ m1, m2, ['None']] )
+      self.buf.remove_all_tags(self.s, self.e)
+      m1, m2 =  self.buf.create_mark(None, self.s, True ), self.buf.create_mark(None, self.e, True )
+      self.add_tag_to_table('None', '', '', m1, m2)
     elif d == 'CLEAR_ALL':
       s,e  =  self.buf.get_start_iter(), self.buf.get_end_iter() 
-      self.PnoteNew.format_tab = []
-    self.buf.remove_all_tags(s,e)
+      self.PnoteNew.format_tab = dict()
+      self.buf.remove_all_tags(s,e)
+      
     self.buf.set_modified(True)
     self.w.destroy()
   def on_bt_clear_all_clicked(self,o=None): self.on_bt_clear_clicked(None, 'CLEAR_ALL')

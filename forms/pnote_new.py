@@ -20,12 +20,25 @@ except:
  pass
   
 from utils import *
+import undostack
   
 class PnoteNew:
  
   def __init__(self,pnote_app, note_id = None, dbname = 'main'):
     self.app = pnote_app
     self.unique_num = 0
+    self.note_id = note_id
+    self.readonly = 0
+    self.econtent = ''
+    self.timestamp = int(time.time())
+    self.reminder_ticks = 0
+    self.alert_count = 0
+    self.last_kword = None
+    self.note_search_backword = False
+    self.pixbuf_dict_fromdb = dict()
+    self.pixbuf_dict = dict()
+    self.format_tab = dict() # key : tagname, value is a list of 2; 1st: dict of tag properties -> values pairs. 2nd: list of tuples of start-end mark
+    self.tmpfile = []
     self.window_size = get_config_key('pnote_new', 'window_size','0x0') # 0x0 default size
     self.dbname = dbname
     gladefile = "glade/pnote_new.glade"
@@ -65,6 +78,7 @@ class PnoteNew:
     'do_save_html': self.do_save_html ,\
     'on_run_as_script': lambda o: self.on_run_as_script(isselection = 'no'),\
     'on_run_selection_as_script': lambda o: self.on_run_as_script(isselection = 'yes'),\
+    'on_bt_undo_clicked': lambda o: self.content.get_buffer().undo()
     }
     #statusbar = self.statusbar = self.wTree.get_widget("statusbar")
     self.bt_ro = self.wTree.get_widget('bt_ro')
@@ -84,7 +98,9 @@ class PnoteNew:
     title = self.title = self.wTree.get_widget('title')
     datelog = self.datelog = self.wTree.get_widget('datelog')
     flags = self.flags = self.wTree.get_widget('flags')
-    content = self.content = self.wTree.get_widget('content')
+    self.content = self.wTree.get_widget('content')
+    content = self.content
+    content.set_buffer(undostack.TextBuffer())
     content.get_buffer().connect('modified-changed', self.content_changed_cb)
     url = self.url = self.wTree.get_widget('url')
     self.dbcon = self.app.db_setup()
@@ -92,64 +108,51 @@ class PnoteNew:
     tag_tab = content.get_buffer().get_tag_table()
     tag_highlight = gtk.TextTag('highlight')
     tag_highlight.set_property('background_gdk' ,  gtk.gdk.color_parse('#FFD900') )
-    tag_underline = gtk.TextTag("underline")
-    tag_underline.set_property('underline', pango.UNDERLINE_SINGLE)
-    tag_strikethrough = gtk.TextTag("strikethrough")
-    tag_strikethrough.set_property('strikethrough', True)
     tag_start_update = gtk.TextTag('start_update')
     tag_start_update.set_property('foreground-gdk', gtk.gdk.color_parse('#FF8928') )
     tag_end_update = gtk.TextTag('end_update')
     tag_end_update.set_property('foreground-gdk', gtk.gdk.color_parse('#2B52FF') )
     # Load note_content if note_id
-    for tg in [tag_highlight, tag_underline, tag_strikethrough, tag_start_update, tag_end_update]: tag_tab.add(tg)
+    for tg in [tag_highlight, tag_start_update, tag_end_update]:
+      tag_tab.add(tg)
+      self.format_tab[tg.get_property('name')] = [{}, [] ]
     content.set_tabs(pango.TabArray(4,False))
-    self.note_id = note_id
-    self.readonly = 0
-    self.econtent = ''
-    self.timestamp = int(time.time())
-    self.reminder_ticks = 0
-    self.alert_count = 0
-    self.last_kword = None
-    self.note_search_backword = False
-    self.pixbuf_dict_fromdb = dict()
-    self.pixbuf_dict = dict()
-    self.format_tab = [] # list of 3-tuples markname, markname, 'tagnames|property'
-    self.tmpfile = []
+
     if not note_id == None:
       dbc = self.dbcon.cursor()
       sql = "select * from {0}.lsnote WHERE note_id = {1}".format(self.dbname, self.note_id)
       #print sql
       dbc.execute(sql)
-      try:
-        row = dbc.fetchone()
-        title.set_text(row['title'])
-        self.w.set_title(row['title'][0:30])
-        datelog.set_text(row['datelog'])
-        flags.set_text(row['flags'])
-        content.get_buffer().set_text(row['content'])
-        self.content.get_buffer().set_modified(False)
-        url.set_text('' if row['url'] == None else row['url'] )
-        self.readonly = row['readonly']
-        self.timestamp = row['timestamp']
-        self.econtent = (row['econtent'] if not row['econtent'] == None else '')
-        self.reminder_ticks = row['reminder_ticks']
-        self.alert_count = row['alert_count']
-        self.pixbuf_dict_fromdb = cPickle.loads(row['pixbuf_dict'])
-        if not self.reminder_ticks == 0: bt_reminder.set_active(True)
-        self.app.note_list[self.dbname+str(note_id)] = self
-        self.load_pixbuf()# before format
-        self.load_format_tag(row['format_tag'])
-        if self.readonly == 1:
-          self.content.set_editable(False)
-          self.bt_ro.set_label('ro')
-          self.bt_ro.set_active(True)
-      except Exception as e: print e
+      row = dbc.fetchone()
+      title.set_text(row['title'])
+      self.w.set_title(row['title'][0:30])
+      datelog.set_text(row['datelog'])
+      flags.set_text(row['flags'])
+      content.get_buffer().set_text(row['content'])
+      self.content.get_buffer().set_modified(False)
+      url.set_text('' if row['url'] == None else row['url'] )
+      self.readonly = row['readonly']
+      self.timestamp = row['timestamp']
+      self.econtent = (row['econtent'] if not row['econtent'] == None else '')
+      self.reminder_ticks = row['reminder_ticks']
+      self.alert_count = row['alert_count']
+      if not self.reminder_ticks == 0: bt_reminder.set_active(True)
+      self.app.note_list[self.dbname+str(note_id)] = self
+      if self.readonly == 1:
+        self.content.set_editable(False)
+        self.bt_ro.set_label('ro')
+        self.bt_ro.set_active(True)
+      self.pixbuf_dict_fromdb = cPickle.loads(str(row['pixbuf_dict']))
+      self.load_pixbuf()# before format
+      self.load_format_tag(str(row['format_tag']))
       self.wTree.get_widget('bt_cancel').set_label('_Close')
       self.start_time = 0
       dbc.close()
     else:
       self.start_time = int(time.time())
       self.datelog.set_text(time.strftime("%d-%m-%Y %H:%M"))
+
+    self.content.get_buffer().undo_reset()
     self.wTree.signal_autoconnect(evtmap)
     content.grab_focus()
     
@@ -226,6 +229,7 @@ class PnoteNew:
     return False
               
   def load_pixbuf(self):
+    if self.pixbuf_dict_fromdb == {} or self.pixbuf_dict_fromdb == None: return
     buf = self.content.get_buffer()
     for urlpath in dict.keys(self.pixbuf_dict_fromdb):
       if os.path.isfile(urlpath):
@@ -368,7 +372,7 @@ class PnoteNew:
       except: return
       buf.apply_tag_by_name('highlight', s,e)
       (m1,m2) = (buf.create_mark( None, s, True), buf.create_mark( None, e, True ) )
-      self.format_tab.append([m1,m2,['highlight'], buf.get_text(s,e)[0:30].strip() ] )
+      self.add_tag_to_table('highlight', '', '', m1, m2)
       buf.set_modified(True)
       #TODO modified the format dict marks name -> tag list name
     elif evt.button == 3:
@@ -404,6 +408,14 @@ class PnoteNew:
             buf.insert_interactive(start, result, self.content.get_editable())
     except: pass    
 
+  def add_tag_to_table(self, tagname, tag_property, value = '', mark1=None, mark2=None):
+    format_tab = self.format_tab
+    if tagname not in format_tab:
+      format_tab[tagname] = [ {tag_property: value} , [ (mark1, mark2) ] ]
+    else:
+      format_tab[tagname][0][tag_property]=value
+      format_tab[tagname][1].append( (mark1, mark2) )
+
   def on_bt_update_button_press(self, obj, evt, data=None):
     if evt.button == 1:
       if self.start_time == 0: self.start_time = int(time.time())
@@ -415,7 +427,7 @@ class PnoteNew:
       buf.insert_with_tags_by_name(s, tex, 'start_update')
       e = buf.get_iter_at_mark(buf.get_insert() )
       m2 = buf.create_mark(None, e, True )
-      self.format_tab.append( [m1, m2, ['start_update'], start_date ] )
+      self.add_tag_to_table('start_update', 'foreground','', m1, m2)
       buf.insert_at_cursor("\n")
       self.content.scroll_to_mark(buf.get_insert() ,0 )
       self.content.grab_focus()
@@ -435,7 +447,7 @@ class PnoteNew:
       self.content.scroll_to_mark(buf.get_insert(), 0)
       e = buf.get_iter_at_mark(buf.get_insert() )
       m2 = buf.create_mark(None, e, True )
-      self.format_tab.append( [m1, m2, ['end_update'], end_date ] )
+      self.add_tag_to_table('end_update', 'foreground', '',m1, m2)
       self.start_time = 0
       buf.insert_at_cursor("\n")
       self.content.scroll_to_mark(buf.get_insert() ,0 )
@@ -472,32 +484,59 @@ class PnoteNew:
     else: self.reminder_ticks = 0; self.alert_count = 0; self.content.get_buffer().set_modified(True)
     
   def content_changed_cb(self, texbuf): self.wTree.get_widget('bt_cancel').set_label('_Cancel')
+  
   def load_format_tag(self, data):
+    
     if data == None or data == '': return
     buf = self.content.get_buffer()
     templist = cPickle.loads(data)
-    for item in templist:
-      s,e,tagnames = item[0], item[1], item[2]
-      its, ite  = buf.get_iter_at_offset(s), buf.get_iter_at_offset(e) 
-      for tag in tagnames:
-        if tag == 'None': buf.remove_all_tags(its,ite)
-        elif tag.find('|') == -1: buf.apply_tag_by_name(tag, its, ite)
-        else:
-          (tgname, tgattr, tgvalue) = map(str.strip, tag.split('|') )
-          tag = gtk.TextTag(tgname)
-          buf.get_tag_table().add(tag)
-          if tgvalue.find('#') == -1: tag.set_property(tgattr, tgvalue)
-          else: tag.set_property(tgattr,gtk.gdk.color_parse(tgvalue) )
-          buf.apply_tag(tag, its, ite)
-      self.format_tab.append( [ buf.create_mark(None, its), buf.create_mark(None, ite), tagnames ] + item[3:] )
-      
+    for tagn in templist:
+      self.format_tab[tagn] = [dict(), [] ]
+      if tagn not in ['highlight', 'start_update', 'end_update', 'None']:
+        _tag = gtk.TextTag(tagn)
+        buf.get_tag_table().add(_tag)
+        self.format_tab[tagn][0] = templist[tagn][0]
+        for prop_name in templist[tagn][0]:
+          _tag.set_property(prop_name, templist[tagn][0][prop_name]  )
+
+      #print "DEBUG load_format_tag", tagn, templist[tagn][1]
+      if tagn != 'None':
+        for (_s, _e) in templist[tagn][1]:
+          its, ite  = buf.get_iter_at_offset(int(_s) ), buf.get_iter_at_offset(int(_e))
+          buf.apply_tag_by_name(tagn, its, ite)
+          self.format_tab[tagn][1].append( (buf.create_mark(None, its, True), buf.create_mark(None, ite, True))  )
+
+    if 'None' in templist: # it needs to be separate and last as it will not be overwriiten by other tags
+      for (_s, _e) in templist['None'][1]:
+       try:
+          its, ite  = buf.get_iter_at_offset(int(_s) ), buf.get_iter_at_offset(int(_e)) 
+          buf.remove_all_tags(its,ite)
+          self.format_tab['None'] = templist['None']
+       except: pass   
+    
+    #print "DEBUG after loading format",   self.format_tab
+    
   def dump_format_tag(self):
     buf = self.content.get_buffer()
-    def cvt(ar):
-      buf = self.content.get_buffer()
-      return [ buf.get_iter_at_mark(ar[0]).get_offset(),  buf.get_iter_at_mark(ar[1]).get_offset() ] + ar[2:]
-    templist =  map(cvt, self.format_tab )
-    return cPickle.dumps(templist, cPickle.HIGHEST_PROTOCOL)
+    tags = buf.get_tag_table()
+    _temp_tab = dict()
+    def _tmp_func(tag, data=None):
+      tagn = tag.get_property('name')
+      if tagn in self.format_tab:
+        _temp_tab[tagn] = [self.format_tab[tagn][0], [] ]
+        for (m1, m2) in self.format_tab[tagn][1]:
+          _temp_tab[tagn][1].append( (buf.get_iter_at_mark(m1).get_offset(),  buf.get_iter_at_mark(m2).get_offset()) )
+      
+    tags.foreach(_tmp_func)
+    
+    if 'None' in self.format_tab:
+      _temp_tab['None'] = [{}, [] ]
+      for (m1, m2) in self.format_tab['None'][1]:
+        try: _temp_tab['None'][1].append( (buf.get_iter_at_mark(m1).get_offset(),  buf.get_iter_at_mark(m2).get_offset()) )
+        except: pass
+        
+    #print "DEBUG: going to pickle this", _temp_tab
+    return cPickle.dumps(_temp_tab, cPickle.HIGHEST_PROTOCOL)
       
   def do_save(self, d=None):
     if self.content.get_buffer().get_modified():
@@ -508,9 +547,9 @@ class PnoteNew:
       try:
         dbc = self.dbcon.cursor()
         if self.note_id == None:
-          dbc.execute("insert into " + self.dbname + ".lsnote(title, datelog, flags, content, url, readonly, timestamp, format_tag, econtent, reminder_ticks, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) )", (self.title.get_text(), self.datelog.get_text(), self.flags.get_text(), tex, self.url.get_text(), self.readonly, int(time.time()), self.dump_format_tag(), sqlite3.Binary(self.econtent), self.reminder_ticks, self.alert_count, self.dump_pixbuf_dict() ) )
+          dbc.execute("insert into " + self.dbname + ".lsnote(title, datelog, flags, content, url, readonly, timestamp, format_tag, econtent, reminder_ticks, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) )", (self.title.get_text(), self.datelog.get_text(), self.flags.get_text(), tex, self.url.get_text(), self.readonly, int(time.time()), sqlite3.Binary(self.dump_format_tag()), sqlite3.Binary(self.econtent), self.reminder_ticks, self.alert_count, sqlite3.Binary(self.dump_pixbuf_dict()) ) )
         else:
-          dbc.execute("update " + self.dbname + ".lsnote set title = (?), datelog = (?), flags = (?), content = (?), url = (?), readonly = (?), timestamp = (?), format_tag = (?), econtent = (?), reminder_ticks = (?), alert_count = (?), pixbuf_dict = (?) where note_id = (?)", ( self.title.get_text(), self.datelog.get_text(), self.flags.get_text(), tex, self.url.get_text(), self.readonly, int(time.time()) , self.dump_format_tag() , sqlite3.Binary(self.econtent) , self.reminder_ticks , self.alert_count, self.dump_pixbuf_dict(), self.note_id ) )
+          dbc.execute("update " + self.dbname + ".lsnote set title = (?), datelog = (?), flags = (?), content = (?), url = (?), readonly = (?), timestamp = (?), format_tag = (?), econtent = (?), reminder_ticks = (?), alert_count = (?), pixbuf_dict = (?) where note_id = (?)", ( self.title.get_text(), self.datelog.get_text(), self.flags.get_text(), tex, self.url.get_text(), self.readonly, int(time.time()) , sqlite3.Binary(self.dump_format_tag()) , sqlite3.Binary(self.econtent) , self.reminder_ticks , self.alert_count, sqlite3.Binary(self.dump_pixbuf_dict()), self.note_id ) )
         if not dbc.lastrowid == None:
           self.note_id = dbc.lastrowid
           self.app.note_list[self.note_id] = self
