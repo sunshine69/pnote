@@ -606,6 +606,7 @@ class EContent:
           self.app.cipherkey = None
           message_box('!!', 'Wrong password!')
           self.econtent.set_editable(False); return
+        else: self.note.bt_url.set_image(gtk.image_new_from_file('icons/decrypted.png'))
         buf.insert_at_cursor(tex)
       except Exception, ex : print ex[0]
     

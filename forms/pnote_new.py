@@ -95,7 +95,7 @@ class PnoteNew:
     self.wTree.get_widget('bt_redo').set_image(gtk.image_new_from_file('icons/redo.png'))
     bt_show_main = self.wTree.get_widget('bt_show_main')
     bt_show_main.set_image(gtk.image_new_from_file('icons/cookie.png'))
-    bt_url = self.wTree.get_widget('bt_url')
+    bt_url = self.bt_url = self.wTree.get_widget('bt_url')
     bt_url.set_image(gtk.image_new_from_file('icons/kgpg.png'))
     bt_reminder = self.wTree.get_widget('bt_reminder')
     title = self.title = self.wTree.get_widget('title')
@@ -145,9 +145,12 @@ class PnoteNew:
         self.content.set_editable(False)
         self.bt_ro.set_label('ro')
         self.bt_ro.set_active(True)
-      self.pixbuf_dict_fromdb = cPickle.loads(str(row['pixbuf_dict']))
-      self.load_pixbuf()# before format
-      self.load_format_tag(str(row['format_tag']))
+      try:
+        self.pixbuf_dict_fromdb = cPickle.loads(str(row['pixbuf_dict']))
+        self.load_pixbuf()# before format
+      except: pass  
+      try: self.load_format_tag(str(row['format_tag']))
+      except: pass
       self.wTree.get_widget('bt_cancel').set_label('_Close')
       self.start_time = 0
       dbc.close()
