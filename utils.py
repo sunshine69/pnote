@@ -260,13 +260,13 @@ class PnCompletion():
 
 class FormatNote:
   
-  def add_tag_to_table(self, tagname, tag_property, value = '', mark1=None, mark2=None):
+  def add_tag_to_table(self, tagname, tag_property, value = '',flag = 'on', mark1=None, mark2=None):
     format_tab = self.PnoteNew.format_tab
     if tagname not in format_tab:
-      format_tab[tagname] = [ {tag_property: value} , [ (mark1, mark2) ] ]
+      format_tab[tagname] = [ {tag_property: value} , [ (flag, mark1, mark2) ] ]
     else:
       format_tab[tagname][0][tag_property]=value
-      format_tab[tagname][1].append( (mark1, mark2) )
+      format_tab[tagname][1].append( (flag, mark1, mark2) )
   
   def create_unique_tagname(self):
     tagn = 'tag' + str(random.randint(0,100000) )
@@ -281,14 +281,14 @@ class FormatNote:
       tag.set_property('underline', pango.UNDERLINE_SINGLE )
       self.buf.get_tag_table().add(tag)
       self.buf.apply_tag(tag, self.s,self.e)
-      self.add_tag_to_table(tagn, 'underline', pango.UNDERLINE_SINGLE, m1, m2)
+      self.add_tag_to_table(tagn, 'underline', pango.UNDERLINE_SINGLE, 'on' , m1, m2)
     if self.cb_strike.get_active():
       tagn = self.create_unique_tagname()
       tag = gtk.TextTag(tagn)
       tag.set_property('strikethrough', True )
       self.buf.get_tag_table().add(tag)
       self.buf.apply_tag(tag, self.s,self.e)
-      self.add_tag_to_table(tagn, 'strikethrough', True, m1, m2)
+      self.add_tag_to_table(tagn, 'strikethrough', True, 'on' ,m1, m2)
     if self.fontcolorset:
       color = self.bt_fontcolor.get_color()
       tagn = self.create_unique_tagname()
@@ -296,7 +296,7 @@ class FormatNote:
       tag.set_property('foreground-gdk', color)
       self.buf.get_tag_table().add(tag)
       self.buf.apply_tag(tag, self.s, self.e)
-      self.add_tag_to_table(tagn,'foreground-gdk', color, m1, m2 )
+      self.add_tag_to_table(tagn,'foreground-gdk', color, 'on' ,m1, m2 )
     if self.bgcolorset:
       color = self.bt_bgcolor.get_color()
       tagn = self.create_unique_tagname()
@@ -304,7 +304,7 @@ class FormatNote:
       tag.set_property('background_gdk', color)
       self.buf.get_tag_table().add(tag)
       self.buf.apply_tag(tag, self.s, self.e)
-      self.add_tag_to_table(tagn,'background_gdk', color, m1, m2 )
+      self.add_tag_to_table(tagn,'background_gdk', color, 'on' ,m1, m2 )
     if self.fontset:
       font_desc = self.bt_font.get_font_name()
       tagn = self.create_unique_tagname()
@@ -312,7 +312,7 @@ class FormatNote:
       tag.set_property('font', font_desc)
       self.buf.get_tag_table().add(tag)
       self.buf.apply_tag(tag, self.s,self.e)
-      self.add_tag_to_table(tagn,'font', font_desc, m1, m2 )
+      self.add_tag_to_table(tagn,'font', font_desc, 'on' ,m1, m2 )
       
     self.buf.set_modified(True)
     self.w.destroy()
@@ -324,8 +324,6 @@ class FormatNote:
   def on_bt_clear_clicked(self, o=None, d=None):
     if d == None:
       self.buf.remove_all_tags(self.s, self.e)
-      m1, m2 =  self.buf.create_mark(None, self.s, True ), self.buf.create_mark(None, self.e, True )
-      self.add_tag_to_table('None', '', '', m1, m2)
     elif d == 'CLEAR_ALL':
       s,e  =  self.buf.get_start_iter(), self.buf.get_end_iter() 
       self.PnoteNew.format_tab = dict()

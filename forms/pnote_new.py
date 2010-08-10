@@ -78,7 +78,8 @@ class PnoteNew:
     'do_save_html': self.do_save_html ,\
     'on_run_as_script': lambda o: self.on_run_as_script(isselection = 'no'),\
     'on_run_selection_as_script': lambda o: self.on_run_as_script(isselection = 'yes'),\
-    'on_bt_undo_clicked': lambda o: self.content.get_buffer().undo()
+    'on_bt_undo_clicked': lambda o: self.content.get_buffer().undo() ,\
+    'on_bt_redo_clicked': lambda o: self.content.get_buffer().redo() ,\
     }
     #statusbar = self.statusbar = self.wTree.get_widget("statusbar")
     self.bt_ro = self.wTree.get_widget('bt_ro')
@@ -90,6 +91,8 @@ class PnoteNew:
     bt_search.set_image(gtk.image_new_from_file('icons/clear_left.png'))
     bt_update = self.wTree.get_widget('bt_update')
     bt_update.set_image(gtk.image_new_from_file('icons/kate.png'))
+    self.wTree.get_widget('bt_undo').set_image(gtk.image_new_from_file('icons/undo.png'))
+    self.wTree.get_widget('bt_redo').set_image(gtk.image_new_from_file('icons/redo.png'))
     bt_show_main = self.wTree.get_widget('bt_show_main')
     bt_show_main.set_image(gtk.image_new_from_file('icons/cookie.png'))
     bt_url = self.wTree.get_widget('bt_url')
@@ -154,8 +157,15 @@ class PnoteNew:
 
     self.content.get_buffer().undo_reset()
     self.wTree.signal_autoconnect(evtmap)
+    #self.content.get_buffer().connect('apply-tag', self.on_apply_tag)
+    self.content.get_buffer().connect('remove-tag', self.on_remove_tag)
     content.grab_focus()
-    
+
+  def on_remove_tag(self, buf, tag, start, end):
+    tagn = tag.get_property('name')
+    m1, m2 = buf.create_mark(None, start, True) , buf.create_mark(None, end, True)
+    self.add_tag_to_table(tagn, '', '', 'off', m1, m2)
+      
   def on_bt_send_clicked(self, o=None): send_note_as_mail(self)
   def on_run_as_script(self, isselection = 'yes'):
     f = NamedTemporaryFile(delete=False)
@@ -372,7 +382,7 @@ class PnoteNew:
       except: return
       buf.apply_tag_by_name('highlight', s,e)
       (m1,m2) = (buf.create_mark( None, s, True), buf.create_mark( None, e, True ) )
-      self.add_tag_to_table('highlight', '', '', m1, m2)
+      self.add_tag_to_table('highlight', '', '', 'on' ,m1, m2)
       buf.set_modified(True)
       #TODO modified the format dict marks name -> tag list name
     elif evt.button == 3:
@@ -408,13 +418,13 @@ class PnoteNew:
             buf.insert_interactive(start, result, self.content.get_editable())
     except: pass    
 
-  def add_tag_to_table(self, tagname, tag_property, value = '', mark1=None, mark2=None):
+  def add_tag_to_table(self, tagname, tag_property, value = '', flag = 'on' , mark1=None, mark2=None):
     format_tab = self.format_tab
     if tagname not in format_tab:
-      format_tab[tagname] = [ {tag_property: value} , [ (mark1, mark2) ] ]
+      format_tab[tagname] = [ {tag_property: value} , [ (flag, mark1, mark2) ] ]
     else:
       format_tab[tagname][0][tag_property]=value
-      format_tab[tagname][1].append( (mark1, mark2) )
+      format_tab[tagname][1].append( (flag, mark1, mark2) )
 
   def on_bt_update_button_press(self, obj, evt, data=None):
     if evt.button == 1:
@@ -427,7 +437,7 @@ class PnoteNew:
       buf.insert_with_tags_by_name(s, tex, 'start_update')
       e = buf.get_iter_at_mark(buf.get_insert() )
       m2 = buf.create_mark(None, e, True )
-      self.add_tag_to_table('start_update', 'foreground','', m1, m2)
+      self.add_tag_to_table('start_update', 'foreground','', 'on' , m1, m2)
       buf.insert_at_cursor("\n")
       self.content.scroll_to_mark(buf.get_insert() ,0 )
       self.content.grab_focus()
@@ -447,7 +457,7 @@ class PnoteNew:
       self.content.scroll_to_mark(buf.get_insert(), 0)
       e = buf.get_iter_at_mark(buf.get_insert() )
       m2 = buf.create_mark(None, e, True )
-      self.add_tag_to_table('end_update', 'foreground', '',m1, m2)
+      self.add_tag_to_table('end_update', 'foreground', '', 'on', m1, m2)
       self.start_time = 0
       buf.insert_at_cursor("\n")
       self.content.scroll_to_mark(buf.get_insert() ,0 )
@@ -492,28 +502,21 @@ class PnoteNew:
     templist = cPickle.loads(data)
     for tagn in templist:
       self.format_tab[tagn] = [dict(), [] ]
-      if tagn not in ['highlight', 'start_update', 'end_update', 'None']:
+      if tagn not in ['highlight', 'start_update', 'end_update']:
         _tag = gtk.TextTag(tagn)
         buf.get_tag_table().add(_tag)
         self.format_tab[tagn][0] = templist[tagn][0]
         for prop_name in templist[tagn][0]:
-          _tag.set_property(prop_name, templist[tagn][0][prop_name]  )
+          try: _tag.set_property(prop_name, templist[tagn][0][prop_name]  )
+          except: pass
 
       #print "DEBUG load_format_tag", tagn, templist[tagn][1]
-      if tagn != 'None':
-        for (_s, _e) in templist[tagn][1]:
-          its, ite  = buf.get_iter_at_offset(int(_s) ), buf.get_iter_at_offset(int(_e))
-          buf.apply_tag_by_name(tagn, its, ite)
-          self.format_tab[tagn][1].append( (buf.create_mark(None, its, True), buf.create_mark(None, ite, True))  )
+      for (_flag, _s, _e) in templist[tagn][1]:
+        its, ite  = buf.get_iter_at_offset(int(_s) ), buf.get_iter_at_offset(int(_e))
+        if _flag == 'on': buf.apply_tag_by_name(tagn, its, ite)
+        elif _flag == 'off': buf.remove_tag_by_name(tagn, its, ite)
+        self.format_tab[tagn][1].append( (_flag, buf.create_mark(None, its, True), buf.create_mark(None, ite, True))  )
 
-    if 'None' in templist: # it needs to be separate and last as it will not be overwriiten by other tags
-      for (_s, _e) in templist['None'][1]:
-       try:
-          its, ite  = buf.get_iter_at_offset(int(_s) ), buf.get_iter_at_offset(int(_e)) 
-          buf.remove_all_tags(its,ite)
-          self.format_tab['None'] = templist['None']
-       except: pass   
-    
     #print "DEBUG after loading format",   self.format_tab
     
   def dump_format_tag(self):
@@ -524,17 +527,11 @@ class PnoteNew:
       tagn = tag.get_property('name')
       if tagn in self.format_tab:
         _temp_tab[tagn] = [self.format_tab[tagn][0], [] ]
-        for (m1, m2) in self.format_tab[tagn][1]:
-          _temp_tab[tagn][1].append( (buf.get_iter_at_mark(m1).get_offset(),  buf.get_iter_at_mark(m2).get_offset()) )
+        for (_flag, m1, m2) in self.format_tab[tagn][1]:
+          _temp_tab[tagn][1].append( (_flag, buf.get_iter_at_mark(m1).get_offset(),  buf.get_iter_at_mark(m2).get_offset()) )
       
     tags.foreach(_tmp_func)
     
-    if 'None' in self.format_tab:
-      _temp_tab['None'] = [{}, [] ]
-      for (m1, m2) in self.format_tab['None'][1]:
-        try: _temp_tab['None'][1].append( (buf.get_iter_at_mark(m1).get_offset(),  buf.get_iter_at_mark(m2).get_offset()) )
-        except: pass
-        
     #print "DEBUG: going to pickle this", _temp_tab
     return cPickle.dumps(_temp_tab, cPickle.HIGHEST_PROTOCOL)
       
