@@ -78,8 +78,8 @@ class PnoteNew:
     'do_save_html': self.do_save_html ,\
     'on_run_as_script': lambda o: self.on_run_as_script(isselection = 'no'),\
     'on_run_selection_as_script': lambda o: self.on_run_as_script(isselection = 'yes'),\
-    'on_bt_undo_clicked': lambda o: self.content.get_buffer().undo() ,\
-    'on_bt_redo_clicked': lambda o: self.content.get_buffer().redo() ,\
+    'on_bt_undo_clicked': self.on_bt_undo_clicked ,\
+    'on_bt_redo_clicked': self.on_bt_redo_clicked ,\
     }
     #statusbar = self.statusbar = self.wTree.get_widget("statusbar")
     self.bt_ro = self.wTree.get_widget('bt_ro')
@@ -115,6 +115,9 @@ class PnoteNew:
     tag_start_update.set_property('foreground-gdk', gtk.gdk.color_parse('#FF8928') )
     tag_end_update = gtk.TextTag('end_update')
     tag_end_update.set_property('foreground-gdk', gtk.gdk.color_parse('#2B52FF') )
+    _config_font = get_config_key('pnote_new', 'default_font', 'None')
+    if _config_font != 'None':
+      self.content.modify_font(pango.FontDescription(_config_font) )
     # Load note_content if note_id
     for tg in [tag_highlight, tag_start_update, tag_end_update]:
       tag_tab.add(tg)
@@ -164,6 +167,62 @@ class PnoteNew:
     self.content.get_buffer().connect('remove-tag', self.on_remove_tag)
     content.grab_focus()
 
+  def on_bt_undo_clicked(self, obj, evt):
+    if evt.button == 1: self.content.get_buffer().undo()
+    elif evt.button == 3:
+      menu_flags  = gtk.Menu()
+      sep = gtk.SeparatorMenuItem()
+      menu_flags.append(sep ); sep.show()
+      format_tab = self.format_tab
+      for item in format_tab:
+        if item == 'highlight' or item == 'start_update':
+          for row in format_tab[item][1]:
+            try:
+              text = row[3]
+              menuitem = gtk.MenuItem(text)
+              m1 = row[2]
+              _tmp_func = eval("lambda menuitem, o=self, mark = m1: o.content.scroll_mark_onscreen(mark)" )
+              menuitem.connect('activate',  _tmp_func )
+              if item == 'highlight':  menu_flags.prepend(menuitem)
+              else: menu_flags.append(menuitem)
+              menuitem.show()
+            except Exception as e: print e
+      menu_flags.popup(None, None, None, evt.button, evt.time, data=None)
+      
+  def on_bt_redo_clicked(self, obj, evt):
+    if evt.button == 1: self.content.get_buffer().undo()
+    elif evt.button == 3:
+      buf = self.content.get_buffer()
+      menu_flags  = gtk.Menu()
+      menuitem, menuitem1, menuitem2= gtk.MenuItem('Top'), gtk.MenuItem('End'), gtk.MenuItem('Set default text font')
+      menuitem.connect('activate',  lambda m: self.content.scroll_to_iter(buf.get_start_iter(),0) )
+      menuitem1.connect('activate',  lambda m: self.content.scroll_to_iter(buf.get_end_iter(),0) )
+      menuitem2.connect('activate', lambda o: self.select_default('font') )
+      for item in [menuitem, menuitem1, menuitem2]:
+        menu_flags.append(item)
+        item.show()
+
+      menu_flags.popup(None, None, None, evt.button, evt.time, data=None)
+
+  def select_default(self, what):
+    settings = gtk.settings_get_default()
+    def _select_font():
+      font_dlg = gtk.FontSelectionDialog('Select font')
+      _config_font = get_config_key('pnote_new', 'default_font', 'None')
+      cur_font = (settings.get_property('gtk-font-name') if _config_font == 'None' else _config_font)
+      font_dlg.set_font_name(cur_font)
+      res = font_dlg.run()
+      if res == gtk.RESPONSE_OK:
+        font_name = font_dlg.get_font_name()
+        self.content.modify_font(pango.FontDescription(font_name))
+        save_config_key('pnote_new', 'default_font', font_name)
+      font_dlg.destroy()
+
+    switch_cmd = { 'font': _select_font, \
+    }
+    
+    switch_cmd[what]()
+    
   def on_remove_tag(self, buf, tag, start, end):
     tagn = tag.get_property('name')
     m1, m2 = buf.create_mark(None, start, True) , buf.create_mark(None, end, True)
@@ -378,14 +437,18 @@ class PnoteNew:
       self.readonly = 0
       
   def on_edit_changed(self, o=None, d=None): self.content.get_buffer().set_modified(True)
+  
   def on_bt_format_button_press(self, obj, evt, data=None):
     if evt.button == 1:
       buf = self.content.get_buffer()
-      try: s,e = buf.get_selection_bounds()
+      text = None
+      try:
+        s,e = buf.get_selection_bounds()
+        text = buf.get_text(s,e)[0:50]
       except: return
       buf.apply_tag_by_name('highlight', s,e)
       (m1,m2) = (buf.create_mark( None, s, True), buf.create_mark( None, e, True ) )
-      self.add_tag_to_table('highlight', '', '', 'on' ,m1, m2)
+      self.add_tag_to_table('highlight', '', '', 'on' ,m1, m2, text)
       buf.set_modified(True)
       #TODO modified the format dict marks name -> tag list name
     elif evt.button == 3:
@@ -421,13 +484,13 @@ class PnoteNew:
             buf.insert_interactive(start, result, self.content.get_editable())
     except: pass    
 
-  def add_tag_to_table(self, tagname, tag_property, value = '', flag = 'on' , mark1=None, mark2=None):
+  def add_tag_to_table(self, tagname, tag_property, value = '', flag = 'on' , mark1=None, mark2=None, text = None):
     format_tab = self.format_tab
     if tagname not in format_tab:
-      format_tab[tagname] = [ {tag_property: value} , [ (flag, mark1, mark2) ] ]
+      format_tab[tagname] = [ {tag_property: value} , [ (flag, mark1, mark2, text) ] ]
     else:
       format_tab[tagname][0][tag_property]=value
-      format_tab[tagname][1].append( (flag, mark1, mark2) )
+      format_tab[tagname][1].append( (flag, mark1, mark2, text) )
 
   def on_bt_update_button_press(self, obj, evt, data=None):
     if evt.button == 1:
@@ -440,7 +503,7 @@ class PnoteNew:
       buf.insert_with_tags_by_name(s, tex, 'start_update')
       e = buf.get_iter_at_mark(buf.get_insert() )
       m2 = buf.create_mark(None, e, True )
-      self.add_tag_to_table('start_update', 'foreground','', 'on' , m1, m2)
+      self.add_tag_to_table('start_update', 'foreground','', 'on' , m1, m2, start_date)
       buf.insert_at_cursor("\n")
       self.content.scroll_to_mark(buf.get_insert() ,0 )
       self.content.grab_focus()
@@ -499,7 +562,6 @@ class PnoteNew:
   def content_changed_cb(self, texbuf): self.wTree.get_widget('bt_cancel').set_label('_Cancel')
   
   def load_format_tag(self, data):
-    
     if data == None or data == '': return
     buf = self.content.get_buffer()
     templist = cPickle.loads(data)
@@ -514,11 +576,11 @@ class PnoteNew:
           except: pass
 
       #print "DEBUG load_format_tag", tagn, templist[tagn][1]
-      for (_flag, _s, _e) in templist[tagn][1]:
+      for (_flag, _s, _e, _text) in templist[tagn][1]:
         its, ite  = buf.get_iter_at_offset(int(_s) ), buf.get_iter_at_offset(int(_e))
         if _flag == 'on': buf.apply_tag_by_name(tagn, its, ite)
         elif _flag == 'off': buf.remove_tag_by_name(tagn, its, ite)
-        self.format_tab[tagn][1].append( (_flag, buf.create_mark(None, its, True), buf.create_mark(None, ite, True))  )
+        self.format_tab[tagn][1].append( (_flag, buf.create_mark(None, its, True), buf.create_mark(None, ite, True), _text )  )
 
     #print "DEBUG after loading format",   self.format_tab
     
@@ -530,8 +592,8 @@ class PnoteNew:
       tagn = tag.get_property('name')
       if tagn in self.format_tab:
         _temp_tab[tagn] = [self.format_tab[tagn][0], [] ]
-        for (_flag, m1, m2) in self.format_tab[tagn][1]:
-          _temp_tab[tagn][1].append( (_flag, buf.get_iter_at_mark(m1).get_offset(),  buf.get_iter_at_mark(m2).get_offset()) )
+        for (_flag, m1, m2, _text) in self.format_tab[tagn][1]:
+          _temp_tab[tagn][1].append( (_flag, buf.get_iter_at_mark(m1).get_offset(),  buf.get_iter_at_mark(m2).get_offset(), _text ) )
       
     tags.foreach(_tmp_func)
     

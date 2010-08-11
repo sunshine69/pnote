@@ -2,10 +2,12 @@
 <webprojectsession>
   <session usePreviewPrefix="0" previewPrefix="" >
     <itemcursorpositions>
-      <item line="0" column="0" url="forms/pnmain.py" />
-      <item line="157" column="16" url="forms/pnote_new.py" />
-      <item line="523" column="0" url="undostack.py" />
-      <item line="331" column="35" url="utils.py" />
+      <item line="299" column="23" url="utils.py" />
+      <item line="50" column="58" url="undostack.py" />
+      <item line="148" column="21" url="forms/pnote_new.py" />
     </itemcursorpositions>
+    <treestatus>
+      <openfolder url="forms" />
+    </treestatus>
   </session>
 </webprojectsession>

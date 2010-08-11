@@ -3,11 +3,20 @@
 
 # Main application. Read, Load config
 
-import os,sys, sqlite3
-import pygtk,gtk, gobject
-import ConfigParser
+import os,sys
+if sys.platform=="win32":
+  gtkdir = "".join( [ x if x.find('GTK') != -1 else '' for x in os.getenv('PATH').split(';') ] )
+  os.environ['PATH'] += ";%s/../lib;%s" % (gtkdir, gtkdir)
+  
 sys.path.append(sys.path[0])
 os.chdir(sys.path[0])
+
+import pygtk, gtk, gobject
+import ConfigParser, sqlite3
+
+SETTINGS = gtk.settings_get_default()
+
+if sys.platform=="win32": SETTINGS.set_long_property("gtk-button-images", True, "main")
 
 # Can not import * here not sure why
 # This u do not need to put one pnmain more when instantiate the object. forms.pnmain means read file pnmain.py under forms dir when sourcing it, import symbol pnmain (which is a class; that is why when instantiate can use symbol pnmain only
@@ -17,8 +26,6 @@ os.chdir(sys.path[0])
 from forms import pnmain, pnote_new
 from utils import *
 
-if sys.platform=="win32": gtk.settings_get_default().set_long_property("gtk-button-images", True, "main") 
-  
 class pnote:
    
   def __init__(self, dbpath=None):

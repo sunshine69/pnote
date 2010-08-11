@@ -191,7 +191,7 @@ def message_box(title = 'Message', msg = ''):
 
 class BFCipher:
     def __init__(self, pword):
-        self.__cipher = Blowfish.new(pword)
+        self.__cipher = Blowfish.new(str(pword))
     def encrypt(self, file_buffer):
         ciphertext = self.__cipher.encrypt(self.__pad_file('OK' + file_buffer))
         return ciphertext
@@ -260,13 +260,13 @@ class PnCompletion():
 
 class FormatNote:
   
-  def add_tag_to_table(self, tagname, tag_property, value = '',flag = 'on', mark1=None, mark2=None):
+  def add_tag_to_table(self, tagname, tag_property, value = '',flag = 'on', mark1=None, mark2=None, text = None):
     format_tab = self.PnoteNew.format_tab
     if tagname not in format_tab:
-      format_tab[tagname] = [ {tag_property: value} , [ (flag, mark1, mark2) ] ]
+      format_tab[tagname] = [ {tag_property: value} , [ (flag, mark1, mark2, text) ] ]
     else:
       format_tab[tagname][0][tag_property]=value
-      format_tab[tagname][1].append( (flag, mark1, mark2) )
+      format_tab[tagname][1].append( (flag, mark1, mark2, text) )
   
   def create_unique_tagname(self):
     tagn = 'tag' + str(random.randint(0,100000) )
@@ -395,13 +395,22 @@ class NoteInfo:
     self.note.content.scroll_mark_onscreen(m1)
   
   def populate_combo(self):
-    for item in self.note.format_tab:
-      if item[2][0] == 'highlight':
-        self.highlight_dict[item[3]] = item[1]
-        self.combo_list_highlight.append_text(item[3])
-      elif item[2][0] == 'start_update':
-        self.update_dict[item[3]] = item[1]
-        self.combo_list_update.append_text(item[3])
+    format_tab = self.note.format_tab
+    for item in format_tab:
+      if item == 'highlight':
+        for row in format_tab[item][1]:
+          try:
+            text = row[3]
+            self.highlight_dict[text] = row[2]
+            self.combo_list_highlight.append_text(text)
+          except: pass  
+      elif item == 'start_update':
+        for row in  format_tab[item][1]:
+          try:
+            text = row[3]
+            self.update_dict[text] = row[2]
+            self.combo_list_update.append_text(text)
+          except: pass
          
 class NoteReminder:
   def destroy(self): self.w.destroy(); return True

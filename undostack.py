@@ -460,14 +460,14 @@ class TextBuffer(gtk.TextBuffer):
         self.connect('remove-tag',        self._on_remove_tag)
         self.connect('begin-user-action', self._on_begin_user_action)
         self.connect('end-user-action',   self._on_end_user_action)
-
-        features = (
-            ('list-indent', True, ListIndent, ()),
-        )
-        for name, default, feature, feature_args in features:
-            active = kwargs.get(name, default)
-            if active:
-                self.activate_feature(feature, *feature_args)
+        # sk the auto indent not working correctly, disabled it for now
+        #features = (
+            #('list-indent', True, ListIndent, ()),
+        #)
+        #for name, default, feature, feature_args in features:
+            #active = kwargs.get(name, default)
+            #if active:
+                #self.activate_feature(feature, *feature_args)
         self._update_timestamp()
 
     def undo_reset(self):

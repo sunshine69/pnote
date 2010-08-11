@@ -175,7 +175,8 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
-                        <signal name="clicked" handler="on_bt_undo_clicked"/>
+                        <property name="tooltip" translatable="yes">undo, right click for navigation window</property>
+                        <signal name="button_release_event" handler="on_bt_undo_clicked"/>
                       </widget>
                       <packing>
                         <property name="position">3</property>
@@ -186,7 +187,8 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
-                        <signal name="clicked" handler="on_bt_redo_clicked"/>
+                        <property name="tooltip" translatable="yes">redo, right click for navigation menu</property>
+                        <signal name="button_release_event" handler="on_bt_redo_clicked"/>
                       </widget>
                       <packing>
                         <property name="position">4</property>
