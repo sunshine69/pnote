@@ -2,3 +2,5 @@
 test*
 *.webprj
 *.session
+*.zip
+*.gz
