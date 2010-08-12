@@ -134,7 +134,9 @@ class pnote:
     _menu_sep.show()
     clipboards = self.clipboards
     for clipinfo in clipboards.clipboard_history:
-      menuitem = gtk.MenuItem(clipinfo.label)
+      if len(clipinfo.text) > 50: _label = clipinfo.text[0:47].split(os.linesep)[0] + ' ...'
+      else: _label = clipinfo.text
+      menuitem = gtk.MenuItem(_label)
       _tmp_func = eval("lambda m,cb=clipboards, cbi = clipinfo: cb.set_clipboard(cbi.text) " )
       menuitem.connect('activate', _tmp_func)
       ic_menu.prepend(menuitem)
