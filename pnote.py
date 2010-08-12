@@ -5,7 +5,7 @@
 
 import os,sys
 if sys.platform=="win32":
-  gtkdir = "".join( [ x if x.find('GTK') != -1 else '' for x in os.getenv('PATH').split(';') ] )
+  [ gtkdir ] = [ x  for x in os.getenv('PATH').split(';') if x.find('GTK') != -1 ]
   os.environ['PATH'] += ";%s/../lib;%s" % (gtkdir, gtkdir)
   
 sys.path.append(sys.path[0])
@@ -25,6 +25,7 @@ if sys.platform=="win32": SETTINGS.set_long_property("gtk-button-images", True, 
 # This needs one more PnoteNew when instantiate the object. Buggar !. This import the symbol as pnmain.py but not sourcing it yet. That is why needs more pnmain.pnmain
 from forms import pnmain, pnote_new
 from utils import *
+from clipboard import PnClipboard
 
 class pnote:
    
@@ -53,6 +54,7 @@ class pnote:
     ic.connect("activate", lambda o: pnote_new.PnoteNew(self).w.show_all() )
     self.load_list_imap_acct()
     gobject.timeout_add_seconds(int(get_config_key('data', 'reminder_timer_interval', '60') ), self.query_note_reminder )
+    self.clipboards = PnClipboard()
 
   def load_list_imap_acct(self):
     list_imap_account_str = get_config_key('global', 'list_imap_account','')
@@ -123,10 +125,21 @@ class pnote:
     for fl in list_flags:
       if not fl == '':
         menuitem = gtk.MenuItem('List ' + fl)
-        tmpstr =  "lambda m,o: o.show_main().do_search( 'FLAGS:' + '{0}' ) ".format(fl)
-        menuitem.connect('activate', eval( tmpstr ) , self )
+        _tmp_func = eval( "lambda m,o=self,kword=fl: o.show_main().do_search( 'FLAGS:' + kword ) " )
+        menuitem.connect('activate', _tmp_func )
         ic_menu.prepend(menuitem)
         menuitem.show()
+    _menu_sep = gtk.SeparatorMenuItem()
+    ic_menu.prepend(_menu_sep)
+    _menu_sep.show()
+    clipboards = self.clipboards
+    for clipinfo in clipboards.clipboard_history:
+      menuitem = gtk.MenuItem(clipinfo.label)
+      _tmp_func = eval("lambda m,cb=clipboards, cbi = clipinfo: cb.set_clipboard(cbi.text) " )
+      menuitem.connect('activate', _tmp_func)
+      ic_menu.prepend(menuitem)
+      menuitem.show()
+    
     ic_menu.popup(None, None, None, button, activate_time, data=None)
     evtmap = { 'icon_menu_show_main': self.show_main, \
       'do_app_exit': self.do_exit, \

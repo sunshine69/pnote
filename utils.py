@@ -81,9 +81,9 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
         #msg = MIMEText( buf.get_text(buf.get_start_iter(), buf.get_end_iter()) )
         _subject = note.title.get_text()
         
-        if _subject == '' of _subject == None:
+        if _subject == '' or _subject == None:
           texbuf = note.content.get_buffer()
-          _subject = texbuf.get_text(texbuf.get_start_iter(), texbuf.get_end_iter() )[0:50].split("\n")[0].replace("\r",' ')
+          _subject = texbuf.get_text(texbuf.get_start_iter(), texbuf.get_end_iter() )[0:50].split(os.linesep)[0].replace("\r",' ')
           
         outer['Subject'] = (_subject if subject == '' else subject)
         outer.attach( MIMEText(buf.get_text(buf.get_start_iter(), buf.get_end_iter()) , 'plain') )

@@ -507,7 +507,7 @@ class PnoteNew:
       e = buf.get_iter_at_mark(buf.get_insert() )
       m2 = buf.create_mark(None, e, True )
       self.add_tag_to_table('start_update', 'foreground','', 'on' , m1, m2, start_date)
-      buf.insert_at_cursor("\n")
+      buf.insert_at_cursor(os.linesep)
       self.content.scroll_to_mark(buf.get_insert() ,0 )
       self.content.grab_focus()
     elif evt.button == 3:
@@ -528,7 +528,7 @@ class PnoteNew:
       m2 = buf.create_mark(None, e, True )
       self.add_tag_to_table('end_update', 'foreground', '', 'on', m1, m2)
       self.start_time = 0
-      buf.insert_at_cursor("\n")
+      buf.insert_at_cursor(os.linesep)
       self.content.scroll_to_mark(buf.get_insert() ,0 )
       self.content.grab_focus()
     else: message_box('Information', "You need to start Update mark first")
@@ -608,7 +608,7 @@ class PnoteNew:
       sql = ''
       texbuf = self.content.get_buffer()
       tex = texbuf.get_text(texbuf.get_start_iter(), texbuf.get_end_iter() )
-      if self.title.get_text() == '': self.title.set_text(tex[0:50].split("\n")[0].replace("\r",' ') )
+      if self.title.get_text() == '': self.title.set_text(tex[0:50].split(os.linesep)[0].replace("\r",' ') )
       try:
         dbc = self.dbcon.cursor()
         if self.note_id == None:
