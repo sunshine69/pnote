@@ -79,7 +79,13 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
         paths = pathstr.split('<|>')
         outer = MIMEMultipart()
         #msg = MIMEText( buf.get_text(buf.get_start_iter(), buf.get_end_iter()) )
-        outer['Subject'] = (note.title.get_text() if subject == '' else subject)
+        _subject = note.title.get_text()
+        
+        if _subject == '' of _subject == None:
+          texbuf = note.content.get_buffer()
+          _subject = texbuf.get_text(texbuf.get_start_iter(), texbuf.get_end_iter() )[0:50].split("\n")[0].replace("\r",' ')
+          
+        outer['Subject'] = (_subject if subject == '' else subject)
         outer.attach( MIMEText(buf.get_text(buf.get_start_iter(), buf.get_end_iter()) , 'plain') )
         outer.preamble = 'You will not see this in a MIME-aware mail reader.\n'
         outer['From'] = me
@@ -495,9 +501,9 @@ class MailPref:
     }
     self.load_smtp_config()
     self.response = 1
+    #self.e_smpt_server.connect("changed", lambda o: self.list_server_changed(control = 'changed') )
+    #self.e_smpt_server.child.connect("activate", lambda o: self.list_server_changed(control = 'activate') )
     self.wTree.signal_autoconnect(evtmap)
-    self.e_smpt_server.connect("changed", lambda o: self.list_server_changed(control = 'changed') )
-    self.e_smpt_server.child.connect("activate", lambda o: self.list_server_changed(control = 'activate') )
 
   def on_cbox_is_imap_server_toggled(self,o=None):
     flag = self.cbox_is_imap_server.get_active()
@@ -539,8 +545,8 @@ class MailPref:
   
   def load_smtp_config(self):
     self.e_smpt_server.get_model().clear()
-    self.e_smpt_server.child.set_text(get_config_key('data', 'mail_server', '') )
-    #self.e_smpt_server.set_active(0)
+    self.e_smpt_server.append_text(get_config_key('data', 'mail_server', '') )
+    self.e_smpt_server.set_active(0)
     self.e_port.set_text(get_config_key('data', 'mail_port', '25') )
     self.e_username.set_text(get_config_key('data', 'mail_user') )
     self.e_passwd.set_text('')
