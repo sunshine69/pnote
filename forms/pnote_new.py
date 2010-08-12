@@ -80,6 +80,7 @@ class PnoteNew:
     'on_run_selection_as_script': lambda o: self.on_run_as_script(isselection = 'yes'),\
     'on_bt_undo_clicked': self.on_bt_undo_clicked ,\
     'on_bt_redo_clicked': self.on_bt_redo_clicked ,\
+    'on_label_url_bt_released': self.on_label_url_button_press_event,\
     }
     #statusbar = self.statusbar = self.wTree.get_widget("statusbar")
     self.bt_ro = self.wTree.get_widget('bt_ro')
@@ -168,7 +169,13 @@ class PnoteNew:
     #self.content.get_buffer().connect('apply-tag', self.on_apply_tag)
     self.content.get_buffer().connect('remove-tag', self.on_remove_tag)
     content.grab_focus()
-
+    
+  def on_label_url_button_press_event(self, obj, evt, data=None):
+    if evt.button == 1:
+      self.app.clipboards.add_info(self.url.get_text() )
+      self.url.set_text('')
+    else: self.url.set_text(self.app.clipboards.clipboard_history[-1].text )
+        
   def on_bt_undo_clicked(self, obj, evt):
     if evt.button == 1: self.content.get_buffer().undo()
     elif evt.button == 3:

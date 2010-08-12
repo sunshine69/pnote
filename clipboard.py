@@ -26,18 +26,21 @@ class PnClipboard:
 
         return
 
+    def add_info(self, text):
+      cbi = ClipboardInfo()
+      cbi.text = text
+      cbi.label = text[0:50].split(os.linesep)[0]
+      # prepend and remove duplicate
+      history = [info for info in self.clipboard_history if info and info.text<>text]
+      self.clipboard_history = ([cbi] + history)[:self.history_count]
+      self.clipboard.request_targets(self.clipboard_targets_received, cbi)
+      return cbi
+      
     # signal handler called when the clipboard returns text data
     def clipboard_text_received(self, clipboard, text, data):
         if not text or text == '':
             return
-        cbi = ClipboardInfo()
-        cbi.text = text
-        cbi.label = text[0:50].split(os.linesep)[0]
-        # prepend and remove duplicate
-        history = [info for info in self.clipboard_history
-                   if info and info.text<>text]
-        self.clipboard_history = ([cbi] + history)[:self.history_count]
-        self.clipboard.request_targets(self.clipboard_targets_received, cbi)
+        cbi = self.add_info(text)
         return
 
     # get the clipboard text

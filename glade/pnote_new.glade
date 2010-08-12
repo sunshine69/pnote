@@ -220,19 +220,6 @@
                   </packing>
                 </child>
                 <child>
-                  <widget class="GtkLabel" id="label4">
-                    <property name="visible">True</property>
-                    <property name="label" translatable="yes">URL</property>
-                    <property name="justify">right</property>
-                  </widget>
-                  <packing>
-                    <property name="top_attach">3</property>
-                    <property name="bottom_attach">4</property>
-                    <property name="x_options"></property>
-                    <property name="y_options"></property>
-                  </packing>
-                </child>
-                <child>
                   <widget class="GtkButton" id="bt_url">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
@@ -398,6 +385,24 @@
                 </child>
                 <child>
                   <placeholder/>
+                </child>
+                <child>
+                  <widget class="GtkButton" id="label_url_bt">
+                    <property name="label" translatable="yes">_u_r_l</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="relief">none</property>
+                    <property name="use_underline">True</property>
+                    <property name="focus_on_click">False</property>
+                    <signal name="button_release_event" handler="on_label_url_bt_released"/>
+                  </widget>
+                  <packing>
+                    <property name="top_attach">3</property>
+                    <property name="bottom_attach">4</property>
+                    <property name="x_options"></property>
+                    <property name="y_options"></property>
+                  </packing>
                 </child>
               </widget>
             </child>
