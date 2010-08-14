@@ -169,7 +169,7 @@
             <child>
               <widget class="GtkToolButton" id="toolbutton2">
                 <property name="visible">True</property>
-                <property name="tooltip" translatable="yes">Show Preferences</property>
+                <property name="tooltip" translatable="yes">Show Preferences Editor Window</property>
                 <property name="label" translatable="yes">Preferences</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-preferences</property>
@@ -183,7 +183,7 @@
             <child>
               <widget class="GtkToolButton" id="toolbutton3">
                 <property name="visible">True</property>
-                <property name="tooltip" translatable="yes">Send Note as Email</property>
+                <property name="tooltip" translatable="yes">Email selected notes</property>
                 <property name="label" translatable="yes">Mail</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-go-up</property>
@@ -197,7 +197,7 @@
             <child>
               <widget class="GtkToolButton" id="toolbutton4">
                 <property name="visible">True</property>
-                <property name="tooltip" translatable="yes">Print</property>
+                <property name="tooltip" translatable="yes">Print (not implemented yet)</property>
                 <property name="label" translatable="yes">Print</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-print</property>

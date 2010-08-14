@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import pygtk,gtk,pango
+import pygtk,gtk,pango,gobject
 import os, ConfigParser, random, sqlite3, time, threading, base64, cPickle
 from random import randrange
 from Crypto.Cipher import Blowfish
@@ -50,9 +50,7 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
     mail_use_auth = (True if get_config_key('data', 'mail_use_auth').strip() == 'yes' else False )
     if mail_use_auth:
       mail_user = get_config_key('data', 'mail_user')
-      if note.app.cipherkey == None:
-        note.app.cipherkey = get_text_from_user('Password required','Enter password to lock/unlock config file',show_char=False, completion = False, default_txt = 'none')
-        if note.app.cipherkey == 'none': note.app.cipherkey = None; message_box('error', 'Aborted');  return 1
+      if not set_password(note.app): return 1
       mail_passwd = BFCipher(note.app.cipherkey).decrypt( base64.b64decode( get_config_key('data', 'mail_passwd') ) )
       if mail_passwd == None: message_box('error', 'Wrong password!'); return 1
     import smtplib
@@ -474,6 +472,16 @@ class Preference:
 
   def  on_bt_cancel_clicked(self, o=None): self.destroy()
 
+def set_password(app, change = False):
+    retval = True
+    if app.cipherkey == None or change:
+      app.cipherkey = get_text_from_user('Password required','Enter password to lock/unlock config file', show_char=False, completion = False, default_txt = 'none')
+      if app.cipherkey == 'none':
+        if not change: app.cipherkey = None
+        message_box('error', 'Aborted')
+        retval = False
+    return retval  
+
 class MailPref:
   def destroy(self): self.w.destroy(); return self.response
   def __init__(self, app):
@@ -501,16 +509,22 @@ class MailPref:
     }
     self.load_smtp_config()
     self.response = 1
-    #self.e_smpt_server.connect("changed", lambda o: self.list_server_changed(control = 'changed') )
-    #self.e_smpt_server.child.connect("activate", lambda o: self.list_server_changed(control = 'activate') )
+    self.combo_handler_id = None
+    self.combo_handler_id1 = None
     self.wTree.signal_autoconnect(evtmap)
-
+    
   def on_cbox_is_imap_server_toggled(self,o=None):
     flag = self.cbox_is_imap_server.get_active()
     if flag:
+      self.combo_handler_id = self.e_smpt_server.connect("changed", lambda o: self.list_server_changed(control = 'changed') )
+      self.combo_handler_id1 = self.e_smpt_server.child.connect("activate", lambda o: self.list_server_changed(control = 'activate') )
       self.bt_del_imap.set_sensitive(True)
       self.load_server_list()
-    else: self.load_smtp_config()
+    else:
+      self.e_smpt_server.disconnect(self.combo_handler_id)
+      self.e_smpt_server.child.disconnect(self.combo_handler_id1)
+      self.cbox_use_auth.set_sensitive(True)
+      self.load_smtp_config()
     
   def load_server_list(self):
     self.e_smpt_server.get_model().clear()
@@ -537,6 +551,8 @@ class MailPref:
         self.e_port.set_text(imap_account[3] )
         self.e_username.set_text(imap_account[0])
         self.cbox_use_ssl.set_active(imap_account[2])
+        self.cbox_use_auth.set_active(True) # imap always requires auth, this refuse to confuse user
+        self.cbox_use_auth.set_sensitive(False)
         self.bt_cancel.set_label('Cancel')
     else: self.load_smtp_config()
     self.bt_cancel.set_label('Cancel')
@@ -559,9 +575,7 @@ class MailPref:
   def on_bt_save_clicked(self,o=None):
     newpass = self.e_passwd.get_text(); encpass64 = None
     if newpass != '':
-      if self.app.cipherkey == None:
-        self.app.cipherkey = get_text_from_user('Password required','Enter password to lock/unlock config file', show_char=False, completion = False, default_txt = 'none')
-        if self.app.cipherkey == 'none': self.app.cipherkey = None; message_box('error', 'Aborted');  return 1
+      if not set_password(self.app): return 1
       encpass = BFCipher(self.app.cipherkey).encrypt(newpass.strip() )
       encpass64 = base64.b64encode(encpass)
     if (self.cbox_is_imap_server.get_active()):
@@ -684,17 +698,42 @@ class NoteSearch:
       self.pn_completion.add_entry(kword)
     except: pass
 
+class PopUpNotification():
+  def __init__(self, text, callback=None):
+    self.w = gtk.Window(type=gtk.WINDOW_POPUP)
+    label = gtk.Label(text)
+    eventbox = gtk.EventBox()
+    eventbox.set_events (gtk.gdk.BUTTON_PRESS_MASK)
+    eventbox.connect("button-press-event", self.do_exit)
+    eventbox.add(label)
+    self.w.add(eventbox)
+    eventbox.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#FFF045") )
+    gobject.timeout_add(3000, self.w.destroy)
+    self.w.show_all()
+
+  def do_exit(self):
+    self.w.destroy
+    if callback != None: callback()
+    
+  
 class PnImap:
-  def __init__(self, imapcon):
+  def __init__(self, app, imapcon):
+    self.app = app
     self.conn = imapcon
     self.conn.select(readonly=1)
-  def search_new_mail(self):
+  def is_new_mail(self):
     conn = self.conn
+    retval = []
     (retcode, msgIDs) = conn.search(None, '(UNSEEN UNDELETED)') # msgIDs is like ['1 23 4 56 5']
     if retcode == 'OK':
       for msgID in msgIDs[0].split(' '):
-        print 'Processing :', message
+        print 'Processing :', msgID
         try:
-          (ret, mesginfo) = conn.fetch( message, '(BODY[HEADER.FIELDS (SUBJECT FROM)])' )
-          if ret == 'OK': print mesginfo,'\n',30*'-'
-        except: pass    
+          (ret, mesginfo) = conn.fetch(msgID , '(BODY[HEADER.FIELDS (SUBJECT FROM)])' )
+          print ret
+          retval.append( (msgID, mesginfo[0][1].replace("\n\r",' ').replace("\n",' ') ) )
+        except Exception, e: print "DEBUG, is_new_mail", e
+    return retval
+
+
+          

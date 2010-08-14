@@ -216,6 +216,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <property name="tooltip" translatable="yes">Delete current imap account. To add new just enter new information and click Save</property>
                 <property name="focus_on_click">False</property>
                 <signal name="clicked" handler="on_bt_del_imap_clicked"/>
               </widget>
@@ -229,7 +230,8 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="tooltip" translatable="yes">Click to save data as Outgoing mail account</property>
+                <property name="has_tooltip">True</property>
+                <property name="tooltip" translatable="yes">Click to save data as Outgoing mail account. To add new IMAP account, click Is IMAP server check and  just enter new information and click Save</property>
                 <signal name="clicked" handler="on_bt_save_clicked"/>
               </widget>
               <packing>

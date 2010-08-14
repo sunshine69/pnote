@@ -55,6 +55,7 @@
                     <property name="can_focus">False</property>
                     <property name="receives_default">True</property>
                     <property name="tooltip" translatable="yes">togle readonly/read write</property>
+                    <property name="focus_on_click">False</property>
                     <signal name="toggled" handler="on_bt_ro_toggled"/>
                   </widget>
                   <packing>
@@ -125,6 +126,7 @@
                         <property name="can_focus">False</property>
                         <property name="receives_default">True</property>
                         <property name="tooltip" translatable="yes">select text click to highlight, right click for format panel</property>
+                        <property name="focus_on_click">False</property>
                         <signal name="button_press_event" handler="on_bt_format_button_press"/>
                         <child>
                           <placeholder/>
@@ -142,6 +144,7 @@
                         <property name="can_focus">False</property>
                         <property name="receives_default">True</property>
                         <property name="tooltip" translatable="yes">select text then click to search note having the text selection. right click for filter menu</property>
+                        <property name="focus_on_click">False</property>
                         <signal name="button_press_event" handler="on_bt_search_button_press"/>
                         <child>
                           <placeholder/>
@@ -159,6 +162,7 @@
                         <property name="can_focus">False</property>
                         <property name="receives_default">True</property>
                         <property name="tooltip" translatable="yes">click to append update mark, right click for menu</property>
+                        <property name="focus_on_click">False</property>
                         <signal name="button_press_event" handler="on_bt_update_button_press"/>
                         <child>
                           <placeholder/>
@@ -176,6 +180,7 @@
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
                         <property name="tooltip" translatable="yes">undo, right click for navigation window</property>
+                        <property name="focus_on_click">False</property>
                         <signal name="button_release_event" handler="on_bt_undo_clicked"/>
                       </widget>
                       <packing>
@@ -188,6 +193,7 @@
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
                         <property name="tooltip" translatable="yes">redo, right click for navigation menu</property>
+                        <property name="focus_on_click">False</property>
                         <signal name="button_release_event" handler="on_bt_redo_clicked"/>
                       </widget>
                       <packing>
@@ -201,6 +207,7 @@
                         <property name="receives_default">True</property>
                         <property name="has_tooltip">True</property>
                         <property name="tooltip" translatable="yes">click to display the search window</property>
+                        <property name="focus_on_click">False</property>
                         <signal name="button_press_event" handler="on_bt_show_main_button_press"/>
                       </widget>
                       <packing>
@@ -225,6 +232,7 @@
                     <property name="can_focus">False</property>
                     <property name="receives_default">True</property>
                     <property name="tooltip" translatable="yes">click to display secure content. right click to open file selection to add to url (for email sending attachment </property>
+                    <property name="focus_on_click">False</property>
                     <signal name="button_press_event" handler="on_bt_url_button_press"/>
                     <child>
                       <placeholder/>
@@ -269,6 +277,7 @@
                     <property name="can_focus">False</property>
                     <property name="receives_default">True</property>
                     <property name="tooltip" translatable="yes">click to flag as TODO, right click for menu</property>
+                    <property name="focus_on_click">False</property>
                     <signal name="button_press_event" handler="on_bt_flag_button_press"/>
                     <child>
                       <placeholder/>
@@ -325,6 +334,7 @@
                         <property name="can_focus">False</property>
                         <property name="receives_default">True</property>
                         <property name="use_stock">True</property>
+                        <property name="focus_on_click">False</property>
                         <signal name="clicked" handler="on_bt_save_activate"/>
                         <signal name="activate" handler="on_bt_save_activate"/>
                       </widget>
@@ -339,6 +349,7 @@
                         <property name="can_focus">False</property>
                         <property name="receives_default">True</property>
                         <property name="use_underline">True</property>
+                        <property name="focus_on_click">False</property>
                         <signal name="clicked" handler="on_bt_cancel_activate"/>
                         <signal name="activate" handler="on_bt_cancel_activate"/>
                       </widget>
@@ -352,6 +363,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="receives_default">True</property>
+                        <property name="focus_on_click">False</property>
                         <signal name="toggled" handler="on_bt_reminder_toggled"/>
                       </widget>
                       <packing>
@@ -364,6 +376,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="receives_default">True</property>
+                        <property name="focus_on_click">False</property>
                         <signal name="clicked" handler="on_bt_send_clicked"/>
                       </widget>
                       <packing>
@@ -379,12 +392,6 @@
                     <property name="y_options"></property>
                     <property name="y_padding">1</property>
                   </packing>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
-                <child>
-                  <placeholder/>
                 </child>
                 <child>
                   <widget class="GtkButton" id="label_url_bt">
@@ -403,6 +410,12 @@
                     <property name="x_options"></property>
                     <property name="y_options"></property>
                   </packing>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
                 </child>
               </widget>
             </child>

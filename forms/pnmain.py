@@ -47,7 +47,7 @@ class pnmain:
     "do_send_mail": self.do_send_mail, \
     "do_print": self.do_print, \
     "bt_clear_button_press": self.bt_clear_button_press, \
-    "on_keyword_activated": lambda o: self.do_search(self.keyword.get_text()), \
+    "on_keyword_activated": self.do_search_cb, \
     "do_search": self.do_search_cb, \
     "on_result_list_row_activated": self.on_result_list_row_activated, \
     "on_result_list_start_interactive_search": self.on_result_list_start_interactive_search, \
@@ -82,6 +82,7 @@ class pnmain:
     result_list.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
     result_list.set_search_column(0)
     self.bt_menu = self.wTree.get_widget('toolbutton5'); self.bt_menu.set_menu(gtk.Menu())
+    self.search_mode = 'note'
     self.wTree.signal_autoconnect(evtmap)
     self.keyword.grab_focus()
 
@@ -91,8 +92,8 @@ class pnmain:
     for fl in dict.keys(list_imap_account):
         if not fl == '':
           menuitem1 = gtk.MenuItem(fl)
-          tmpstr = "lambda m,o: o.do_set_search_mode( '{0}' ) ".format(fl)
-          menuitem1.connect('activate', eval(tmpstr), self )
+          _tmp_func = eval("lambda m,o, fl_text=fl: o.do_set_search_mode( fl_text ) " )
+          menuitem1.connect('activate', _tmp_func, self, fl )
           thismenu.append(menuitem1)
           menuitem1.show()
     bt.set_menu(thismenu)
@@ -186,7 +187,7 @@ class pnmain:
         else: mynote = pnote_new.PnoteNew(self.app, item[1], item[0])
         send_note_as_mail(note = mynote, mail_from = get_config_key('data', 'mail_from', 'none'), to = alert_mail_to )
       
-  def do_print(self, obj, data=None):    pass
+  def do_print(self, obj, data=None): pass
     
   def do_clear_keyword(self, obj=None):
     self.keyword.set_text('')
@@ -204,7 +205,7 @@ class pnmain:
       elif keyword.startswith('FLAGS:'):
         mykeys = keyword[5:].split(':')
         mykeys = [ x for x in mykeys if not x == '' ]
-        sqlcmd = "select * from {0}.lsnote where".format(dbname)
+        sqlcmd = "select note_id, title, timestamp from {0}.lsnote where".format(dbname)
         for i in xrange(len(mykeys)):
           kw = mykeys[i].strip()
           sqlcmd += (r" AND " if (i > 0) else " ") + r" flags like '%" + kw + r"%' "
@@ -212,7 +213,7 @@ class pnmain:
       else:
           # Parse & as and
           kwlist = keyword.split(r'&')
-          sqlcmd = "select * from {0}.lsnote ".format(dbname)
+          sqlcmd = "select note_id, title, timestamp from {0}.lsnote ".format(dbname)
           kwlist = [ x for x in kwlist if not x == '' ]
           for i in xrange(len(kwlist)):
               kw = kwlist[i].strip()
@@ -237,8 +238,15 @@ class pnmain:
     if not keyword == '': self.pn_completion.add_entry(keyword)
       
   def do_search_cb(self, obj, data=None):
-      if (self.app.working_mode == 'note'): self.do_search(self.keyword.get_text())
-      elif (self.app.working_mode == 'imap4'): print "imap4"
+      if (self.search_mode == 'note'): self.do_search(self.keyword.get_text())
+      else:
+        try: imapconn = self.app.imapconn[self.search_mode]
+        except:
+          self.app.load_list_imap_acct(connect=True)
+          imapconn = self.app.imapconn[self.search_mode]
+        if imapconn:
+          pn_imap = PnImap(self.app, imapconn)
+          pn_imap.is_new_mail()
 
   def on_result_list_row_activated(self, obj, path, view_col, data=None):
     model = obj.get_model()

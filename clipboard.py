@@ -61,8 +61,9 @@ class PnClipboard:
         #self.got_content = None
         self.history_count = int(get_config_key('global', 'clipboard_history_size', '15'))
         self.clipboard = gtk.clipboard_get(selection="PRIMARY")
-        if sys.platform != 'win32': self.clipboard1 = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
+        if sys.platform != 'win32':
+          self.clipboard1 = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
+          self.clipboard1.request_text(self.clipboard_text_received)
         self.clipboard.request_text(self.clipboard_text_received)
-        self.clipboard1.request_text(self.clipboard_text_received)
         gobject.timeout_add(1500, self.fetch_clipboard_info)
         return

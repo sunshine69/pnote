@@ -12,7 +12,8 @@ sys.path.append(sys.path[0])
 os.chdir(sys.path[0])
 
 import pygtk, gtk, gobject
-import ConfigParser, sqlite3
+import ConfigParser, sqlite3, base64
+import imaplib
 
 SETTINGS = gtk.settings_get_default()
 
@@ -42,6 +43,7 @@ class pnote:
     self.dbpaths = { 'main': dbpath }
     self.dbcon = None
     self.note_list = {}
+    self.imapconn = dict()
     dbpathstr = get_config_key('data', 'db_paths', 'None')
     if not dbpathstr == 'None':
       i = 0
@@ -49,18 +51,58 @@ class pnote:
         if (not p == '') and (not p == 'None') and (not p == None): self.dbpaths['sub' + str(i)] = p
         i += 1
     
-    ic=gtk.status_icon_new_from_file('icons/cookie.png')
+    ic= self.icon = gtk.status_icon_new_from_file('icons/cookie.png')
     ic.connect("popup-menu", self.icon_popup_menu)
     ic.connect("activate", lambda o: pnote_new.PnoteNew(self).w.show_all() )
     self.load_list_imap_acct()
-    gobject.timeout_add_seconds(int(get_config_key('data', 'reminder_timer_interval', '60') ), self.query_note_reminder )
+    gobject.timeout_add_seconds(int(get_config_key('global', 'reminder_timer_interval', '60') ), self.query_note_reminder )
+    gobject.timeout_add_seconds(int(get_config_key('global', 'check_mail_interval', '60') ), self.checkmail )
+    self.new_mail_list = []
     self.clipboards = PnClipboard()
 
-  def load_list_imap_acct(self):
+  def checkmail(self):
+    for server in dict.keys(self.list_imap_account_dict):
+      try: imapconn = self.imapconn[server]
+      except:
+        self.load_list_imap_acct(connect=True)
+        imapconn = self.imapconn[server]
+      if imapconn:
+          pn_imap = PnImap(self, imapconn)
+          self.new_mail_list = pn_imap.is_new_mail()
+          if len(self.new_mail_list) > 0:
+            _msg = ''
+            for _item in self.new_mail_list: _msg += _item[1] + "\n"
+            _msg = "New mail - " + _msg
+            self.icon.set_tooltip(_msg)
+            PopUpNotification(_msg)
+          else:
+            self.icon.set_tooltip('No mail')
+            
+              
+  def load_list_imap_acct(self, connect=False):
     list_imap_account_str = get_config_key('global', 'list_imap_account','')
     if list_imap_account_str != '': self.list_imap_account_dict = cPickle.loads(base64.b64decode( list_imap_account_str ) )
     else: self.list_imap_account_dict = dict()
-    
+    if connect:
+      if get_config_key('global', 'checkmail', 'no') == 'yes':
+        _msg = ''
+        if not set_password(self): return
+        for key in dict.keys(self.list_imap_account_dict):
+          _logname, _pass, _use_ssl, _port  = self.list_imap_account_dict[key]
+          _pass1 = BFCipher(self.cipherkey).decrypt(base64.b64decode( _pass ) )
+          try:
+            if _use_ssl:
+              conn = imaplib.IMAP4_SSL(host=key, port = _port)
+            else:
+              conn = imaplib.IMAP4(host=key, port = _port)
+            if key.find('yahoo') != -1: conn.xatom('ID ("GUID" "1")')
+            (retcode, capabilities) = conn.login(_logname, _pass1)
+            self.imapconn[key] = conn
+          except Exception, e:
+            print sys.exc_info()[1]
+            print "DEBUG", e
+            _msg += "\nLogin to imap server error. Server: " + key + "\nsystem msg: "
+            
   def change_passwd(self):
     if self.cipherkey == None:
       if get_text_from_user('CRITICAL WARNING', "It seems you failed to unlock this field before. Changing password now AND if the password is not the same as the old correct one you will LOSE old information\nIf you still want to try to enter password to unlock this field, click Cancel, and then click Cancel in the popup window. Then click the lock button again\nIf you really want to DISCARD old information and reset to use newpass then click OK now", default_txt = None) != 0:
