@@ -61,18 +61,20 @@ class pnote:
     self.clipboards = PnClipboard()
 
   def checkmail(self):
+    imapconn = None
     for server in dict.keys(self.list_imap_account_dict):
       try: imapconn = self.imapconn[server]
       except:
         self.load_list_imap_acct(connect=True)
-        imapconn = self.imapconn[server]
-      if imapconn:
+        try: imapconn = self.imapconn[server]
+	except: pass
+      if imapconn != None:
           pn_imap = PnImap(self, imapconn)
           self.new_mail_list = pn_imap.is_new_mail()
           if len(self.new_mail_list) > 0:
             _msg = ''
             for _item in self.new_mail_list: _msg += _item[1] + "\n"
-            _msg = "New mail - " + _msg
+            _msg = "New mail - " + _msg; _msg = _msg[0:-2]
             self.icon.set_tooltip(_msg)
             PopUpNotification(_msg)
           else:

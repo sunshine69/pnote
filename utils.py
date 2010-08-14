@@ -701,6 +701,7 @@ class NoteSearch:
 class PopUpNotification():
   def __init__(self, text, callback=None):
     self.w = gtk.Window(type=gtk.WINDOW_POPUP)
+    self.callback = callback
     label = gtk.Label(text)
     eventbox = gtk.EventBox()
     eventbox.set_events (gtk.gdk.BUTTON_PRESS_MASK)
@@ -708,19 +709,19 @@ class PopUpNotification():
     eventbox.add(label)
     self.w.add(eventbox)
     eventbox.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#FFF045") )
-    gobject.timeout_add(3000, self.w.destroy)
+    gobject.timeout_add(30000, self.w.destroy)
     self.w.show_all()
 
-  def do_exit(self):
-    self.w.destroy
-    if callback != None: callback()
+  def do_exit(self, o=None, evt=None):
+    self.w.destroy()
+    if self.callback != None: self.callback()
     
   
 class PnImap:
   def __init__(self, app, imapcon):
     self.app = app
     self.conn = imapcon
-    self.conn.select(readonly=1)
+    self.conn.select('INBOX')
   def is_new_mail(self):
     conn = self.conn
     retval = []
