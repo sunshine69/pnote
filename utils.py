@@ -709,10 +709,10 @@ class PopUpNotification():
     eventbox.add(label)
     self.w.add(eventbox)
     eventbox.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#FFF045") )
-    gobject.timeout_add(3000, self.w.destroy)
+    gobject.timeout_add_seconds(10, self.w.destroy)
     self.w.show_all()
 
-  def do_exit(self):
+  def do_exit(self, o=None, evt=None):
     self.w.destroy
     if self.callback != None: self.callback()
     
@@ -721,9 +721,10 @@ class PnImap:
   def __init__(self, app, imapcon):
     self.app = app
     self.conn = imapcon
-    self.conn.select(readonly=1)
+    
   def is_new_mail(self):
     conn = self.conn
+    conn.select('INBOX',readonly=1)
     retval = []
     (retcode, msgIDs) = conn.search(None, '(UNSEEN UNDELETED)') # msgIDs is like ['1 23 4 56 5']
     if retcode == 'OK':
