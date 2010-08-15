@@ -71,7 +71,7 @@ class pnmain:
     #col1.set_resizable(True)
     col2.set_resizable(True)
     col3.set_resizable(True)
-    col2.set_max_width(250)
+    col2.set_max_width(350)
     col2.set_min_width(200)
     col3.set_min_width(200)
     col4.set_min_width(200)
@@ -81,11 +81,21 @@ class pnmain:
     result_list.append_column(col4)
     result_list.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
     result_list.set_search_column(0)
-    self.bt_menu = self.wTree.get_widget('toolbutton5'); self.bt_menu.set_menu(gtk.Menu())
+    self.bt_menu = self.wTree.get_widget('toolbar_menu'); self.bt_menu.set_menu(gtk.Menu())
     self.search_mode = 'note'
+    self.imapdata = None
     self.wTree.signal_autoconnect(evtmap)
     self.keyword.grab_focus()
 
+  def display_new_mail(self, data = None):
+    _data = data 
+    self.imapdata = _data
+    self.result_list_model.clear()
+    self.search_mode='display_new_mail'
+    for iserver in dict.keys(_data):
+      for (msgID, msgTitle) in _data[iserver][1]:
+        self.result_list_model.append([int(msgID), msgTitle, iserver, ''])
+    
   def on_toolbar_menu(self,bt=None):
     thismenu = gtk.Menu()
     list_imap_account = self.app.list_imap_account_dict
@@ -109,14 +119,17 @@ class pnmain:
   def on_result_list_key_press(self, o=None, e=None, d=None):
     #print gtk.gdk.keyval_name(e.keyval)
     if gtk.gdk.keyval_name(e.keyval) == 'Delete':
-      selection = o.get_selection()
-      if selection.count_selected_rows() == 1: # safe delete, only delete one note
-        model, paths = selection.get_selected_rows() # get_selected() not available in SELECTION_MULTIPLE mode
-        note_id = model.get_value(model.get_iter(paths[0]), 0)
-        dbname = model.get_value(model.get_iter(paths[0]), 3)
-        self.dbcon.execute("delete from " + dbname + ".lsnote where note_id = (?)" , ( note_id,  ) ) #the traling , is python stupid, forces it to be a tuple
-        self.dbcon.commit()
-        self.do_search(self.keyword.get_text())
+      if self.search_mode == 'note':
+          selection = o.get_selection()
+          if selection.count_selected_rows() == 1: # safe delete, only delete one note
+            model, paths = selection.get_selected_rows() # get_selected() not available in SELECTION_MULTIPLE mode
+            note_id = model.get_value(model.get_iter(paths[0]), 0)
+            dbname = model.get_value(model.get_iter(paths[0]), 3)
+            self.dbcon.execute("delete from " + dbname + ".lsnote where note_id = (?)" , ( note_id,  ) ) #the traling , is python stupid, forces it to be a tuple
+            self.dbcon.commit()
+            self.do_search(self.keyword.get_text())
+      else:#TODO Shoule we allow to delete mail message
+        pass    
 
   def bt_clear_button_press(self, obj, evt):
     if evt.button == 1: self.do_clear_keyword()
@@ -156,7 +169,7 @@ class pnmain:
     self.save_config()
     gtk.main_quit()
     
-  def do_show_pref(self, obj, data=None): Preference().w.show_all()
+  def do_show_pref(self, obj, data=None): Preference(app=self.app).w.show_all()
     
   def do_export(self,obj, data=None): pass
     
@@ -238,6 +251,7 @@ class pnmain:
     if not keyword == '': self.pn_completion.add_entry(keyword)
       
   def do_search_cb(self, obj, data=None):
+      if self.bt_menu.get_label() == 'NoteDB': self.search_mode == 'note'
       if (self.search_mode == 'note'): self.do_search(self.keyword.get_text())
       else:
         try: imapconn = self.app.imapconn[self.search_mode]
@@ -250,10 +264,25 @@ class pnmain:
 
   def on_result_list_row_activated(self, obj, path, view_col, data=None):
     model = obj.get_model()
-    note_id = model.get_value(model.get_iter(path), 0) # col1 -> note_id
-    dbname = model.get_value(model.get_iter(path), 3)
-    try: self.app.note_list[dbname+str(note_id)].w.present()
-    except Exception as e: pnote_new.PnoteNew(self.app, note_id, dbname).w.show_all()
+    if self.search_mode == 'note':
+      note_id = model.get_value(model.get_iter(path), 0) # col1 -> note_id
+      dbname = model.get_value(model.get_iter(path), 3)
+      try: self.app.note_list[dbname+str(note_id)].w.present()
+      except Exception as e: pnote_new.PnoteNew(self.app, note_id, dbname).w.show_all()
+    else:
+        data = self.imapdata
+        msgID =  model.get_value(model.get_iter(path), 0)
+        iserver =  model.get_value(model.get_iter(path), 2)
+        conn = data[iserver][0]
+        conn.select('INBOX',readonly=0)
+        (ret, mesginfo) = conn.fetch(msgID , '(BODY[1])' )
+        _temp = model.get_value(model.get_iter(path), 1).split("\r\n")
+        _newnote = pnote_new.PnoteNew(self.app)
+        _newnote.content.get_buffer().insert_at_cursor(mesginfo[0][1])
+        _newnote.title.set_text(_temp[1])
+        _newnote.datelog.set_text(_temp[0])
+        _newnote.url.set_text(_temp[2])
+        _newnote.w.show_all()
     
   def on_result_list_start_interactive_search(self, obj, data=None): pass
 

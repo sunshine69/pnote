@@ -448,7 +448,8 @@ class NoteReminder:
     
 class Preference:
   def destroy(self): self.w.destroy(); return True
-  def __init__(self):
+  def __init__(self, app=None):
+    self.app = app
     self.wTree = gtk.glade.XML('glade/preference.glade')
     self.w = self.wTree.get_widget('preferences')
     self.textview =   self.wTree.get_widget('textview1')
@@ -468,6 +469,7 @@ class Preference:
     buf = self.textview.get_buffer()
     fp.write(buf.get_text(buf.get_start_iter(), buf.get_end_iter()))
     fp.close()
+    if self.app != None: self.app.reload_config()
     self.destroy()
 
   def  on_bt_cancel_clicked(self, o=None): self.destroy()
@@ -713,9 +715,8 @@ class PopUpNotification():
     self.w.show_all()
 
   def do_exit(self, o=None, evt=None):
-    self.w.destroy
+    self.w.destroy()
     if self.callback != None: self.callback()
-    
   
 class PnImap:
   def __init__(self, app, imapcon):
@@ -731,9 +732,8 @@ class PnImap:
       for msgID in msgIDs[0].split(' '):
         print 'Processing :', msgID
         try:
-          (ret, mesginfo) = conn.fetch(msgID , '(BODY[HEADER.FIELDS (SUBJECT FROM)])' )
-          print ret
-          retval.append( (msgID, mesginfo[0][1].replace("\n\r",' ').replace("\n",' ') ) )
+          (ret, mesginfo) = conn.fetch(msgID , '(BODY[HEADER.FIELDS (SUBJECT FROM DATE)])' )
+          retval.append( (msgID, mesginfo[0][1]) )
         except Exception, e: print "DEBUG, is_new_mail", e
     return retval
 

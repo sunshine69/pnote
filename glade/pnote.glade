@@ -209,7 +209,7 @@
               </packing>
             </child>
             <child>
-              <widget class="GtkMenuToolButton" id="toolbutton5">
+              <widget class="GtkMenuToolButton" id="toolbar_menu">
                 <property name="visible">True</property>
                 <property name="tooltip" translatable="yes">Click to set mode to NoteDB. Click the menu to select another</property>
                 <property name="label" translatable="yes">NoteDB</property>
