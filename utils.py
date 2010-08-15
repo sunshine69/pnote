@@ -701,6 +701,7 @@ class NoteSearch:
 class PopUpNotification():
   def __init__(self, text, callback=None):
     self.w = gtk.Window(type=gtk.WINDOW_POPUP)
+    self.callback = callback
     label = gtk.Label(text)
     eventbox = gtk.EventBox()
     eventbox.set_events (gtk.gdk.BUTTON_PRESS_MASK)
@@ -713,7 +714,7 @@ class PopUpNotification():
 
   def do_exit(self):
     self.w.destroy
-    if callback != None: callback()
+    if self.callback != None: self.callback()
     
   
 class PnImap:
