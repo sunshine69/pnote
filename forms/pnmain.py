@@ -95,7 +95,8 @@ class pnmain:
     for iserver in dict.keys(_data):
       for (msgID, msgTitle) in _data[iserver][1]:
         self.result_list_model.append([int(msgID), msgTitle, iserver, ''])
-    
+        self.bt_menu.set_label(iserver)
+        
   def on_toolbar_menu(self,bt=None):
     thismenu = gtk.Menu()
     list_imap_account = self.app.list_imap_account_dict
