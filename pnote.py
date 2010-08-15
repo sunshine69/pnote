@@ -55,31 +55,42 @@ class pnote:
     ic.connect("popup-menu", self.icon_popup_menu)
     ic.connect("activate", lambda o: pnote_new.PnoteNew(self).w.show_all() )
     self.load_list_imap_acct()
-    gobject.timeout_add_seconds(int(get_config_key('global', 'reminder_timer_interval', '60') ), self.query_note_reminder )
-    gobject.timeout_add_seconds(int(get_config_key('global', 'check_mail_interval', '60') ), self.checkmail )
+    self.load_run_time_out_tasks()
     self.new_mail_list = []
     self.clipboards = PnClipboard()
 
+  def reload_config(self): # this to reload anything that has config changes. Usually in __init__
+    self.load_run_time_out_tasks()
+    
+  def load_run_time_out_tasks(self):
+    gobject.timeout_add_seconds(int(get_config_key('global', 'reminder_timer_interval', '60') ), self.query_note_reminder )
+    gobject.timeout_add_seconds(int(get_config_key('global', 'check_mail_interval', '60') ), self.checkmail )
+    
   def checkmail(self):
     imapconn = None
+    _msg = ''
     for server in dict.keys(self.list_imap_account_dict):
+      _data = dict()
       try: imapconn = self.imapconn[server]
       except:
         self.load_list_imap_acct(connect=True)
         try: imapconn = self.imapconn[server]
-	except: pass
+        except: pass
       if imapconn != None:
+          _data[server] = [imapconn, None]
           pn_imap = PnImap(self, imapconn)
           self.new_mail_list = pn_imap.is_new_mail()
           if len(self.new_mail_list) > 0:
-            _msg = ''
-            for _item in self.new_mail_list: _msg += _item[1] + "\n"
-            _msg = "New mail - " + _msg; _msg = _msg[0:-2]
-            self.icon.set_tooltip(_msg)
-            PopUpNotification(_msg)
+            _data[server][1] = self.new_mail_list 
+            for _item in self.new_mail_list: _msg += _item[1].replace("\r", ' ') 
+            _msg = "New mail - " + _msg[0:-2]
           else:
-            self.icon.set_tooltip('No mail')
+            _msg = 'No new mail'
             
+    self.icon.set_tooltip(_msg)
+    if _msg != 'No new mail':
+      PopUpNotification(_msg, callback = lambda: self.show_main().display_new_mail(_data)  )
+    return True        
               
   def load_list_imap_acct(self, connect=False):
     list_imap_account_str = get_config_key('global', 'list_imap_account','')
