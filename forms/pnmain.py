@@ -88,13 +88,13 @@ class pnmain:
     self.keyword.grab_focus()
 
   def display_new_mail(self, data = None):
-    _data = data 
+    _data = data# { 'iserver' :  [conn,  [(msgID, 'text'),(msgID, 'text')] ] } 
     self.imapdata = _data
     self.result_list_model.clear()
-    self.search_mode='display_new_mail'
     for iserver in dict.keys(_data):
-      for (msgID, msgTitle) in _data[iserver][1]:
-        self.result_list_model.append([int(msgID), msgTitle, iserver, ''])
+      self.search_mode=iserver
+      for (_target, msgID, msgTitle) in _data[iserver][1]:
+        self.result_list_model.append([int(msgID), msgTitle, iserver, _target])
         self.bt_menu.set_label(iserver)
         
   def on_toolbar_menu(self,bt=None):
@@ -261,7 +261,10 @@ class pnmain:
           imapconn = self.app.imapconn[self.search_mode]
         if imapconn:
           pn_imap = PnImap(self.app, imapconn)
-          pn_imap.is_new_mail()
+          _search_result = pn_imap.search_mail(self.keyword.get_text())
+          if _search_result != None:
+            _data = {self.search_mode :  [imapconn,  _search_result ] }
+            self.display_new_mail(data = _data)
 
   def on_result_list_row_activated(self, obj, path, view_col, data=None):
     model = obj.get_model()
@@ -275,7 +278,8 @@ class pnmain:
         msgID =  model.get_value(model.get_iter(path), 0)
         iserver =  model.get_value(model.get_iter(path), 2)
         conn = data[iserver][0]
-        conn.select('INBOX',readonly=0)
+        _target =  model.get_value(model.get_iter(path), 3)
+        conn.select(_target,readonly=0)
         (ret, mesginfo) = conn.fetch(msgID , '(BODY[1])' )
         _temp = model.get_value(model.get_iter(path), 1).split("\r\n")
         _newnote = pnote_new.PnoteNew(self.app)

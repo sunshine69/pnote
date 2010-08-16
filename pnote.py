@@ -82,7 +82,7 @@ class pnote:
           self.new_mail_list = pn_imap.is_new_mail()
           if len(self.new_mail_list) > 0:
             _data[server][1] = self.new_mail_list 
-            for _item in self.new_mail_list: _msg += _item[1].replace("\r", ' ') 
+            for _item in self.new_mail_list: _msg += _item[2].replace("\r", ' ')
             _msg = "New mail - " + _msg[0:-2]
           else:
             _msg = 'No new mail'

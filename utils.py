@@ -722,20 +722,46 @@ class PnImap:
   def __init__(self, app, imapcon):
     self.app = app
     self.conn = imapcon
+    self.mailboxes = []
     
   def is_new_mail(self):
-    conn = self.conn
-    conn.select('INBOX',readonly=1)
-    retval = []
-    (retcode, msgIDs) = conn.search(None, '(UNSEEN UNDELETED)') # msgIDs is like ['1 23 4 56 5']
-    if retcode == 'OK':
-      for msgID in msgIDs[0].split(' '):
-        print 'Processing :', msgID
-        try:
-          (ret, mesginfo) = conn.fetch(msgID , '(BODY[HEADER.FIELDS (SUBJECT FROM DATE)])' )
-          retval.append( (msgID, mesginfo[0][1]) )
-        except Exception, e: print "DEBUG, is_new_mail", e
-    return retval
+    self.search_mail(search_new_mail = 1)
 
+  def get_mailboxes(self):
+    rc, self.response = self.conn.list()
+    for item in self.response:
+      self.mailboxes.append(item.split()[-1])
+    return rc
+    
+  def search_mail(self, text=None, **b):
+    if text == None and len(b) == 0: return None
+    search_filter_str = ''
+    targets = ['INBOX']
+    if b.get('search_new_mail', 0) == 1:
+      search_filter_str = '(UNSEEN UNDELETED)'
+    if text != None:
+      print self.get_mailboxes()
+      targets = self.mailboxes
+      if text.startswith('^'): search_filter_str = text[1:] #pass through search filter as is
+      else: search_filter_str = '(BODY "%s")' % (text)
+    conn = self.conn
+    print "DEBUG", conn.state
+    retval = []
+    for target in targets:
+        #target.replace("'", "").replace('"', '')
+        try: conn.select(target,readonly=1)
+        except Exception, e: print "DEBUG", e
+        (retcode, msgIDs) = (None, None)
+        try: (retcode, msgIDs) = conn.search(None, search_filter_str) # msgIDs is like ['1 23 4 56 5']
+        except Exception,e: print "DEBUG", e
+        if retcode == 'OK':
+          for msgID in msgIDs[0].split(' '):
+            print 'Processing :', msgID
+            try:
+              (ret, mesginfo) = conn.fetch(msgID , '(BODY[HEADER.FIELDS (SUBJECT FROM DATE)])' )
+              retval.append( (target ,msgID, mesginfo[0][1]) )
+            except Exception, e: print "DEBUG, is_new_mail", e
+
+    return retval    
 
           
