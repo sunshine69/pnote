@@ -67,29 +67,31 @@ class pnote:
     gobject.timeout_add_seconds(int(get_config_key('global', 'check_mail_interval', '60') ), self.checkmail )
     
   def checkmail(self):
-    imapconn = None
-    _msg = ''
-    for server in dict.keys(self.list_imap_account_dict):
-      _data = dict()
-      try: imapconn = self.imapconn[server]
-      except:
-        self.load_list_imap_acct(connect=True)
-        try: imapconn = self.imapconn[server]
-        except: pass
-      if imapconn != None:
-          _data[server] = [imapconn, None]
-          pn_imap = PnImap(self, imapconn)
-          self.new_mail_list = pn_imap.is_new_mail()
-          if len(self.new_mail_list) > 0:
-            _data[server][1] = self.new_mail_list 
-            for _item in self.new_mail_list: _msg += _item[2].replace("\r", ' ')
-            _msg = "New mail - " + _msg[0:-2]
-          else:
-            _msg = 'No new mail'
-            
-    self.icon.set_tooltip(_msg)
-    if _msg != 'No new mail':
-      PopUpNotification(_msg, callback = lambda: self.show_main().display_new_mail(_data)  )
+    try:
+        imapconn = None
+        _msg = ''
+        for server in dict.keys(self.list_imap_account_dict):
+          _data = dict()
+          try: imapconn = self.imapconn[server]
+          except:
+            self.load_list_imap_acct(connect=True)
+            try: imapconn = self.imapconn[server]
+            except: pass
+          if imapconn != None:
+              _data[server] = [imapconn, None]
+              pn_imap = PnImap(self, imapconn)
+              self.new_mail_list = pn_imap.is_new_mail()
+              if len(self.new_mail_list) > 0:
+                _data[server][1] = self.new_mail_list 
+                for _item in self.new_mail_list: _msg += _item[2].replace("\r", ' ')
+                _msg = "New mail - " + _msg[0:-2]
+              else:
+                _msg = 'No new mail'
+                
+        self.icon.set_tooltip(_msg)
+        if _msg != 'No new mail':
+          PopUpNotification(_msg, callback = lambda: self.show_main().display_new_mail(_data)  )
+    except Exception, e: print "DEBUG pnmain.checkmail",e
     return True        
               
   def load_list_imap_acct(self, connect=False):

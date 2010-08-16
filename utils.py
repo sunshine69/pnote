@@ -734,25 +734,26 @@ class PnImap:
     return rc
     
   def search_mail(self, text=None, **b):
-    if text == None and len(b) == 0: return None
+    print len(b), "DEBUG", b.get('search_new_mail', 0)
+    if text == None and len(b) == 0: return []
     search_filter_str = ''
     targets = ['INBOX']
     if b.get('search_new_mail', 0) == 1:
-      search_filter_str = '(UNSEEN UNDELETED)'
+      search_filter_str = 'UNSEEN'
     if text != None:
-      print self.get_mailboxes()
       targets = self.mailboxes
       if text.startswith('^'): search_filter_str = text[1:] #pass through search filter as is
       else: search_filter_str = '(BODY "%s")' % (text)
     conn = self.conn
-    print "DEBUG", conn.state
     retval = []
     for target in targets:
         #target.replace("'", "").replace('"', '')
         try: conn.select(target,readonly=1)
-        except Exception, e: print "DEBUG", e
+        except Exception, e: print "DEBUG selec {0}".format(target), e
         (retcode, msgIDs) = (None, None)
-        try: (retcode, msgIDs) = conn.search(None, search_filter_str) # msgIDs is like ['1 23 4 56 5']
+        try:
+          print search_filter_str, target, "DEBUG search_filter_str"
+          (retcode, msgIDs) = conn.search(None, 'UNSEEN') # msgIDs is like ['1 23 4 56 5']
         except Exception,e: print "DEBUG", e
         if retcode == 'OK':
           for msgID in msgIDs[0].split(' '):
