@@ -255,16 +255,19 @@ class pnmain:
       if self.bt_menu.get_label() == 'NoteDB': self.search_mode == 'note'
       if (self.search_mode == 'note'): self.do_search(self.keyword.get_text())
       else:
-        try: imapconn = self.app.imapconn[self.search_mode]
+        try:
+          imapconn = self.app.imapconn[self.search_mode]
+          imapconn.select('INBOX', readonly = 1) # try to make sure all okay
         except:
           self.app.load_list_imap_acct(connect=True)
           imapconn = self.app.imapconn[self.search_mode]
         if imapconn:
           pn_imap = PnImap(self.app, imapconn)
           _search_result = pn_imap.search_mail(self.keyword.get_text())
-          if _search_result != None:
+          if len(_search_result) > 0:
             _data = {self.search_mode :  [imapconn,  _search_result ] }
             self.display_new_mail(data = _data)
+          else: print "search return empty"  
 
   def on_result_list_row_activated(self, obj, path, view_col, data=None):
     model = obj.get_model()

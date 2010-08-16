@@ -711,7 +711,7 @@ class PopUpNotification():
     eventbox.add(label)
     self.w.add(eventbox)
     eventbox.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#FFF045") )
-    gobject.timeout_add_seconds(10, self.w.destroy)
+    gobject.timeout_add_seconds(20, self.w.destroy)
     self.w.show_all()
 
   def do_exit(self, o=None, evt=None):
@@ -725,7 +725,7 @@ class PnImap:
     self.mailboxes = []
     
   def is_new_mail(self):
-    self.search_mail(search_new_mail = 1)
+    return self.search_mail(search_new_mail = 1)
 
   def get_mailboxes(self):
     rc, self.response = self.conn.list()
@@ -734,35 +734,33 @@ class PnImap:
     return rc
     
   def search_mail(self, text=None, **b):
-    print len(b), "DEBUG", b.get('search_new_mail', 0)
-    if text == None and len(b) == 0: return []
+    retval = []
+    if text == None and len(b) == 0: return retval
     search_filter_str = ''
     targets = ['INBOX']
     if b.get('search_new_mail', 0) == 1:
-      search_filter_str = 'UNSEEN'
+      search_filter_str = '(UNSEEN UNDELETED)'
     if text != None:
-      targets = self.mailboxes
+      if self.get_mailboxes() == 'OK': targets = self.mailboxes
       if text.startswith('^'): search_filter_str = text[1:] #pass through search filter as is
       else: search_filter_str = '(BODY "%s")' % (text)
     conn = self.conn
-    retval = []
     for target in targets:
-        #target.replace("'", "").replace('"', '')
-        try: conn.select(target,readonly=1)
-        except Exception, e: print "DEBUG selec {0}".format(target), e
-        (retcode, msgIDs) = (None, None)
-        try:
-          print search_filter_str, target, "DEBUG search_filter_str"
-          (retcode, msgIDs) = conn.search(None, 'UNSEEN') # msgIDs is like ['1 23 4 56 5']
-        except Exception,e: print "DEBUG", e
-        if retcode == 'OK':
-          for msgID in msgIDs[0].split(' '):
-            print 'Processing :', msgID
-            try:
-              (ret, mesginfo) = conn.fetch(msgID , '(BODY[HEADER.FIELDS (SUBJECT FROM DATE)])' )
-              retval.append( (target ,msgID, mesginfo[0][1]) )
-            except Exception, e: print "DEBUG, is_new_mail", e
+        if target.find('Trash') == -1:
+          try: conn.select(target,readonly=1)
+          except Exception, e: print "DEBUG select {0}".format(target), e
+          (retcode, msgIDs) = (None, None)
+          try:
+            print search_filter_str, target, conn.state, "DEBUG search_mail going to search"
+            (retcode, msgIDs) = conn.search(None, search_filter_str) # msgIDs is like ['1 23 4 56 5']
+          except Exception,e: print "DEBUG", e
+          if retcode == 'OK':
+            if len(msgIDs) > 0 and len(msgIDs[0]) > 0:
+              for msgID in msgIDs[0].split(' '):
+                print 'Processing :', msgID
+                try:
+                  (ret, mesginfo) = conn.fetch(msgID , '(BODY[HEADER.FIELDS (SUBJECT FROM DATE)])' )
+                  retval.append( (target ,msgID, mesginfo[0][1]) )
+                except Exception, e: print "DEBUG, search_mail", e
 
     return retval    
-
-          
