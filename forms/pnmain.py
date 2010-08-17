@@ -56,6 +56,7 @@ class pnmain:
     'do_export_selected_html': self.do_export_selected_html,\
     'on_toolbar_menu': self.on_toolbar_menu,\
     'on_toolbar_menu_clicked': self.on_toolbar_menu_clicked,\
+    'do_check_mail': lambda o: self.app.checkmail() ,\
     }
     statusbar = self.statusbar = self.wTree.get_widget("statusbar")
     msgid = statusbar.push(1, " welcome to pnote")

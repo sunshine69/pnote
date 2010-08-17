@@ -195,20 +195,6 @@
               </packing>
             </child>
             <child>
-              <widget class="GtkToolButton" id="toolbutton4">
-                <property name="visible">True</property>
-                <property name="tooltip" translatable="yes">Print (not implemented yet)</property>
-                <property name="label" translatable="yes">Print</property>
-                <property name="use_underline">True</property>
-                <property name="stock_id">gtk-print</property>
-                <signal name="clicked" handler="do_print"/>
-              </widget>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
               <widget class="GtkMenuToolButton" id="toolbar_menu">
                 <property name="visible">True</property>
                 <property name="tooltip" translatable="yes">Click to set mode to NoteDB. Click the menu to select another</property>
@@ -216,6 +202,20 @@
                 <property name="use_underline">True</property>
                 <signal name="clicked" handler="on_toolbar_menu_clicked"/>
                 <signal name="show_menu" handler="on_toolbar_menu"/>
+              </widget>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="GtkToolButton" id="bt_checkmail">
+                <property name="visible">True</property>
+                <property name="tooltip" translatable="yes">Check new mail</property>
+                <property name="label" translatable="yes">Check mail</property>
+                <property name="use_underline">True</property>
+                <property name="icon">../icons/email.png</property>
+                <signal name="clicked" handler="do_check_mail"/>
               </widget>
               <packing>
                 <property name="expand">False</property>
