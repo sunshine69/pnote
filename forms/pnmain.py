@@ -91,12 +91,15 @@ class pnmain:
     _data = data# { 'iserver' :  [conn,  [(msgID, 'text'),(msgID, 'text')] ] } 
     self.imapdata = _data
     self.result_list_model.clear()
+    _count = 0
     for iserver in dict.keys(_data):
       self.search_mode=iserver
       for (_target, msgID, msgTitle) in _data[iserver][1]:
         self.result_list_model.append([int(msgID), msgTitle, iserver, _target])
         self.bt_menu.set_label(iserver)
-        
+        _count += 1
+
+    self.statusbar.push(1, " Found " + str(_count) + " message" + ('s' if (_count > 1) else '' ) + r'!')
   def on_toolbar_menu(self,bt=None):
     thismenu = gtk.Menu()
     list_imap_account = self.app.list_imap_account_dict
