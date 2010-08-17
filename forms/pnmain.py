@@ -56,6 +56,7 @@ class pnmain:
     'do_export_selected_html': self.do_export_selected_html,\
     'on_toolbar_menu': self.on_toolbar_menu,\
     'on_toolbar_menu_clicked': self.on_toolbar_menu_clicked,\
+    'do_check_mail': lambda o: self.app.checkmail() ,\
     }
     statusbar = self.statusbar = self.wTree.get_widget("statusbar")
     msgid = statusbar.push(1, " welcome to pnote")
@@ -133,8 +134,23 @@ class pnmain:
             self.dbcon.commit()
             self.do_search(self.keyword.get_text())
       else:#TODO Shoule we allow to delete mail message
-        pass    
-
+        if get_text_from_user('Warning',"Are you sure to delete this message?\n\n", default_txt = None) != 0: return
+        data = self.imapdata
+        selection = o.get_selection()
+        if selection.count_selected_rows() == 1: # safe delete, only delete one note
+          model, path = selection.get_selected_rows() # get_selected() not available in SELECTION_MULTIPLE mode
+          msgID =  model.get_value(model.get_iter(path[0]), 0)
+          iserver =  model.get_value(model.get_iter(path[0]), 2)
+          conn = data[iserver][0]
+          _target =  model.get_value(model.get_iter(path[0]), 3)
+          try: conn.select(_target,readonly=0)
+          except:
+            self.app.load_list_imap_acct()
+            conn.select(_target,readonly=0)
+          print "DEBUG, gonna delete msgID ", msgID  
+          conn.store(msgID, '+FLAGS', '(\Deleted)')
+        
+        
   def bt_clear_button_press(self, obj, evt):
     if evt.button == 1: self.do_clear_keyword()
     else: self.bt_clear_popup_menu(evt)
@@ -289,7 +305,12 @@ class pnmain:
         (ret, mesginfo) = conn.fetch(msgID , '(BODY[1])' )
         _temp = model.get_value(model.get_iter(path), 1).split("\r\n")
         _newnote = pnote_new.PnoteNew(self.app)
-        _newnote.content.get_buffer().insert_at_cursor(mesginfo[0][1])
+        _content = mesginfo[0][1]
+        from html2text import html2text
+        #from htmlrender import render
+        _content = html2text(_content.decode('utf-8') )
+        #_content = render(_content)
+        _newnote.content.get_buffer().insert_at_cursor(_content)
         _newnote.title.set_text(_temp[1])
         _newnote.datelog.set_text(_temp[0])
         _newnote.url.set_text(_temp[2])
