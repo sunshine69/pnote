@@ -338,9 +338,13 @@ class pnmain:
         _temp = model.get_value(model.get_iter(path), 1).split("\r\n")
         _newnote = pnote_new.PnoteNew(self.app)
         _content = mesginfo[0][1]
-        from html2text import html2text
+        _html2text_cmd = get_config_key('global', 'html2text_cmd', 'None')
+        if _html2text_cmd == 'None':
+          from html2text import html2text
+          _content = html2text(_content.decode('utf-8') )
+        else:
+          _content = TextFormatter(html2text = _html2text_cmd).run_html2text(_content)  
         #from htmlrender import render
-        _content = html2text(_content.decode('utf-8') )
         #_content = render(_content)# Got trouble with some html text (error)
         #from html2txt import HtmlToText
         #_content = HtmlToText(_content).out.output_text # not better than html2text slower and code ugly. Doesn't not provide new line and structured text

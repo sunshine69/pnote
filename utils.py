@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import pygtk,gtk,pango,gobject
-import os, ConfigParser, random, sqlite3, time, threading, base64, cPickle
+import os, ConfigParser, random, sqlite3, time, threading, base64, cPickle, subprocess, shlex
 from random import randrange
 from Crypto.Cipher import Blowfish
 
@@ -755,8 +755,8 @@ class PnImap:
     conn = self.conn
     for target in targets:
         if target.find('Trash') == -1:
-          try: conn.select(target,readonly=1)
-          except Exception, e: print "DEBUG select {0}".format(target), e
+          conn.select(target,readonly=1)
+          if conn.state != 'SELECTED': conn.select(readonly=1)
           (retcode, msgIDs) = (None, None)
           try:
             print search_filter_str, target, conn.state, "DEBUG search_mail going to search"
@@ -771,4 +771,26 @@ class PnImap:
                   retval.append( (target ,msgID, mesginfo[0][1]) )
                 except Exception, e: print "DEBUG, search_mail", e
 
-    return retval    
+    return retval
+                 
+class TextFormatter:
+    def __init__(self,lynx='/usr/bin/lynx', html2text = '/usr/bin/html2text'):
+        self.lynx = lynx
+        self.html2text = html2text
+        
+    def run_lynx(self, unicode_html_source):
+        "Expects unicode; returns unicode"
+        return subprocess.Popen([self.lynx, 
+                      '-assume-charset=UTF-8', 
+                      '-display-charset=UTF-8', 
+                      '-dump', 
+                      '-stdin'], 
+                      stdin=subprocess.PIPE, 
+                      stdout=subprocess.PIPE).communicate(input=unicode_html_source.encode('utf-8'))[0].decode('utf-8')
+    def run_html2text(self, unicode_html_source):
+        return subprocess.Popen(shlex.split(self.html2text),
+                      stdin=subprocess.PIPE,
+                      stdout=subprocess.PIPE).communicate(input=unicode_html_source.encode('utf-8'))[0].decode('utf-8')                    
+                            
+
+                      
