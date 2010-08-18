@@ -151,6 +151,7 @@ class PnoteNew:
         self.content.set_editable(False)
         self.bt_ro.set_label('ro')
         self.bt_ro.set_active(True)
+        self.content.set_cursor_visible(False)
       try:
         self.pixbuf_dict_fromdb = cPickle.loads(str(row['pixbuf_dict']))
         self.load_pixbuf()# before format
@@ -441,10 +442,12 @@ class PnoteNew:
       self.content.set_editable(False)
       self.bt_ro.set_label('ro')
       self.readonly = 1
+      self.content.set_cursor_visible(False)
     else:
       self.content.set_editable(True)
       self.bt_ro.set_label('rw')
       self.readonly = 0
+      self.content.set_cursor_visible(True)
       
   def on_edit_changed(self, o=None, d=None): self.content.get_buffer().set_modified(True)
   

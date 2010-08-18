@@ -791,6 +791,4 @@ class TextFormatter:
         return subprocess.Popen(shlex.split(self.html2text),
                       stdin=subprocess.PIPE,
                       stdout=subprocess.PIPE).communicate(input=unicode_html_source.encode('utf-8'))[0].decode('utf-8')                    
-                            
-
-                      
+                         
