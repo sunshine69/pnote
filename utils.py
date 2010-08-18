@@ -756,7 +756,7 @@ class PnImap:
     for target in targets:
         if target.find('Trash') == -1:
           conn.select(target,readonly=1)
-          if conn.state != 'SELECTED': conn.select(readonly=1)
+          if conn.state != 'SELECTED': conn.select('INBOX',readonly=1)
           (retcode, msgIDs) = (None, None)
           try:
             print search_filter_str, target, conn.state, "DEBUG search_mail going to search"

@@ -58,7 +58,7 @@ class pnote:
     self.load_run_time_out_tasks()
     self.new_mail_list = []
     self.clipboards = PnClipboard()
-    self.current_mailbox = None
+    self.current_mailbox = 'INBOX'
     
   def reload_config(self): # this to reload anything that has config changes. Usually in __init__
     self.load_run_time_out_tasks()
