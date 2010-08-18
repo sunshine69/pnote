@@ -721,9 +721,12 @@ class PopUpNotification():
 class PnImap:
   def __init__(self, app, imapcon):
     self.app = app
+    if imapcon == None:
+      self.app.load_list_imap_acct(connect=True)
+      return
     self.conn = imapcon
     self.mailboxes = []
-    
+
   def is_new_mail(self):
     return self.search_mail(search_new_mail = 1)
 
@@ -737,11 +740,16 @@ class PnImap:
     retval = []
     if text == None and len(b) == 0: return retval
     search_filter_str = ''
-    targets = ['INBOX']
+    
     if b.get('search_new_mail', 0) == 1:
       search_filter_str = '(UNSEEN UNDELETED)'
+      
+    targets = ['INBOX']  
+    if self.app.current_mailbox == None:
+        if self.get_mailboxes() == 'OK': targets = self.mailboxes
+    else: targets = [self.app.current_mailbox]
+    
     if text != None:
-      if self.get_mailboxes() == 'OK': targets = self.mailboxes
       if text.startswith('^'): search_filter_str = text[1:] #pass through search filter as is
       else: search_filter_str = '(BODY "%s")' % (text)
     conn = self.conn
@@ -752,14 +760,14 @@ class PnImap:
           (retcode, msgIDs) = (None, None)
           try:
             print search_filter_str, target, conn.state, "DEBUG search_mail going to search"
-            (retcode, msgIDs) = conn.search(None, search_filter_str) # msgIDs is like ['1 23 4 56 5']
+            (retcode, msgIDs) = conn.uid("SEARCH", None, search_filter_str) # msgIDs is like ['1 23 4 56 5']
           except Exception,e: print "DEBUG", e
           if retcode == 'OK':
             if len(msgIDs) > 0 and len(msgIDs[0]) > 0:
               for msgID in msgIDs[0].split(' '):
                 print 'Processing :', msgID
                 try:
-                  (ret, mesginfo) = conn.fetch(msgID , '(BODY[HEADER.FIELDS (SUBJECT FROM DATE)])' )
+                  (ret, mesginfo) = conn.uid("FETCH", msgID , '(BODY[HEADER.FIELDS (SUBJECT FROM DATE)])' )
                   retval.append( (target ,msgID, mesginfo[0][1]) )
                 except Exception, e: print "DEBUG, search_mail", e
 

@@ -57,6 +57,7 @@ class pnmain:
     'on_toolbar_menu': self.on_toolbar_menu,\
     'on_toolbar_menu_clicked': self.on_toolbar_menu_clicked,\
     'do_check_mail': lambda o: self.app.checkmail() ,\
+    'on_bt_find_button_release_event': self.on_bt_find_button_release_event,\
     }
     statusbar = self.statusbar = self.wTree.get_widget("statusbar")
     msgid = statusbar.push(1, " welcome to pnote")
@@ -88,6 +89,37 @@ class pnmain:
     self.wTree.signal_autoconnect(evtmap)
     self.keyword.grab_focus()
 
+  def on_bt_find_button_release_event(self, o=None, evt=None):
+    if evt.button == 1: self.do_search_cb(o,evt)
+    else:
+      thismenu = gtk.Menu()
+      server = self.search_mode
+      if server != 'note':
+        imapconn = None
+        try: imapconn = self.app.imapconn[server]
+        except:
+              self.app.load_list_imap_acct(connect=True)
+              try: imapconn = self.app.imapconn[server]
+              except: pass
+        list_imap_account = self.app.list_imap_account_dict
+        pn_imap = PnImap(self.app, imapconn)
+        if pn_imap.get_mailboxes() != 'OK': return
+        for mailbox in pn_imap.mailboxes:
+            if not mailbox == '':
+              menuitem1 = gtk.CheckMenuItem(mailbox)
+              _tmp_func = eval("lambda m,o, fl_text=mailbox: o.set_current_mailbox (fl_text)" )
+              menuitem1.connect('activate', _tmp_func, self, mailbox )
+              if mailbox == self.app.current_mailbox: menuitem1.set_active(True)
+              thismenu.append(menuitem1)
+              menuitem1.show()
+        menuitem1 = gtk.CheckMenuItem('ALL')
+        _tmp_func = eval("lambda m,o, fl_text=mailbox: o.set_current_mailbox (fl_text)" )
+        menuitem1.connect('activate', _tmp_func, self, None )
+        thismenu.append(menuitem1); menuitem1.show()
+        thismenu.popup(None, None, None, evt.button, evt.time, data=None)
+              
+  def   set_current_mailbox(self, text): self.app.current_mailbox = text
+  
   def display_new_mail(self, data = None):
     _data = data# { 'iserver' :  [conn,  [(msgID, 'text'),(msgID, 'text')] ] } 
     self.imapdata = _data
@@ -276,7 +308,7 @@ class pnmain:
       else:
         try:
           imapconn = self.app.imapconn[self.search_mode]
-          imapconn.select('INBOX', readonly = 1) # try to make sure all okay
+          imapconn.select(readonly = 1) # try to make sure all okay
         except:
           self.app.load_list_imap_acct(connect=True)
           imapconn = self.app.imapconn[self.search_mode]
@@ -302,14 +334,16 @@ class pnmain:
         conn = data[iserver][0]
         _target =  model.get_value(model.get_iter(path), 3)
         conn.select(_target,readonly=0)
-        (ret, mesginfo) = conn.fetch(msgID , '(BODY[1])' )
+        (ret, mesginfo) = conn.uid("FETCH", msgID , '(BODY[1])' )
         _temp = model.get_value(model.get_iter(path), 1).split("\r\n")
         _newnote = pnote_new.PnoteNew(self.app)
         _content = mesginfo[0][1]
         from html2text import html2text
         #from htmlrender import render
         _content = html2text(_content.decode('utf-8') )
-        #_content = render(_content)
+        #_content = render(_content)# Got trouble with some html text (error)
+        #from html2txt import HtmlToText
+        #_content = HtmlToText(_content).out.output_text # not better than html2text slower and code ugly. Doesn't not provide new line and structured text
         _newnote.content.get_buffer().insert_at_cursor(_content)
         _newnote.title.set_text(_temp[1])
         _newnote.datelog.set_text(_temp[0])

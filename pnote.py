@@ -58,13 +58,15 @@ class pnote:
     self.load_run_time_out_tasks()
     self.new_mail_list = []
     self.clipboards = PnClipboard()
-
+    self.current_mailbox = None
+    
   def reload_config(self): # this to reload anything that has config changes. Usually in __init__
     self.load_run_time_out_tasks()
     
   def load_run_time_out_tasks(self):
     gobject.timeout_add_seconds(int(get_config_key('global', 'reminder_timer_interval', '60') ), self.query_note_reminder )
-    gobject.timeout_add_seconds(int(get_config_key('global', 'check_mail_interval', '60') ), self.checkmail )
+    if get_config_key('global', 'checkmail', 'no') == 'yes':
+      gobject.timeout_add_seconds(int(get_config_key('global', 'check_mail_interval', '60') ), self.checkmail )
     
   def checkmail(self):
     try:
@@ -99,7 +101,6 @@ class pnote:
     if list_imap_account_str != '': self.list_imap_account_dict = cPickle.loads(base64.b64decode( list_imap_account_str ) )
     else: self.list_imap_account_dict = dict()
     if connect:
-      if get_config_key('global', 'checkmail', 'no') == 'yes':
         _msg = ''
         if not set_password(self): return
         for key in dict.keys(self.list_imap_account_dict):

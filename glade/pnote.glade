@@ -211,6 +211,7 @@
             <child>
               <widget class="GtkToolButton" id="bt_checkmail">
                 <property name="visible">True</property>
+                <property name="events">GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_STRUCTURE_MASK</property>
                 <property name="tooltip" translatable="yes">Check new mail</property>
                 <property name="label" translatable="yes">Check mail</property>
                 <property name="use_underline">True</property>
@@ -261,14 +262,15 @@
               </packing>
             </child>
             <child>
-              <widget class="GtkButton" id="button1">
+              <widget class="GtkButton" id="bt_find">
                 <property name="label">gtk-find</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <property name="tooltip" translatable="yes">Select Imap mail server and right click me for selecting mailbox</property>
                 <property name="use_stock">True</property>
-                <signal name="clicked" handler="do_search"/>
                 <signal name="activate" handler="do_search"/>
+                <signal name="button_release_event" handler="on_bt_find_button_release_event"/>
               </widget>
               <packing>
                 <property name="expand">False</property>
