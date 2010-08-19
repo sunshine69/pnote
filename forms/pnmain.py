@@ -133,10 +133,10 @@ class pnmain:
       for (_target, msgID, msgData) in _data[iserver][1]:
         _mail_msg_header = email.message_from_string(msgData)
         _iter = self.result_list_model.append([int(msgID), _mail_msg_header.get('SUBJECT'), iserver, _target])
-        _tooltip = PnTips(self.result_list.get_column(0))
-        _tooltip.add_view(self.result_list)
-        self.tempdata['mail'][msgID] = _mail_msg_header; print "DEBUG", msgID
-        _tooltip.set_text("From: {0}\nDate: {1}".format(_mail_msg_header.get('FROM'), _mail_msg_header.get('DATE')) )
+        self.list_tooltip = PnTips(self.result_list.get_column(0), self.tempdata['mail'], 0)
+        self.list_tooltip.add_view(self.result_list)
+        self.tempdata['mail'][msgID] = _mail_msg_header
+        self.tempdata['mail']['TIP_' + msgID] = "From: {0}\nDate: {1}".format(_mail_msg_header.get('FROM'), _mail_msg_header.get('DATE'))
         _path = self.result_list_model.get_path(_iter)
         self.bt_menu.set_label(iserver)
         _count += 1
@@ -162,6 +162,7 @@ class pnmain:
     self.bt_menu.set_label('NoteDB')
     self.search_mode = 'note'
     self.tempdata['mail'] = None
+    self.list_tooltip.disable() #TODO we dont not display tooltip for note. Do we need it at all?
   
   def on_result_list_key_press(self, o=None, e=None, d=None):
     #print gtk.gdk.keyval_name(e.keyval)

@@ -798,16 +798,13 @@ class TextFormatter:
                          
 class PnTips(TreeViewTooltips):
         
-        def __init__(self, column):
+        def __init__(self, column, data, key_col = 0):
             self.cust_col = column
-            self.display_text = None
-            
+            self.key_col = key_col
+            self.data = data
             # call base class init
             TreeViewTooltips.__init__(self, use_markup = False)
             
-        def set_text(self, text):
-          self.display_text = text
-
         def get_tooltip(self, view, column, path):
 
             # we have a two column view: customer, phone; we'll make
@@ -819,7 +816,9 @@ class PnTips(TreeViewTooltips):
 
                 # By checking both column and path we have a
                 # cell-based tooltip.
-                return self.display_text
+                model = view.get_model()
+                key = model[path][self.key_col]
+                return self.data["TIP_{0}".format(key)]
 
         def XX_location(self, x, y, w, h):
             # rename me to "location" so I override the base class
