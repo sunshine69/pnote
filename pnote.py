@@ -5,8 +5,8 @@
 
 import os,sys
 if sys.platform=="win32":
-  [ gtkdir ] = [ x  for x in os.getenv('PATH').split(';') if x.find('GTK') != -1 ]
-  os.environ['PATH'] += ";%s/../lib;%s" % (gtkdir, gtkdir)
+  [ GTKDIR ] = [ x  for x in os.getenv('PATH').split(';') if x.find('GTK') != -1 ]
+  os.environ['PATH'] = "%s%s..%slib;%s" % (GTKDIR, os.path.sep, os.path.sep, GTKDIR)
   
 sys.path.append(sys.path[0])
 os.chdir(sys.path[0])
@@ -68,13 +68,16 @@ class pnote:
     if get_config_key('global', 'checkmail', 'no') == 'yes':
       gobject.timeout_add_seconds(int(get_config_key('global', 'check_mail_interval', '60') ), self.checkmail )
     
-  def checkmail(self):
+  def checkmail(self, server = None):
     try:
         imapconn = None
         _msg = ''
-        for server in dict.keys(self.list_imap_account_dict):
+        _list_server = ([server] if server != None else dict.keys(self.list_imap_account_dict) )
+        for server in _list_server:
           _data = dict()
-          try: imapconn = self.imapconn[server]
+          try:
+            imapconn = self.imapconn[server]
+            imapconn.select(self.current_mailbox, readonly=1)
           except:
             self.load_list_imap_acct(connect=True)
             try: imapconn = self.imapconn[server]
@@ -96,14 +99,15 @@ class pnote:
     except Exception, e: print "DEBUG pnmain.checkmail",e
     return True        
               
-  def load_list_imap_acct(self, connect=False):
+  def load_list_imap_acct(self, connect=False, server = None):
     list_imap_account_str = get_config_key('global', 'list_imap_account','')
     if list_imap_account_str != '': self.list_imap_account_dict = cPickle.loads(base64.b64decode( list_imap_account_str ) )
     else: self.list_imap_account_dict = dict()
     if connect:
         _msg = ''
         if not set_password(self): return
-        for key in dict.keys(self.list_imap_account_dict):
+        _list_server = ([server] if server != None else dict.keys(self.list_imap_account_dict) )
+        for key in _list_server:
           _logname, _pass, _use_ssl, _port  = self.list_imap_account_dict[key]
           _pass1 = BFCipher(self.cipherkey).decrypt(base64.b64decode( _pass ) )
           try:

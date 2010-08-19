@@ -86,6 +86,7 @@ class pnmain:
     self.bt_menu = self.wTree.get_widget('toolbar_menu'); self.bt_menu.set_menu(gtk.Menu())
     self.search_mode = 'note'
     self.imapdata = None
+    self.tempdata = dict() # to store wany temporal data
     self.wTree.signal_autoconnect(evtmap)
     self.keyword.grab_focus()
 
@@ -98,7 +99,7 @@ class pnmain:
         imapconn = None
         try: imapconn = self.app.imapconn[server]
         except:
-              self.app.load_list_imap_acct(connect=True)
+              self.app.load_list_imap_acct(connect=True, server=self.search_mode)
               try: imapconn = self.app.imapconn[server]
               except: pass
         list_imap_account = self.app.list_imap_account_dict
@@ -121,14 +122,22 @@ class pnmain:
   def   set_current_mailbox(self, text): self.app.current_mailbox = text
   
   def display_new_mail(self, data = None):
+    import email
     _data = data# { 'iserver' :  [conn,  [(msgID, 'text'),(msgID, 'text')] ] } 
     self.imapdata = _data
     self.result_list_model.clear()
+    self.tempdata['mail']=dict()
     _count = 0
     for iserver in dict.keys(_data):
       self.search_mode=iserver
-      for (_target, msgID, msgTitle) in _data[iserver][1]:
-        self.result_list_model.append([int(msgID), msgTitle, iserver, _target])
+      for (_target, msgID, msgData) in _data[iserver][1]:
+        _mail_msg_header = email.message_from_string(msgData)
+        _iter = self.result_list_model.append([int(msgID), _mail_msg_header.get('SUBJECT'), iserver, _target])
+        _tooltip = PnTips(self.result_list.get_column(0))
+        _tooltip.add_view(self.result_list)
+        self.tempdata['mail'][msgID] = _mail_msg_header; print "DEBUG", msgID
+        _tooltip.set_text("From: {0}\nDate: {1}".format(_mail_msg_header.get('FROM'), _mail_msg_header.get('DATE')) )
+        _path = self.result_list_model.get_path(_iter)
         self.bt_menu.set_label(iserver)
         _count += 1
 
@@ -152,6 +161,7 @@ class pnmain:
   def on_toolbar_menu_clicked(self,o=None):
     self.bt_menu.set_label('NoteDB')
     self.search_mode = 'note'
+    self.tempdata['mail'] = None
   
   def on_result_list_key_press(self, o=None, e=None, d=None):
     #print gtk.gdk.keyval_name(e.keyval)
@@ -177,11 +187,11 @@ class pnmain:
           _target =  model.get_value(model.get_iter(path[0]), 3)
           try: conn.select(_target,readonly=0)
           except:
-            self.app.load_list_imap_acct()
+            self.app.load_list_imap_acct(connect = True, server = iserver)
+            conn = self.app.imapconn[iserver]
             conn.select(_target,readonly=0)
           print "DEBUG, gonna delete msgID ", msgID  
           conn.store(msgID, '+FLAGS', '(\Deleted)')
-        
         
   def bt_clear_button_press(self, obj, evt):
     if evt.button == 1: self.do_clear_keyword()
@@ -310,7 +320,7 @@ class pnmain:
           imapconn = self.app.imapconn[self.search_mode]
           imapconn.select(readonly = 1) # try to make sure all okay
         except:
-          self.app.load_list_imap_acct(connect=True)
+          self.app.load_list_imap_acct(connect=True, server = self.search_mode)
           imapconn = self.app.imapconn[self.search_mode]
         if imapconn:
           pn_imap = PnImap(self.app, imapconn)
@@ -334,8 +344,11 @@ class pnmain:
         conn = data[iserver][0]
         _target =  model.get_value(model.get_iter(path), 3)
         conn.select(_target,readonly=0)
-        (ret, mesginfo) = conn.uid("FETCH", msgID , '(BODY[1])' )
-        _temp = model.get_value(model.get_iter(path), 1).split("\r\n")
+        (ret, mesginfo) = conn.uid("FETCH", msgID , '(BODY[1] FLAGS)' )
+        _title = model.get_value(model.get_iter(path), 1)
+        _date = self.tempdata['mail'][str(msgID)].get('DATE')
+        _url = self.tempdata['mail'][str(msgID)].get('FROM')
+        _flags = mesginfo[0][0][mesginfo[0][0].find('FLAGS'):mesginfo[0][0].find('UID')].strip()
         _newnote = pnote_new.PnoteNew(self.app)
         _content = mesginfo[0][1]
         _html2text_cmd = get_config_key('global', 'html2text_cmd', 'None')
@@ -349,9 +362,10 @@ class pnmain:
         #from html2txt import HtmlToText
         #_content = HtmlToText(_content).out.output_text # not better than html2text slower and code ugly. Doesn't not provide new line and structured text
         _newnote.content.get_buffer().insert_at_cursor(_content)
-        _newnote.title.set_text(_temp[1])
-        _newnote.datelog.set_text(_temp[0])
-        _newnote.url.set_text(_temp[2])
+        _newnote.title.set_text(_title)
+        _newnote.datelog.set_text(_date)
+        _newnote.url.set_text(_url)
+        _newnote.flags.set_text(_flags)
         _newnote.w.show_all()
     
   def on_result_list_start_interactive_search(self, obj, data=None): pass

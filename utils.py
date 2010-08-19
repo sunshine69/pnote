@@ -4,6 +4,9 @@ import pygtk,gtk,pango,gobject
 import os, ConfigParser, random, sqlite3, time, threading, base64, cPickle, subprocess, shlex
 from random import randrange
 from Crypto.Cipher import Blowfish
+from TreeViewTooltips import TreeViewTooltips
+
+CONFIGDIR = '.pnote'
 
 def get_text_from_user(title='Input text', msg = 'Enter text:', default_txt = '', size = -1, show_char = True, completion = True):
     d = gtk.Dialog(title, None, 0, (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT, gtk.STOCK_OK, gtk.RESPONSE_ACCEPT) )
@@ -134,6 +137,7 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
     else: print "Forked to send mail"; threading.Thread(target = fork_send).start()
     
 def run_setup(dbpath=''):
+  global CONFIGDIR
   if dbpath == '':
     chooser = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
     res = chooser.run()
@@ -152,21 +156,21 @@ def run_setup(dbpath=''):
   create index timestamp_idx on lsnote(timestamp DESC);
   """)
   conn.commit()
-  msg = "Completed. if you set a new database file you can attached it by editing the config file in your {0}/.pnote/pnote.cfg".format(os.path.expanduser("~") )
+  msg = "Completed. if you set a new database file you can attached it by editing the config file in your {0}{1}{2}{3}pnote.cfg".format(os.path.expanduser("~"), os.path.sep, CONFIGDIR, os.path.sep )
   print msg
   message_box('Information', msg)
   return dbpath
   
 def get_config_key(section='data',key='', default_val=''):
-    if not os.path.exists(os.path.expanduser("~") + '/.pnote'): os.mkdir(os.path.expanduser("~") + '/.pnote')
+    if not os.path.exists("{0}{1}{2}".format( os.path.expanduser("~"), os.path.sep, CONFIGDIR) ): os.mkdir("{0}{1}{2}".format(os.path.expanduser("~"), os.path.sep, CONFIGDIR) )
     config = ConfigParser.RawConfigParser()
-    config.read(os.path.expanduser("~") + '/.pnote/pnote.cfg')
+    config.read("{0}{1}{2}{3}pnote.cfg".format(os.path.expanduser("~"), os.path.sep, CONFIGDIR,os.path.sep  ) )
     retval = ''
     def tmpfunc():
       try: config.add_section(section)
       except: pass
       config.set(section, key, default_val)
-      with open(os.path.expanduser("~") + '/.pnote/pnote.cfg', 'wb') as configfile: config.write(configfile)
+      with open("{0}{1}{2}{3}pnote.cfg".format(os.path.expanduser("~"), os.path.sep, CONFIGDIR,os.path.sep  ), 'wb') as configfile: config.write(configfile)
       return default_val
     try: retval = config.get(section, key).strip()
     except: retval = tmpfunc()
@@ -175,14 +179,14 @@ def get_config_key(section='data',key='', default_val=''):
       
 def save_config_key(section='data', key='', value=''):
     config = ConfigParser.RawConfigParser()
-    config.read(os.path.expanduser("~") + '/.pnote/pnote.cfg')
+    config.read("{0}{1}{2}{3}pnote.cfg".format(os.path.expanduser("~"), os.path.sep, CONFIGDIR,os.path.sep  ))
     try: config.set(section, key, value)
     except:
       try:
         config.add_section(section)
         config.set(section, key, value)
       except: return False
-    with open(os.path.expanduser("~") + '/.pnote/pnote.cfg', 'wb') as configfile: config.write(configfile)
+    with open("{0}{1}{2}{3}pnote.cfg".format(os.path.expanduser("~"), os.path.sep, CONFIGDIR,os.path.sep  ), 'wb') as configfile: config.write(configfile)
     return True      
 
 def message_box(title = 'Message', msg = ''):
@@ -792,3 +796,36 @@ class TextFormatter:
                       stdin=subprocess.PIPE,
                       stdout=subprocess.PIPE).communicate(input=unicode_html_source.encode('utf-8'))[0].decode('utf-8')                    
                          
+class PnTips(TreeViewTooltips):
+        
+        def __init__(self, column):
+            self.cust_col = column
+            self.display_text = None
+            
+            # call base class init
+            TreeViewTooltips.__init__(self, use_markup = False)
+            
+        def set_text(self, text):
+          self.display_text = text
+
+        def get_tooltip(self, view, column, path):
+
+            # we have a two column view: customer, phone; we'll make
+            # tooltips cell-based for the customer column, but generic
+            # column-based for the phone column.
+
+            # customer
+            if column is self.cust_col:
+
+                # By checking both column and path we have a
+                # cell-based tooltip.
+                return self.display_text
+
+        def XX_location(self, x, y, w, h):
+            # rename me to "location" so I override the base class
+            # method.  This will demonstrate being able to change
+            # where the tooltip window popups, relative to the
+            # pointer.
+
+            # this will place the tooltip above and to the right
+            return x + 10, y - (h + 10)
