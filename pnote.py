@@ -13,7 +13,7 @@ os.chdir(sys.path[0])
 
 import pygtk, gtk, gobject
 import ConfigParser, sqlite3, base64
-import imaplib
+import imaplib, email
 
 SETTINGS = gtk.settings_get_default()
 
@@ -87,9 +87,12 @@ class pnote:
               pn_imap = PnImap(self, imapconn)
               self.new_mail_list = pn_imap.is_new_mail()
               if len(self.new_mail_list) > 0:
-                _data[server][1] = self.new_mail_list 
-                for _item in self.new_mail_list: _msg += _item[2].replace("\r", ' ')
-                _msg = "New mail - " + _msg[0:-2]
+                _data[server][1] = self.new_mail_list
+                
+                for _item in self.new_mail_list:
+                   _mail_msg_header = email.message_from_string(_item[2])
+                   _msg += "{0}\n{1}".format(_mail_msg_header.get('FROM'),_mail_msg_header.get('SUBJECT') )
+                _msg = "New mail: {0}".format(_msg)
               else:
                 _msg = 'No new mail'
                 
