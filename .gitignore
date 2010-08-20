@@ -1,9 +1,0 @@
-*.pyc
-.gitignore
-test*
-*.webprj
-*.session
-*.zip
-*.gz
-dll
-*.dll
