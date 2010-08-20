@@ -97,7 +97,9 @@ class pnmain:
       server = self.search_mode
       if server != 'note':
         imapconn = None
-        try: imapconn = self.app.imapconn[server]
+        try:
+          imapconn = self.app.imapconn[server]
+          imapconn.select(readonly=1)
         except:
               self.app.load_list_imap_acct(connect=True, server=self.search_mode)
               try: imapconn = self.app.imapconn[server]
