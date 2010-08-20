@@ -799,26 +799,18 @@ class TextFormatter:
 class PnTips(TreeViewTooltips):
         
         def __init__(self, column, data, key_col = 0):
-            self.cust_col = column
+            'column: where the mouse point and moves; data = {key_col_string: tip_string}; key_col: column number that I can get the string from model and pass it to data dict'
+            self.column = column
             self.key_col = key_col
             self.data = data
             # call base class init
             TreeViewTooltips.__init__(self, use_markup = False)
             
         def get_tooltip(self, view, column, path):
-
-            # we have a two column view: customer, phone; we'll make
-            # tooltips cell-based for the customer column, but generic
-            # column-based for the phone column.
-
-            # customer
-            if column is self.cust_col:
-
-                # By checking both column and path we have a
-                # cell-based tooltip.
+            if column is self.column:
                 model = view.get_model()
                 key = model[path][self.key_col]
-                return self.data["TIP_{0}".format(key)]
+                return self.data.get("TIP_{0}".format(key), None )
 
         def XX_location(self, x, y, w, h):
             # rename me to "location" so I override the base class

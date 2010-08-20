@@ -162,8 +162,10 @@ class pnmain:
     self.bt_menu.set_label('NoteDB')
     self.search_mode = 'note'
     self.tempdata['mail'] = None
-    self.list_tooltip.disable() #TODO we dont not display tooltip for note. Do we need it at all?
-  
+    #self.list_tooltip.disable() #TODO we dont not display tooltip for note. Do we need it at all?
+    self.list_tooltip.remove_view()
+    self.list_tooltip = None
+    
   def on_result_list_key_press(self, o=None, e=None, d=None):
     #print gtk.gdk.keyval_name(e.keyval)
     if gtk.gdk.keyval_name(e.keyval) == 'Delete':
@@ -171,8 +173,10 @@ class pnmain:
           selection = o.get_selection()
           if selection.count_selected_rows() == 1: # safe delete, only delete one note
             model, paths = selection.get_selected_rows() # get_selected() not available in SELECTION_MULTIPLE mode
-            note_id = model.get_value(model.get_iter(paths[0]), 0)
-            dbname = model.get_value(model.get_iter(paths[0]), 3)
+            #note_id = model.get_value(model.get_iter(paths[0]), 0)
+            note_id = model[paths[0]][0]
+            #dbname = model.get_value(model.get_iter(paths[0]), 3)
+            dbname = model[paths[0]][3]
             self.dbcon.execute("delete from " + dbname + ".lsnote where note_id = (?)" , ( note_id,  ) ) #the traling , is python stupid, forces it to be a tuple
             self.dbcon.commit()
             self.do_search(self.keyword.get_text())
@@ -182,10 +186,13 @@ class pnmain:
         selection = o.get_selection()
         if selection.count_selected_rows() == 1: # safe delete, only delete one note
           model, path = selection.get_selected_rows() # get_selected() not available in SELECTION_MULTIPLE mode
-          msgID =  model.get_value(model.get_iter(path[0]), 0)
-          iserver =  model.get_value(model.get_iter(path[0]), 2)
+          #msgID =  model.get_value(model.get_iter(path[0]), 0)
+          msgID = model[path[0]][0]
+          #iserver =  model.get_value(model.get_iter(path[0]), 2)
+          iserver = model[path[0]][2]
           conn = data[iserver][0]
-          _target =  model.get_value(model.get_iter(path[0]), 3)
+          #_target =  model.get_value(model.get_iter(path[0]), 3)
+          _target = model[path[0]][3]
           try: conn.select(_target,readonly=0)
           except:
             self.app.load_list_imap_acct(connect = True, server = iserver)
@@ -247,8 +254,10 @@ class pnmain:
   def get_list_notes_from_selection(self):
     list_notes = []
     def func(model, path, iter):
-      note_id = model.get_value(model.get_iter(path), 0)
-      dbname =  model.get_value(model.get_iter(path), 3)
+      #note_id = model.get_value(model.get_iter(path), 0)
+      #dbname =  model.get_value(model.get_iter(path), 3)
+      note_id = model[path][0]
+      dbname = model[path][3]
       list_notes.append([dbname, note_id])
     self.result_list.get_selection().selected_foreach(func)
     return  list_notes
@@ -334,19 +343,25 @@ class pnmain:
   def on_result_list_row_activated(self, obj, path, view_col, data=None):
     model = obj.get_model()
     if self.search_mode == 'note':
-      note_id = model.get_value(model.get_iter(path), 0) # col1 -> note_id
-      dbname = model.get_value(model.get_iter(path), 3)
+      #note_id = model.get_value(model.get_iter(path), 0) # col1 -> note_id
+      note_id = model[path][0]
+      #dbname = model.get_value(model.get_iter(path), 3)
+      dbname = model[path][3]
       try: self.app.note_list[dbname+str(note_id)].w.present()
       except Exception as e: pnote_new.PnoteNew(self.app, note_id, dbname).w.show_all()
     else:
         data = self.imapdata
-        msgID =  model.get_value(model.get_iter(path), 0)
-        iserver =  model.get_value(model.get_iter(path), 2)
+        #msgID =  model.get_value(model.get_iter(path), 0)
+        msgID = model[path][0]
+        #iserver =  model.get_value(model.get_iter(path), 2)
+        iserver = model[path][2]
         conn = data[iserver][0]
-        _target =  model.get_value(model.get_iter(path), 3)
+        #_target =  model.get_value(model.get_iter(path), 3)
+        _target = model[path][3]
         conn.select(_target,readonly=0)
         (ret, mesginfo) = conn.uid("FETCH", msgID , '(BODY[1] FLAGS)' )
-        _title = model.get_value(model.get_iter(path), 1)
+        #_title = model.get_value(model.get_iter(path), 1)
+        _title = model[path][1]
         _date = self.tempdata['mail'][str(msgID)].get('DATE')
         _url = self.tempdata['mail'][str(msgID)].get('FROM')
         _flags = mesginfo[0][0][mesginfo[0][0].find('FLAGS'):mesginfo[0][0].find('UID')].strip()

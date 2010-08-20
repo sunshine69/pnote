@@ -137,8 +137,8 @@ class TreeViewTooltips:
         window.set_resizable(False)
         window.set_border_width(4)
         window.set_app_paintable(True)
-        window.connect("expose-event", self.__on_expose_event)
-
+        self.expose_event_id = window.connect("expose-event", self.__on_expose_event)
+        self.view = None
 
         # create the label
         self.label = label = gtk.Label()
@@ -202,9 +202,7 @@ class TreeViewTooltips:
 
     def __motion_handler(self, view, event):
         'As the pointer moves across the view, show a tooltip.'
-
         path = view.get_path_at_pos(int(event.x), int(event.y))
-        
         if self.__enabled and path:
             path, col, x, y = path
             tooltip = self.get_tooltip(view, col, path)
@@ -285,10 +283,18 @@ class TreeViewTooltips:
         assert isinstance(view, gtk.TreeView), \
                ('This handler should only be connected to '
                 'instances of gtk.TreeView')
-
-        view.connect("motion-notify-event", self.__motion_handler)
-        view.connect("leave-notify-event", self.__leave_handler)
-
+        self.view = view
+        self.motion_event_id = view.connect("motion-notify-event", self.__motion_handler)
+        self.leave_event_id = view.connect("leave-notify-event", self.__leave_handler)
+        self.enable()
+        
+    def remove_view(self):
+        if self.view != None:
+          self.view.disconnect(self.motion_event_id)
+          self.view.disconnect(self.leave_event_id)
+          self.view = None
+          self.disable()
+      
     def get_tooltip(self, view, column, path):
         'See the module doc string for a description of this method'
         

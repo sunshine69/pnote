@@ -28,6 +28,8 @@ from forms import pnmain, pnote_new
 from utils import *
 from clipboard import PnClipboard
 
+version = 0,4,0
+
 class pnote:
    
   def __init__(self, dbpath=None):
@@ -91,8 +93,8 @@ class pnote:
                 
                 for _item in self.new_mail_list:
                    _mail_msg_header = email.message_from_string(_item[2])
-                   _msg += "{0}\n{1}".format(_mail_msg_header.get('FROM'),_mail_msg_header.get('SUBJECT') )
-                _msg = "New mail: {0}".format(_msg)
+                   _msg = "{0}\nFrom: {1}\nSubject: {2}\n".format(_msg, _mail_msg_header.get('FROM'),_mail_msg_header.get('SUBJECT') )
+                   print _msg
               else:
                 _msg = 'No new mail'
                 
