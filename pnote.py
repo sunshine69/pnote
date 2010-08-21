@@ -75,8 +75,8 @@ class pnote:
         imapconn = None
         _msg = ''
         _list_server = ([server] if server != None else dict.keys(self.list_imap_account_dict) )
+        _data = dict()
         for server in _list_server:
-          _data = dict()
           try:
             imapconn = self.imapconn[server]
             imapconn.select(self.current_mailbox, readonly=1)
@@ -94,10 +94,9 @@ class pnote:
                 for _item in self.new_mail_list:
                    _mail_msg_header = email.message_from_string(_item[2])
                    _msg = "{0}\nFrom: {1}\nSubject: {2}\n".format(_msg, _mail_msg_header.get('FROM'),_mail_msg_header.get('SUBJECT') )
-                   print _msg
               else:
-                _msg = 'No new mail'
-                
+                _msg = 'No new mail' if _msg == '' else _msg
+
         self.icon.set_tooltip(_msg)
         if _msg != 'No new mail':
           PopUpNotification(_msg, callback = lambda: self.show_main().display_new_mail(_data)  )

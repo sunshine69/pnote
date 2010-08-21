@@ -56,7 +56,7 @@ class pnmain:
     'do_export_selected_html': self.do_export_selected_html,\
     'on_toolbar_menu': self.on_toolbar_menu,\
     'on_toolbar_menu_clicked': self.on_toolbar_menu_clicked,\
-    'do_check_mail': lambda o: self.app.checkmail() ,\
+    'do_check_mail': lambda o: self.app.checkmail(server=None if self.search_mode=='note' else self.search_mode ) ,\
     'on_bt_find_button_release_event': self.on_bt_find_button_release_event,\
     }
     statusbar = self.statusbar = self.wTree.get_widget("statusbar")
@@ -132,16 +132,17 @@ class pnmain:
     _count = 0
     for iserver in dict.keys(_data):
       self.search_mode=iserver
-      for (_target, msgID, msgData) in _data[iserver][1]:
-        _mail_msg_header = email.message_from_string(msgData)
-        _iter = self.result_list_model.append([int(msgID), _mail_msg_header.get('SUBJECT'), iserver, _target])
-        self.list_tooltip = PnTips(self.result_list.get_column(0), self.tempdata['mail'], 0)
-        self.list_tooltip.add_view(self.result_list)
-        self.tempdata['mail'][msgID] = _mail_msg_header
-        self.tempdata['mail']['TIP_' + msgID] = "From: {0}\nDate: {1}".format(_mail_msg_header.get('FROM'), _mail_msg_header.get('DATE'))
-        _path = self.result_list_model.get_path(_iter)
-        self.bt_menu.set_label(iserver)
-        _count += 1
+      if _data[iserver][1] != None:
+        for (_target, msgID, msgData) in _data[iserver][1]:
+          _mail_msg_header = email.message_from_string(msgData)
+          _iter = self.result_list_model.append([int(msgID), _mail_msg_header.get('SUBJECT'), iserver, _target])
+          self.list_tooltip = PnTips(self.result_list.get_column(0), self.tempdata['mail'], 0)
+          self.list_tooltip.add_view(self.result_list)
+          self.tempdata['mail'][msgID] = _mail_msg_header
+          self.tempdata['mail']['TIP_' + msgID] = "From: {0}\nDate: {1}".format(_mail_msg_header.get('FROM'), _mail_msg_header.get('DATE'))
+          _path = self.result_list_model.get_path(_iter)
+          self.bt_menu.set_label(iserver.split('.')[-2])
+          _count += 1
 
     self.statusbar.push(1, " Found " + str(_count) + " message" + ('s' if (_count > 1) else '' ) + r'!')
   def on_toolbar_menu(self,bt=None):
@@ -157,7 +158,7 @@ class pnmain:
     bt.set_menu(thismenu)
     
   def do_set_search_mode(self, modestr=''):
-    self.bt_menu.set_label(modestr.split('.')[1] )
+    self.bt_menu.set_label(modestr.split('.')[-2] )
     self.search_mode = modestr
     
   def on_toolbar_menu_clicked(self,o=None):
@@ -165,8 +166,10 @@ class pnmain:
     self.search_mode = 'note'
     self.tempdata['mail'] = None
     #self.list_tooltip.disable() #TODO we dont not display tooltip for note. Do we need it at all?
-    self.list_tooltip.remove_view()
-    self.list_tooltip = None
+    try:
+      self.list_tooltip.remove_view()
+      self.list_tooltip = None
+    except: pass  
     
   def on_result_list_key_press(self, o=None, e=None, d=None):
     #print gtk.gdk.keyval_name(e.keyval)
