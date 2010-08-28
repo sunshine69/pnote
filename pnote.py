@@ -54,6 +54,7 @@ class pnote:
     self.dbpath = dbpath
     self.dbpaths = { 'main': dbpath }
     self.dbcon = None
+    self.pnmain = None
     self.note_list = {}
     self.new_note_list = []
     self.imapconn = dict()
@@ -241,7 +242,8 @@ class pnote:
 
   def do_exit(self, obj=None, flag=None):
     if flag != 'from_pnmain':
-      self.pnmain.do_exit()
+      try: self.pnmain.do_exit()
+      except: pass
     for key in dict.keys(self.note_list): self.note_list[key].do_save(flag='NO_SAVE_SIZE')
     for newnote in self.new_note_list: newnote.do_save(flag='NO_SAVE_SIZE')
       

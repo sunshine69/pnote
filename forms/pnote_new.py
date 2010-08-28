@@ -165,7 +165,9 @@ class PnoteNew:
     else:
       self.app.new_note_list.append(self)
       self.start_time = int(time.time())
-      self.datelog.set_text(time.strftime("%d-%m-%Y %H:%M"))
+      _timenow = time.strftime("%d-%m-%Y %H:%M")
+      self.datelog.set_text(_timenow)
+      self.w.set_title('New note '+_timenow )
 
     self.content.get_buffer().undo_reset()
     self.wTree.signal_autoconnect(evtmap)
