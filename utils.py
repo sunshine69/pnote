@@ -66,14 +66,14 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
     from email.mime.image import MIMEImage
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
-    COMMASPACE = ', '
+    COMMASPACE = ','
     buf = note.content.get_buffer()
     if mail_from == '':
           me = get_config_key('data', 'mail_from', 'none')
           if me == 'none': me = get_text_from_user('From', 'From: '); save_config_key('data', 'mail_from', me)
     else: me = mail_from
     if to == '':
-      to = get_text_from_user('To: ', 'Recipient address separated by ; ', size = 300)
+      to = get_text_from_user('To: ', 'Recipient address separated by %s ' % (COMMASPACE), size = 300)
       if to == None: message_box('error', 'Recipients required'); return
     pathstr = note.url.get_text()
     if pathstr != '':
@@ -130,7 +130,7 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
         if mail_use_ssl: mailer =  smtplib.SMTP_SSL(mail_server, port)
         else: mailer = smtplib.SMTP(mail_server, port)
         if mail_use_auth: mailer.login(mail_user, mail_passwd)
-        mailer.sendmail(me, to.split(';'), outer.as_string())
+        mailer.sendmail(me, to.split(COMMASPACE), outer.as_string())
         mailer.quit()
       except Exception as ex: print "send_note_as_mail Error: " , ex
     if forked_to_sendmail == 'no': print "Sending mail in main thread"; fork_send()

@@ -267,8 +267,13 @@ class PnoteNew:
     self.do_save_insert_txt(do='save', text = htmltext )
     
   def dump_to_html(self): # TODO For now Just like this
-    buf = self.content.get_buffer()
-    return "<PRE>{0}</PRE>".format(buf.get_text(buf.get_start_iter(), buf.get_end_iter() ) )
+    draft_note = PnoteNew(self.app,note_id = self.note_id, dbname = self.dbname)
+    format_tab = draft_note.format_tab
+    for tagn in dict.keys(format_tab):
+      print format_tab[tagn][0]
+
+    return 'TODO'
+    #return "<PRE>{0}</PRE>".format(buf.get_text(buf.get_start_iter(), buf.get_end_iter() ) )
     #stringIO = StringIO()
     #itr = buf.get_start_iter()
     #while True:
@@ -595,7 +600,7 @@ class PnoteNew:
         elif _flag == 'off': buf.remove_tag_by_name(tagn, its, ite)
         self.format_tab[tagn][1].append( (_flag, buf.create_mark(None, its, True), buf.create_mark(None, ite, True), _text )  )
 
-    #print "DEBUG after loading format",   self.format_tab
+    ##print "DEBUG after loading format",   self.format_tab
     
   def dump_format_tag(self):
     buf = self.content.get_buffer()
