@@ -567,6 +567,7 @@ class PnoteNew:
       chooser.destroy()
       
   def on_bt_cancel_activate(self,  evt, data=None):
+    if self.note_id == None: self.app.new_note_list.remove(self)
     self.content.get_buffer().set_modified(False) # Tell do_save not to save
     self.destroy()
 
@@ -659,7 +660,7 @@ class PnoteNew:
     #else:
     self.do_save(flag = 'NO_SAVE_SIZE') # If saved here, race condition will reset size to default
     try: del self.app.note_list[self.dbname + str(self.note_id)]
-    except Exception as e: pass #print e.args[0]
+    except Exception as e: pass
     self.w.destroy()
     self.wTree = None
     return True
