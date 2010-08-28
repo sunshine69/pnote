@@ -242,7 +242,7 @@ class pnmain:
   def do_exit(self, obj=None, data=None): # Exit here will NOT save the dbpath to teh config file
     print "Destroy called"
     self.save_config()
-    gtk.main_quit()
+    self.app.do_exit(flag='from_pnmain')
     
   def do_show_pref(self, obj, data=None): Preference(app=self.app).w.show_all()
     

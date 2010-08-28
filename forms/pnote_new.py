@@ -25,6 +25,7 @@ import undostack
 class PnoteNew:
  
   def __init__(self,pnote_app, note_id = None, dbname = 'main'):
+  
     self.app = pnote_app
     self.unique_num = 0
     self.note_id = note_id
@@ -127,7 +128,7 @@ class PnoteNew:
       self.format_tab[tg.get_property('name')] = [{}, [] ]
     content.set_tabs(pango.TabArray(4,False))
 
-    if not note_id == None:
+    if  note_id != None:
       dbc = self.dbcon.cursor()
       sql = "select * from {0}.lsnote WHERE note_id = {1}".format(self.dbname, self.note_id)
       #print sql
@@ -146,7 +147,7 @@ class PnoteNew:
       self.reminder_ticks = row['reminder_ticks']
       self.alert_count = row['alert_count']
       if not self.reminder_ticks == 0: bt_reminder.set_active(True)
-      self.app.note_list[self.dbname+str(note_id)] = self
+      self.app.note_list["{0}_{1}".format(dbname,str(note_id))] = self
       if self.readonly == 1:
         self.content.set_editable(False)
         self.bt_ro.set_label('ro')
@@ -162,6 +163,7 @@ class PnoteNew:
       self.start_time = 0
       dbc.close()
     else:
+      self.app.new_note_list.append(self)
       self.start_time = int(time.time())
       self.datelog.set_text(time.strftime("%d-%m-%Y %H:%M"))
 
@@ -570,6 +572,7 @@ class PnoteNew:
       chooser.destroy()
       
   def on_bt_cancel_activate(self,  evt, data=None):
+    if self.note_id == None: self.app.new_note_list.remove(self)
     self.content.get_buffer().set_modified(False) # Tell do_save not to save
     self.destroy()
 
@@ -618,7 +621,7 @@ class PnoteNew:
     #print "DEBUG: going to pickle this", _temp_tab
     return cPickle.dumps(_temp_tab, cPickle.HIGHEST_PROTOCOL)
       
-  def do_save(self, d=None):
+  def do_save(self, flag=None):
     if self.content.get_buffer().get_modified():
       sql = ''
       texbuf = self.content.get_buffer()
@@ -630,18 +633,18 @@ class PnoteNew:
           dbc.execute("insert into " + self.dbname + ".lsnote(title, datelog, flags, content, url, readonly, timestamp, format_tag, econtent, reminder_ticks, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) )", (self.title.get_text(), self.datelog.get_text(), self.flags.get_text(), tex, self.url.get_text(), self.readonly, int(time.time()), sqlite3.Binary(self.dump_format_tag()), sqlite3.Binary(self.econtent), self.reminder_ticks, self.alert_count, sqlite3.Binary(self.dump_pixbuf_dict()) ) )
         else:
           dbc.execute("update " + self.dbname + ".lsnote set title = (?), datelog = (?), flags = (?), content = (?), url = (?), readonly = (?), timestamp = (?), format_tag = (?), econtent = (?), reminder_ticks = (?), alert_count = (?), pixbuf_dict = (?) where note_id = (?)", ( self.title.get_text(), self.datelog.get_text(), self.flags.get_text(), tex, self.url.get_text(), self.readonly, int(time.time()) , sqlite3.Binary(self.dump_format_tag()) , sqlite3.Binary(self.econtent) , self.reminder_ticks , self.alert_count, sqlite3.Binary(self.dump_pixbuf_dict()), self.note_id ) )
-        if not dbc.lastrowid == None:
+        if dbc.lastrowid != None:
           self.note_id = dbc.lastrowid
           self.app.note_list[self.note_id] = self
+          self.app.new_note_list.remove(self)
+          
         self.dbcon.commit()
         self.content.get_buffer().set_modified(False)
         self.wTree.get_widget('bt_cancel').set_label('_Close')
         dbc.close()
       except Exception as e: print e
     else: print "Not modified. No save"
-    if not d is None:
-      if not 'NO_SAVE_SIZE' in d: self.save_window_size()
-    else: self.save_window_size()
+    if flag != 'NO_SAVE_SIZE': self.save_window_size()
     self.w.set_title(self.title.get_text()[0:30])
     
   def on_bt_flag_button_press(self, obj, evt, data=None):
@@ -655,14 +658,14 @@ class PnoteNew:
     self.window_size = str(w)+'x'+str(h)
     save_config_key('pnote_new', 'window_size', self.window_size)
     
-  def destroy(self, obj=None, data=None):
-    print "destroy called"
+  def destroy(self, obj=None, flag=None):
     for tmpf in self.tmpfile:
       if os.path.isfile(tmpf): os.unlink(tmpf)
-    if not data == None: pass
-    else: self.do_save({'NO_SAVE_SIZE':1}) # If saved here, race condition will reset size to default
+    #if flag != None: pass
+    #else:
+    self.do_save(flag = 'NO_SAVE_SIZE') # If saved here, race condition will reset size to default
     try: del self.app.note_list[self.dbname + str(self.note_id)]
-    except Exception as e: pass #print e.args[0]
+    except Exception as e: pass
     self.w.destroy()
     self.wTree = None
     return True

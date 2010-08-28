@@ -33,6 +33,16 @@ version = 0,4,0
 class pnote:
    
   def __init__(self, dbpath=None):
+
+    import signal
+    def handler(signum, data=None):
+        print 'Signal handler called with signal', signum
+        print 'Finalizing main loop'
+        self.do_exit()
+        
+    signal.signal(signal.SIGINT, handler)
+    signal.signal(signal.SIGTERM, handler)
+    
     self.cipherkey = None
     self.filechooser_dir = os.getcwd()
     self.working_mode = get_config_key('global', 'working_mode', 'note')
@@ -45,6 +55,7 @@ class pnote:
     self.dbpaths = { 'main': dbpath }
     self.dbcon = None
     self.note_list = {}
+    self.new_note_list = []
     self.imapconn = dict()
     dbpathstr = get_config_key('data', 'db_paths', 'None')
     if not dbpathstr == 'None':
@@ -145,7 +156,7 @@ class pnote:
         row = cur.fetchone()
         if (row == None): break
         note_id = row['note_id']
-        try: self.note_list[dbname+str(note_id)].w.present()
+        try: self.note_list["{0}_{1}".format(dbname,str(note_id))].w.present()
         except: pnote_new.PnoteNew(self, note_id, dbname).w.show_all()
         alert_mail_to = get_config_key('data', 'alert_mail_to', 'none')
         if not alert_mail_to  == 'none':
@@ -228,10 +239,14 @@ class pnote:
         pnote_new.PnoteNew(self, r['note_id'], dbname).w.show_all()
       dbc.close()
 
-  def do_exit(self, obj, data=None):
+  def do_exit(self, obj=None, flag=None):
+    if flag != 'from_pnmain':
+      self.pnmain.do_exit()
+    for key in dict.keys(self.note_list): self.note_list[key].do_save(flag='NO_SAVE_SIZE')
+    for newnote in self.new_note_list: newnote.do_save(flag='NO_SAVE_SIZE')
+      
     save_config_key('data', 'main_db_path',self.dbpath)
-    try: self.pnmain.do_exit()
-    except: gtk.main_quit()
+    gtk.main_quit()
 
   def selectdb(self):
     chooser = gtk.FileChooserDialog(title="Select database file or enter new filename",action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
@@ -243,13 +258,17 @@ class pnote:
     chooser.destroy()
     return dbpath
 
+  def run(self):
+    gtk.main()
+
 if __name__ == "__main__":
   try:
      dbpath = sys.argv[1]
      print "Using database file ", dbpath
-     pnote(dbpath).show_main()
+     app = pnote(dbpath)
   except Exception as e:
     print e
-    pnote().show_main()
+    app = pnote()
 
-  gtk.main()
+  app.show_main()
+  app.run()
