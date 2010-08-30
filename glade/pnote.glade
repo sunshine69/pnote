@@ -76,6 +76,15 @@
                       </widget>
                     </child>
                     <child>
+                      <widget class="GtkMenuItem" id="menuitem5">
+                        <property name="visible">True</property>
+                        <property name="tooltip" translatable="yes">run VACUUM command to compress and cleanup database. </property>
+                        <property name="label" translatable="yes">Run Vacumn</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="on_run_vacuum"/>
+                      </widget>
+                    </child>
+                    <child>
                       <widget class="GtkSeparatorMenuItem" id="separatormenuitem1">
                         <property name="visible">True</property>
                       </widget>

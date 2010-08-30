@@ -666,7 +666,7 @@ class PnoteNew:
     #if flag != None: pass
     #else:
     self.do_save(flag = 'NO_SAVE_SIZE') # If saved here, race condition will reset size to default
-    try: del self.app.note_list[self.dbname + str(self.note_id)]
+    try: del self.app.note_list["%s_%s" % (self.dbname , self.note_id)]
     except Exception as e: pass
     self.w.destroy()
     self.wTree = None

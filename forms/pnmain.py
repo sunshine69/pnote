@@ -58,6 +58,7 @@ class pnmain:
     'on_toolbar_menu_clicked': self.on_toolbar_menu_clicked,\
     'do_check_mail': lambda o: self.app.checkmail(server=None if self.search_mode=='note' else self.search_mode ) ,\
     'on_bt_find_button_release_event': self.on_bt_find_button_release_event,\
+    'on_run_vacuum': lambda o: self.dbcon.cursor().execute('VACUUM')
     }
     statusbar = self.statusbar = self.wTree.get_widget("statusbar")
     msgid = statusbar.push(1, " welcome to pnote")
@@ -352,7 +353,7 @@ class pnmain:
       note_id = model[path][0]
       #dbname = model.get_value(model.get_iter(path), 3)
       dbname = model[path][3]
-      try: self.app.note_list[dbname+str(note_id)].w.present()
+      try: self.app.note_list["{0}_{1}".format(dbname,str(note_id))].w.present()
       except Exception as e: pnote_new.PnoteNew(self.app, note_id, dbname).w.show_all()
     else:
         data = self.imapdata
