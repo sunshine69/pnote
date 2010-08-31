@@ -58,7 +58,7 @@ class DbSync:
         print "Error: when insert to A", e
         self.return_msg += "ERROR when insert to A"
 
-    msg = "B_not_have: %s records." % len(B_not_have)
+    msg = "\nB_not_have: %s records." % len(B_not_have)
     self.return_msg += msg
     print msg
     for _note_id in B_not_have:
@@ -68,7 +68,7 @@ class DbSync:
         print "Error: when insert to B", e
         self.return_msg += "\nERROR when insert to B"
 
-    msg =  "Both A and B has %s records. Will sync all of them. This will take a long time!" % len(both_A_B_has)
+    msg =  "\nBoth A and B has %s records. Will sync all of them. This will take a long time!" % len(both_A_B_has)
     self.return_msg += msg
     print msg
     for _note_id in both_A_B_has:
