@@ -76,6 +76,24 @@
                       </widget>
                     </child>
                     <child>
+                      <widget class="GtkMenuItem" id="menuitem6">
+                        <property name="visible">True</property>
+                        <property name="tooltip" translatable="yes">Sync with another note database</property>
+                        <property name="label" translatable="yes">Sync DB</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="on_sync_db"/>
+                      </widget>
+                    </child>
+                    <child>
+                      <widget class="GtkMenuItem" id="menuitem7">
+                        <property name="visible">True</property>
+                        <property name="tooltip" translatable="yes">Similar before but asking for base_id</property>
+                        <property name="label" translatable="yes">Sync DB with base_id</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="on_sync_db_baseid"/>
+                      </widget>
+                    </child>
+                    <child>
                       <widget class="GtkMenuItem" id="menuitem5">
                         <property name="visible">True</property>
                         <property name="tooltip" translatable="yes">run VACUUM command to compress and cleanup database. </property>

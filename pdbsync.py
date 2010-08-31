@@ -3,6 +3,7 @@
 
 import patch
 import time
+import sqlite3
 
 class DbSync:
   
@@ -26,6 +27,7 @@ class DbSync:
     dmp=patch.diff_match_patch()
     cursorA, cursorB = A.cursor(), B.cursor()
     base_id = args.get('base_id', 0)
+    self.return_msg = 'Started, base_id %s' % base_id
     sqlcmd = 'select * from lsnote where note_id > %s' % base_id
     cursorA.execute(sqlcmd)
     cursorB.execute(sqlcmd)
@@ -46,19 +48,29 @@ class DbSync:
     A_not_have = setB - both_A_B_has
     B_not_have = setA - both_A_B_has
 
-    print "A_not_have: %s records" % len(A_not_have)
+    msg = "A_not_have: %s records" % len(A_not_have)
+    self.return_msg += msg
+    print msg
     for _note_id in A_not_have:
       try:
         cursorA.execute("insert into lsnote(note_id, title, datelog, flags, content, url, readonly, timestamp, format_tag, econtent, reminder_ticks, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) )" , (_note_id, dictB[_note_id]['title'] , dictB[_note_id]['datelog'], dictB[_note_id]['flags'] , dictB[_note_id]['content'], dictB[_note_id]['url'], dictB[_note_id]['readonly'], dictB[_note_id]['timestamp'], dictB[_note_id]['format_tag'], dictB[_note_id]['econtent'], dictB[_note_id]['reminder_ticks'], dictB[_note_id]['alert_count'], dictB[_note_id]['pixbuf_dict']) )
-      except Exception, e: print "Error: when insert to A", e
+      except Exception, e:
+        print "Error: when insert to A", e
+        self.return_msg += "ERROR when insert to A"
 
-    print "B_not_have: %s records." % len(B_not_have)
+    msg = "B_not_have: %s records." % len(B_not_have)
+    self.return_msg += msg
+    print msg
     for _note_id in B_not_have:
       try:
         cursorB.execute("insert into lsnote(note_id, title, datelog, flags, content, url, readonly, timestamp, format_tag, econtent, reminder_ticks, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) )" , (_note_id, dictA[_note_id]['title'] , dictA[_note_id]['datelog'], dictA[_note_id]['flags'] , dictA[_note_id]['content'], dictA[_note_id]['url'], dictA[_note_id]['readonly'], dictA[_note_id]['timestamp'], dictA[_note_id]['format_tag'], dictA[_note_id]['econtent'], dictA[_note_id]['reminder_ticks'], dictA[_note_id]['alert_count'], dictA[_note_id]['pixbuf_dict']) )
-      except Exception, e: print "Error: when insert to B", e
+      except Exception, e:
+        print "Error: when insert to B", e
+        self.return_msg += "\nERROR when insert to B"
 
-    print "Both A and B has %s records. Will sync all of them. This will take a long time!" % len(both_A_B_has)
+    msg =  "Both A and B has %s records. Will sync all of them. This will take a long time!" % len(both_A_B_has)
+    self.return_msg += msg
+    print msg
     for _note_id in both_A_B_has:
       _A, _B = dictA[_note_id], dictB[_note_id]
       if _A['title'] == _B['title']:
@@ -91,9 +103,13 @@ class DbSync:
             else: _new_contentA , _new_contentB = _older_new_content[0], _B['content']
 
             try: cursorA.execute("update lsnote set title = (?), datelog = (?), flags = (?), content = (?), url = (?), readonly = (?), timestamp = (?), format_tag = (?), econtent = (?), reminder_ticks = (?), alert_count = (?), pixbuf_dict = (?) where note_id = (?)", (_A['title'], _A['datelog'], _A['flags'], _new_contentA, _A['url'], _A['readonly'], _A['timestamp'], _A['format_tag'], _A['econtent'], _A['reminder_ticks'], _A['alert_count'], _A['pixbuf_dict'], _note_id) )
-            except Exception, e: print "DEBUG 0 ", e
+            except Exception, e:
+              print "DEBUG 0 ", e
+              self.return_msg += "\nDEBUG0 error"
             try: cursorB.execute("update lsnote set title = (?), datelog = (?), flags = (?), content = (?), url = (?), readonly = (?), timestamp = (?), format_tag = (?), econtent = (?), reminder_ticks = (?), alert_count = (?), pixbuf_dict = (?) where note_id = (?)", (_B['title'], _B['datelog'], _B['flags'], _new_contentB, _B['url'], _B['readonly'], _B['timestamp'], _B['format_tag'], _B['econtent'], _B['reminder_ticks'], _B['alert_count'], _B['pixbuf_dict'], _note_id) )
-            except Exception, e: print "DEBUG 1 ", e
+            except Exception, e:
+              print "DEBUG 1 ", e
+              self.return_msg += "\nDEBUG1 error"
       else:
         """ Different title, they are two different notes """
         try:
@@ -102,15 +118,22 @@ class DbSync:
           else: print "Warning. Unable to get new id for A"
           cursorB.execute("update lsnote set note_id=(?) where note_id=(?)", (_newA_id, _note_id) )
           cursorB.execute("insert into lsnote(note_id, title, datelog, flags, content, url, readonly, timestamp, format_tag, econtent, reminder_ticks, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) )" , (_note_id, dictA[_note_id]['title'] , dictA[_note_id]['datelog'], dictA[_note_id]['flags'] , dictA[_note_id]['content'], dictA[_note_id]['url'], dictA[_note_id]['readonly'], dictA[_note_id]['timestamp'], dictA[_note_id]['format_tag'], dictA[_note_id]['econtent'], dictA[_note_id]['reminder_ticks'], dictA[_note_id]['alert_count'], dictA[_note_id]['pixbuf_dict']) )
-        except Exception, e: print "Error: when insert to when copying from ", e
+        except Exception, e:
+            print "Error: when insert to when copying from ", e
+            self.return_msg += "\nError: when insert to when copying from"
 
-import sqlite3, MySQLdb
+    cursorA.execute("select count(note_id) as last_sync_id from lsnote")
+    self.last_sync_id = cursorA.fetchone()['last_sync_id']
+    self.return_msg += "\nOperation completed successfully"
+    print self.return_msg
+    
 
 if  __name__ == "__main__":
   import sys,os
   con_list = []
   for dbstr in [sys.argv[1], sys.argv[2]]:
     if dbstr.startswith('mysql:'):
+      import MySQLdb
       (proto, host, port, dbname, user, password) = dbstr.split(':')
       connection = MySQLdb.connect(host=host, user=user,passwd = password, port = int(port) if port != '0' else 3306 )
       connection.cursor().execute('use %s' % dbname)

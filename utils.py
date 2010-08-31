@@ -141,6 +141,10 @@ def run_setup(dbpath=''):
   global CONFIGDIR
   if dbpath == '':
     chooser = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+    ffilter = gtk.FileFilter(); ffilter.add_pattern('*.sqlite3'); ffilter.set_name('sqlite3 Database')
+    ffilter1 = gtk.FileFilter(); ffilter1.add_pattern('*.db'); ffilter1.set_name('Database')
+    ffilter2 = gtk.FileFilter(); ffilter2.add_pattern('*.*'); ffilter2.set_name('All files')
+    chooser.add_filter(ffilter);chooser.add_filter(ffilter1);chooser.add_filter(ffilter2)
     res = chooser.run()
     if res == gtk.RESPONSE_OK: dbpath =  chooser.get_filename()
     chooser.destroy()

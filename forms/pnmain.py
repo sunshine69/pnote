@@ -58,7 +58,9 @@ class pnmain:
     'on_toolbar_menu_clicked': self.on_toolbar_menu_clicked,\
     'do_check_mail': lambda o: self.app.checkmail(server=None if self.search_mode=='note' else self.search_mode ) ,\
     'on_bt_find_button_release_event': self.on_bt_find_button_release_event,\
-    'on_run_vacuum': lambda o: self.dbcon.cursor().execute('VACUUM')
+    'on_run_vacuum': lambda o: self.dbcon.cursor().execute('VACUUM'),\
+    'on_sync_db': lambda o: self.sync_sqlite_db(),\
+    'on_sync_db_baseid': lambda o: self.sync_sqlite_db(ask_base_id = True), \
     }
     statusbar = self.statusbar = self.wTree.get_widget("statusbar")
     msgid = statusbar.push(1, " welcome to pnote")
@@ -91,6 +93,31 @@ class pnmain:
     self.wTree.signal_autoconnect(evtmap)
     self.keyword.grab_focus()
 
+  def sync_sqlite_db(self, ask_base_id = False):
+    remote_syncdb = get_config_key('data', 'remote_syncdb', 'none')
+    if remote_syncdb == 'none' or ask_base_id:
+      chooser = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_OPEN, buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+      chooser.set_current_folder(self.app.filechooser_dir)
+      ffilter = gtk.FileFilter(); ffilter.add_pattern('*.sqlite3'); ffilter.set_name('sqlite3 Database')
+      ffilter1 = gtk.FileFilter(); ffilter1.add_pattern('*.db'); ffilter1.set_name('Database')
+      ffilter2 = gtk.FileFilter(); ffilter2.add_pattern('*.*'); ffilter2.set_name('All files')
+      chooser.add_filter(ffilter);chooser.add_filter(ffilter1);chooser.add_filter(ffilter2)
+      res = chooser.run()
+      if res == gtk.RESPONSE_OK:
+        remote_syncdb =  chooser.get_filename()
+        save_config_key('data', 'remote_syncdb', remote_syncdb)
+        self.app.filechooser_dir = chooser.get_current_folder()
+      chooser.destroy()
+      
+    if remote_syncdb != '' and os.path.isfile(remote_syncdb):
+      if ask_base_id: last_sync_id = get_text_from_user('pnote - Enter', 'Endter base id you want to sync ')
+      else: last_sync_id = get_config_key('data', 'last_sync_id', '0')
+      from pdbsync import DbSync
+      remote_con = sqlite3.connect(remote_syncdb)      
+      sync_it_now = DbSync(self.app.dbcon, remote_con, base_id = int(last_sync_id) - 100 ) # use 100 for safer sync
+      save_config_key('data', 'last_sync_id', sync_it_now.last_sync_id)
+      message_box('pnote - Information', sync_it_now.return_msg)
+      
   def on_bt_find_button_release_event(self, o=None, evt=None):
     if evt.button == 1: self.do_search_cb(o,evt)
     else:
