@@ -79,9 +79,18 @@ class pnote:
     
   def load_run_time_out_tasks(self):
     gobject.timeout_add_seconds(int(get_config_key('global', 'reminder_timer_interval', '60') ), self.query_note_reminder )
+    gobject.timeout_add_seconds(120, self.save_pnmain_pos )
     if get_config_key('global', 'checkmail', 'no') == 'yes':
       gobject.timeout_add_seconds(int(get_config_key('global', 'check_mail_interval', '60') ), self.checkmail )
-    
+
+  def save_pnmain_pos(self):
+    try:
+      w1 = self.pnmain.w.window
+      x,y=w1.get_root_origin()
+      save_config_key('data', 'pnmain_win_pos', "%s:%s" % (x,y) )
+      return False
+    except: return True
+      
   def checkmail(self, server = None):
     try:
         imapconn = None

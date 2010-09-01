@@ -61,6 +61,7 @@ class pnmain:
     'on_run_vacuum': lambda o: self.dbcon.cursor().execute('VACUUM'),\
     'on_sync_db': lambda o: self.sync_sqlite_db(),\
     'on_sync_db_baseid': lambda o: self.sync_sqlite_db(ask_base_id = True), \
+
     }
     statusbar = self.statusbar = self.wTree.get_widget("statusbar")
     msgid = statusbar.push(1, " welcome to pnote")
@@ -90,9 +91,12 @@ class pnmain:
     self.search_mode = 'note'
     self.imapdata = None
     self.tempdata = dict() # to store wany temporal data
+    win_pos = get_config_key('data', 'pnmain_win_pos', '0:0')
+    wx,wy = win_pos.split(':')
+    if wx != '0' and wy != '0': self.w.move(int(wx), int(wy))
     self.wTree.signal_autoconnect(evtmap)
     self.keyword.grab_focus()
-
+  
   def sync_sqlite_db(self, ask_base_id = False):
     remote_syncdb = get_config_key('data', 'remote_syncdb', 'none')
     if remote_syncdb == 'none' or ask_base_id:
@@ -265,8 +269,9 @@ class pnmain:
     response = abt.run()
     abt.destroy()
       
-  def save_config(self): save_config_key('data', 'keywords', self.pn_completion.get_list_str() )
-              
+  def save_config(self):
+    save_config_key('data', 'keywords', self.pn_completion.get_list_str() )
+    
   def do_exit(self, obj=None, data=None): # Exit here will NOT save the dbpath to teh config file
     print "Destroy called"
     self.save_config()
