@@ -16,7 +16,7 @@ try:
 except:
  pass
 
-import sqlite3, types, cPickle, base64
+import sqlite3, types, cPickle, base64, threading, subprocess
 from forms import pnote_new
 from utils import *
 
@@ -61,6 +61,8 @@ class pnmain:
     'on_run_vacuum': lambda o: self.dbcon.cursor().execute('VACUUM'),\
     'on_sync_db': lambda o: self.sync_sqlite_db(),\
     'on_sync_db_baseid': lambda o: self.sync_sqlite_db(ask_base_id = True), \
+    'on_control_script_run': lambda o: self.on_control_script_run() ,\
+    'on_run_script': lambda o: self.run_script() ,\
 
     }
     statusbar = self.statusbar = self.wTree.get_widget("statusbar")
@@ -94,13 +96,36 @@ class pnmain:
     win_pos = get_config_key('data', 'pnmain_win_pos', '0:0')
     wx,wy = win_pos.split(':')
     if wx != '0' and wy != '0': self.w.move(int(wx), int(wy))
+    startup_cmds = get_config_key('global', 'startup_cmds', '').split(':')
+    for _cmds in startup_cmds: self.run_script(file_name = _cmds)
     self.wTree.signal_autoconnect(evtmap)
     self.keyword.grab_focus()
-  
+
+  def run_script(self, file_name = None):
+      if file_name == None:
+          chooser = gtk.FileChooserDialog(title="Select script to run or type command to run",action=gtk.FILE_CHOOSER_ACTION_OPEN, buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+          chooser.set_current_folder(self.app.filechooser_dir)
+          file_name = None
+          res = chooser.run()
+          if res == gtk.RESPONSE_OK:
+            file_name =  chooser.get_filename()
+            self.app.filechooser_dir = chooser.get_current_folder()
+          chooser.destroy()
+      elif file_name == '': return
+      if os.path.isfile(file_name):
+        subp = subprocess.Popen(shlex.split(file_name), stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+      else:
+        cmds = os.path.basename(file_name); print cmds
+        subp = subprocess.Popen(shlex.split(cmds), stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+      threading.Thread(target = lambda: subp.wait() ).start()
+      self.app.list_popen.append(subp)
+      
+  def on_control_script_run(self): pass
+      
   def sync_sqlite_db(self, ask_base_id = False):
     remote_syncdb = get_config_key('data', 'remote_syncdb', 'none')
     if remote_syncdb == 'none' or ask_base_id:
-      chooser = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_OPEN, buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+      chooser = gtk.FileChooserDialog(title="Select second database file to sync with",action=gtk.FILE_CHOOSER_ACTION_OPEN, buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
       chooser.set_current_folder(self.app.filechooser_dir)
       ffilter = gtk.FileFilter(); ffilter.add_pattern('*.sqlite3'); ffilter.set_name('sqlite3 Database')
       ffilter1 = gtk.FileFilter(); ffilter1.add_pattern('*.db'); ffilter1.set_name('Database')
@@ -273,7 +298,6 @@ class pnmain:
     save_config_key('data', 'keywords', self.pn_completion.get_list_str() )
     
   def do_exit(self, obj=None, data=None): # Exit here will NOT save the dbpath to teh config file
-    print "Destroy called"
     self.save_config()
     self.app.do_exit(flag='from_pnmain')
     

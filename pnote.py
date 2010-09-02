@@ -11,9 +11,9 @@ if sys.platform=="win32":
 sys.path.append(sys.path[0])
 os.chdir(sys.path[0])
 
-import pygtk, gtk, gobject
+import pygtk, gtk, gobject, time
 import ConfigParser, sqlite3, base64
-import imaplib, email
+import imaplib, email, subprocess
 
 SETTINGS = gtk.settings_get_default()
 
@@ -28,7 +28,7 @@ from forms import pnmain, pnote_new
 from utils import *
 from clipboard import PnClipboard
 
-version = 0,4,0
+version = 0,4
 
 class pnote:
    
@@ -57,6 +57,7 @@ class pnote:
     self.pnmain = None
     self.note_list = {}
     self.new_note_list = []
+    self.list_popen = [] # List forked process in Run Script
     self.imapconn = dict()
     dbpathstr = get_config_key('data', 'db_paths', 'None')
     if not dbpathstr == 'None':
@@ -74,12 +75,21 @@ class pnote:
     self.clipboards = PnClipboard()
     self.current_mailbox = 'INBOX'
     
+  def cleanup_process(self):
+    for subp in self.list_popen:
+      retcode = subp.poll()
+      if retcode != None: self.list_popen.remove(subp)
+
+    return True  
+          
+          
   def reload_config(self): # this to reload anything that has config changes. Usually in __init__
     self.load_run_time_out_tasks()
     
   def load_run_time_out_tasks(self):
     gobject.timeout_add_seconds(int(get_config_key('global', 'reminder_timer_interval', '60') ), self.query_note_reminder )
     gobject.timeout_add_seconds(120, self.save_pnmain_pos )
+    gobject.timeout_add_seconds(600, self.cleanup_process )
     if get_config_key('global', 'checkmail', 'no') == 'yes':
       gobject.timeout_add_seconds(int(get_config_key('global', 'check_mail_interval', '60') ), self.checkmail )
 
@@ -255,7 +265,12 @@ class pnote:
       except: pass
     for key in dict.keys(self.note_list): self.note_list[key].do_save(flag='NO_SAVE_SIZE')
     for newnote in self.new_note_list: newnote.do_save(flag='NO_SAVE_SIZE')
-      
+    for subp in self.list_popen:
+      while subp.poll() == None:
+        subp.terminate()
+        time.sleep(int(get_config_key('global', 'process_timeout', '2') ) )
+        try: subp.kill()
+        except: pass
     save_config_key('data', 'main_db_path',self.dbpath)
     gtk.main_quit()
 

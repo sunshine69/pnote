@@ -46,6 +46,23 @@
                       </widget>
                     </child>
                     <child>
+                      <widget class="GtkMenuItem" id="menuitem8">
+                        <property name="visible">True</property>
+                        <property name="tooltip" translatable="yes">Fork and run a script </property>
+                        <property name="label" translatable="yes">Run script</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="on_run_script"/>
+                      </widget>
+                    </child>
+                    <child>
+                      <widget class="GtkMenuItem" id="menuitem9">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">Control script run</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="on_control_script_run"/>
+                      </widget>
+                    </child>
+                    <child>
                       <widget class="GtkSeparatorMenuItem" id="separatormenuitem2">
                         <property name="visible">True</property>
                       </widget>
