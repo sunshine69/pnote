@@ -156,7 +156,7 @@ def run_setup(dbpath=''):
   message_box('Information', msg)
   conn = sqlite3.connect(dbpath)
   conn.executescript("""
-  CREATE TABLE lsnote(note_id integer primary key, title varchar(254), datelog date, content text, url varchar(254), reminder_ticks unsigned long long default 0, flags varchar(50), timestamp unsigned long long, readonly integer default 0, format_tag BLOB, econtent BLOB, alert_count integer default 0, pixbuf_dict BLOB);
+  CREATE TABLE lsnote(note_id integer primary key, title varchar(254) unique, datelog date, content text, url varchar(254), reminder_ticks unsigned long long default 0, flags varchar(50), timestamp unsigned long long, readonly integer default 0, format_tag BLOB, econtent BLOB, alert_count integer default 0, pixbuf_dict BLOB);
   create index reminder_ticks_idx on lsnote(reminder_ticks DESC);
   create index timestamp_idx on lsnote(timestamp DESC);
   """)

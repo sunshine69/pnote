@@ -644,7 +644,7 @@ class PnoteNew:
         self.content.get_buffer().set_modified(False)
         self.wTree.get_widget('bt_cancel').set_label('_Close')
         dbc.close()
-      except Exception as e: print e
+      except Exception as e: message_box('Error in insert or update', "Sorry there is error: %s\nUsually the title is duplicated. Try to change the title of the note and try again" % e)
     else: print "Not modified. No save"
     if flag != 'NO_SAVE_SIZE': self.save_window_size()
     self.w.set_title(self.title.get_text()[0:30])
