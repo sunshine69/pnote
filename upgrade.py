@@ -17,7 +17,8 @@ con.row_factory = sqlite3.Row
 con.text_factory = str
 cur = con.cursor()
 try: cur.execute("CREATE TABLE TEMP as select * from lsnote")
-except:
+except Exception, e:
+  print e
   cur.execute("DROP TABLE TEMP")
   cur.execute("CREATE TABLE TEMP as select * from lsnote")
 try: 
