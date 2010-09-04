@@ -1,11 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os,sys,sqlite3, shutil, time
+import os,sys,sqlite3, shutil, time, random, md5
 
 """ Run the sql script to update the database if needed between upgrade version """
 
 from utils import *
+
+def getNewSID2(tag=''):
+        """Build a new Session ID"""
+        t1 = time.time()
+        t2 = t1 + random.random()
+        base = md5.new( tag + str(t1 +t2) )
+        sid = tag + '_' + base.hexdigest()
+        return sid
 
 def first_upgrade(con):
 
@@ -29,19 +37,27 @@ def first_upgrade(con):
         try:
           con.cursor().execute("INSERT INTO lsnote(note_id, title, datelog, content, url, reminder_ticks, flags, timestamp, readonly, format_tag, econtent, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) ) ", (row['note_id'],row['title'], row['datelog'], row['content'], row['url'], row['reminder_ticks'], row['flags'], row['timestamp'], row['readonly'], row['format_tag'], row['econtent'], row['alert_count'], row['pixbuf_dict'] )  )
         except Exception, e:
+          print "Error, lets see what"
           if ("%s" % e).startswith('column title is not unique'):
+            print "title not unique. go on to make new title if needed"
             _cs = con.cursor()
             _cs.execute("select * from lsnote where title = (?)", (row['title'],))
             _row = _cs.fetchone()
             if _row['content'] != row['content']:
-              new_title = "%s - %s" % ( row['title'], time.time())
-              con.cursor().execute("INSERT INTO lsnote(note_id, title, datelog, content, url, reminder_ticks, flags, timestamp, readonly, format_tag, econtent, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) ) ", (row['note_id'], new_title, row['datelog'], row['content'], row['url'], row['reminder_ticks'], row['flags'], row['timestamp'], row['readonly'], row['format_tag'], row['econtent'], row['alert_count'], row['pixbuf_dict'] )  )
-              
+              new_title = "%s - %s" % ( row['title'], getNewSID2() )
+              print "okay needed and new title is %s" % new_title
+              try:
+                con.cursor().execute("INSERT INTO lsnote(note_id, title, datelog, content, url, reminder_ticks, flags, timestamp, readonly, format_tag, econtent, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) ) ", (row['note_id'], new_title, row['datelog'], row['content'], row['url'], row['reminder_ticks'], row['flags'], row['timestamp'], row['readonly'], row['format_tag'], row['econtent'], row['alert_count'], row['pixbuf_dict'] )  )
+              except Exception, e: print "Still error? %s" % e
+            _cs.close()  
+
+      csor.close()
       con.commit()
       message_box('Success', "Operation completed succesfully. A backup file %s.backup is created. Its fate depends on you :-)" % dbpaths)
     except Exception, e:
-      cur.execute("DROP TABLE TEMP")
-      message_box('Error', "Sorry there is error: %s\nA backup of the database is in %s.backup. You can restore it in case of need." % e)
+      message_box('Error', "Sorry there is error: %s\nA backup of the database is in .backup. You can restore it in case of need." % e )
+      
+    cur.execute("DROP TABLE TEMP")      
   
 def second_upgrade(con):
   try: con.execute("DROP TABLE deleted_notes")
