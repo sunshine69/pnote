@@ -48,29 +48,54 @@ class DbSync:
     A_not_have = setB - both_A_B_has
     B_not_have = setA - both_A_B_has
 
-    msg = "A_not_have: %s records" % len(A_not_have)
+    msg = "\nA_not_have: %s records" % len(A_not_have)
     self.return_msg += msg
     print msg
     for _note_id in A_not_have:
       try:
+        cursorA.execute("select * from deleted_notes where note_id = %s" % _note_id )
+        ret_val = cursorA.fetchone()
+        if ret_val != None:
+          if ret_val['timestamp'] >= dictB[_note_id]['timestamp']:
+            cursorB.execute("delete from lsnote where note_id = %s" % (_note_id) )
+            continue
+
         cursorA.execute("insert into lsnote(note_id, title, datelog, flags, content, url, readonly, timestamp, format_tag, econtent, reminder_ticks, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) )" , (_note_id, dictB[_note_id]['title'] , dictB[_note_id]['datelog'], dictB[_note_id]['flags'] , dictB[_note_id]['content'], dictB[_note_id]['url'], dictB[_note_id]['readonly'], dictB[_note_id]['timestamp'], dictB[_note_id]['format_tag'], dictB[_note_id]['econtent'], dictB[_note_id]['reminder_ticks'], dictB[_note_id]['alert_count'], dictB[_note_id]['pixbuf_dict']) )
+        print "Insert to A OK: id: %s, title: %s" % (_note_id, dictB[_note_id]['title'])
       except Exception, e:
-        print "Error: when insert to A", e
-        self.return_msg += "ERROR when insert to A"
+        if ("%s" % e).startswith('column title is not unique'):
+          try: cursorA.execute("update lsnote set note_id = (?) where title = (?)" , (_note_id, dictB[_note_id]['title'] ) )
+          except Exception, e:
+            print "Error updating A: %s" % e
+            print "Error: when insert to A", e
+            self.return_msg += "\nERROR when insert to A: %s: Title: %s" % ( e, dictB[_note_id]['title'])
 
     msg = "\nB_not_have: %s records." % len(B_not_have)
     self.return_msg += msg
     print msg
     for _note_id in B_not_have:
       try:
+        cursorB.execute("select * from deleted_notes where note_id = %s" % _note_id )
+        ret_val = cursorB.fetchone()
+        if ret_val != None:
+          if ret_val['timestamp'] >= dictA[_note_id]['timestamp']:
+            cursorA.execute("delete from lsnote where note_id = %s" % (_note_id) )
+            continue
         cursorB.execute("insert into lsnote(note_id, title, datelog, flags, content, url, readonly, timestamp, format_tag, econtent, reminder_ticks, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) )" , (_note_id, dictA[_note_id]['title'] , dictA[_note_id]['datelog'], dictA[_note_id]['flags'] , dictA[_note_id]['content'], dictA[_note_id]['url'], dictA[_note_id]['readonly'], dictA[_note_id]['timestamp'], dictA[_note_id]['format_tag'], dictA[_note_id]['econtent'], dictA[_note_id]['reminder_ticks'], dictA[_note_id]['alert_count'], dictA[_note_id]['pixbuf_dict']) )
+        print "Insert to B OK: id: %s, title: %s" % (_note_id, dictA[_note_id]['title'])
       except Exception, e:
-        print "Error: when insert to B", e
-        self.return_msg += "\nERROR when insert to B"
+        if ("%s" % e).startswith('column title is not unique'):
+          try: cursorB.execute("update lsnote set note_id = (?) where title = (?)" , (_note_id, dictA[_note_id]['title'] ) )
+          except Exception, e:
+            print "Error updating B: %s" % e
+            print "Error: when insert to B %s" % e
+            self.return_msg += "\nERROR when insert to B: %s: Title: %s" % (e, dictA[_note_id]['title'])
 
     msg =  "\nBoth A and B has %s records. Will sync all of them. This will take a long time!" % len(both_A_B_has)
     self.return_msg += msg
     print msg
+    cursorA.execute("select max(note_id) as last_sync_id from lsnote")
+    self.last_sync_id = cursorA.fetchone()['last_sync_id']    
     for _note_id in both_A_B_has:
       _A, _B = dictA[_note_id], dictB[_note_id]
       if _A['title'] == _B['title']:
@@ -109,21 +134,47 @@ class DbSync:
             try: cursorB.execute("update lsnote set title = (?), datelog = (?), flags = (?), content = (?), url = (?), readonly = (?), timestamp = (?), format_tag = (?), econtent = (?), reminder_ticks = (?), alert_count = (?), pixbuf_dict = (?) where note_id = (?)", (_B['title'], _B['datelog'], _B['flags'], _new_contentB, _B['url'], _B['readonly'], _B['timestamp'], _B['format_tag'], _B['econtent'], _B['reminder_ticks'], _B['alert_count'], _B['pixbuf_dict'], _note_id) )
             except Exception, e:
               print "DEBUG 1 ", e
-              self.return_msg += "\nDEBUG1 error"
+              self.return_msg += "\nDEBUG1 error: %s" % e
       else:
         """ Different title, they are two different notes """
+        
         try:
           cursorA.execute("insert into lsnote(title, datelog, flags, content, url, readonly, timestamp, format_tag, econtent, reminder_ticks, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) )" , (dictB[_note_id]['title'] , dictB[_note_id]['datelog'], dictB[_note_id]['flags'] , dictB[_note_id]['content'], dictB[_note_id]['url'], dictB[_note_id]['readonly'], dictB[_note_id]['timestamp'], dictB[_note_id]['format_tag'], dictB[_note_id]['econtent'], dictB[_note_id]['reminder_ticks'], dictB[_note_id]['alert_count'], dictB[_note_id]['pixbuf_dict']) )
-          if cursorA.lastrowid != None: _newA_id = cursorA.lastrowid
+          if cursorA.lastrowid != None:
+            _newA_id = cursorA.lastrowid
+            cursorB.execute("update lsnote set note_id=(?) where note_id=(?)", (_newA_id, _note_id) )
           else: print "Warning. Unable to get new id for A"
-          cursorB.execute("update lsnote set note_id=(?) where note_id=(?)", (_newA_id, _note_id) )
+          
+        except Exception, e:
+            if ("%s" % e).startswith('column title is not unique'):
+              # If A has a ntoe with the same title of the B then inserting here will conflict. Actually they both have same note but different ID. Daling with by update A this title to hieash one, and then B the same ID (w created a hole in ID but it is fine)
+              next_id = self.last_sync_id + 1
+              # Hope that only one note has same title. We did remove duplicate using upgrade.py script anyway. If not the case, run that script again to normalize data
+              try:
+                cursorA.execute("UPDATE lsnote set note_id = (?) where title = (?)", (next_id, _B['title'] ) )
+                cursorB.execute("UPDATE lsnote set note_id = (?) where title = (?)", (next_id, _B['title']) )
+                self.last_sync_id = next_id
+              except Exception, e: print "Error DEBUG2: %s" % e
+            else:
+              print "Error: when insert to A / copying from B: %s " % e
+              self.return_msg += "\nError: when insert to when copying from: %s: Title A: %s, B: %s" % (e , _A['title'], _B['title']) 
+        try:
           cursorB.execute("insert into lsnote(note_id, title, datelog, flags, content, url, readonly, timestamp, format_tag, econtent, reminder_ticks, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) )" , (_note_id, dictA[_note_id]['title'] , dictA[_note_id]['datelog'], dictA[_note_id]['flags'] , dictA[_note_id]['content'], dictA[_note_id]['url'], dictA[_note_id]['readonly'], dictA[_note_id]['timestamp'], dictA[_note_id]['format_tag'], dictA[_note_id]['econtent'], dictA[_note_id]['reminder_ticks'], dictA[_note_id]['alert_count'], dictA[_note_id]['pixbuf_dict']) )
         except Exception, e:
-            print "Error: when insert to when copying from ", e
-            self.return_msg += "\nError: when insert to when copying from"
+          if ("%s" % e).startswith('column title is not unique'):
+            next_id = self.last_sync_id + 1
+            # Hope that only one note has same title. We did remove duplicate using upgrade.py script anyway. If not the case, run that script again to normalize data
+            try:
+              cursorB.execute("UPDATE lsnote set note_id = (?) where title = (?)", (next_id, _A['title'] ) )
+              cursorA.execute("UPDATE lsnote set note_id = (?) where title = (?)", (next_id, _A['title']) )
+              self.last_sync_id = next_id
+            except Exception, e: print "Error DEBUG3: %s" % e
+          else:
+              print "Error: when insert to B / copying from A: %s " % e
+              self.return_msg += "\nError: when insert to when copying from: %s: Title A: %s, B: %s" % (e , _A['title'], _B['title'])
 
-    cursorA.execute("select count(note_id) as last_sync_id from lsnote")
-    self.last_sync_id = cursorA.fetchone()['last_sync_id']
+    A.commit()
+    B.commit()
     self.return_msg += "\nOperation completed successfully"
     print self.return_msg
     
@@ -149,8 +200,8 @@ if  __name__ == "__main__":
   try: base_id = sys.argv[3]
   except: base_id = 0
   mydbsync = DbSync(con_list[0], con_list[1], base_id = base_id)
-  con_list[0].commit()
-  con_list[1].commit()
+  con_list[0].commit(); print "Commited 0"
+  con_list[1].commit(); print "Commited 1"
   try:
     action = sys.argv[4]
     if action == 'vacuum':
