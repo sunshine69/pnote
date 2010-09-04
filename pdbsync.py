@@ -24,9 +24,21 @@ class DbSync:
     A.text_factory = str # sqlite3.OptimizedUnicode
     B.row_factory = sqlite3.Row
     B.text_factory = str # sqlite3.OptimizedUnicode
+    self.A = A; self.B = B; self.args = args
+
+  def add_note_same_title(self):
+    # A has many notes same title, Added to B with title changes
+    A = self.A; B = self.B    
     dmp=patch.diff_match_patch()
     cursorA, cursorB = A.cursor(), B.cursor()
-    base_id = args.get('base_id', 0)
+    cursorA.execute("select * from lsnote where flags like '%TRIGRAM%' or content like '%Tuan Khong%'")
+    # No not doing it
+      
+  def do_sync(self):
+    A = self.A; B = self.B    
+    dmp=patch.diff_match_patch()
+    cursorA, cursorB = A.cursor(), B.cursor()
+    base_id = self.args.get('base_id', 0)
     self.return_msg = 'Started, base_id %s' % base_id
     sqlcmd = 'select * from lsnote where note_id > %s' % base_id
     cursorA.execute(sqlcmd)
@@ -172,11 +184,14 @@ class DbSync:
           else:
               print "Error: when insert to B / copying from A: %s " % e
               self.return_msg += "\nError: when insert to when copying from: %s: Title A: %s, B: %s" % (e , _A['title'], _B['title'])
-
-    A.commit()
-    B.commit()
+    return self
+          
+  def commit(self):
+    self.A.commit()
+    self.B.commit()
     self.return_msg += "\nOperation completed successfully"
     print self.return_msg
+    return self
     
 
 if  __name__ == "__main__":
@@ -200,8 +215,8 @@ if  __name__ == "__main__":
   try: base_id = sys.argv[3]
   except: base_id = 0
   mydbsync = DbSync(con_list[0], con_list[1], base_id = base_id)
-  con_list[0].commit(); print "Commited 0"
-  con_list[1].commit(); print "Commited 1"
+  mydbsync.do_sync()
+  mydbsync.commit()
   try:
     action = sys.argv[4]
     if action == 'vacuum':

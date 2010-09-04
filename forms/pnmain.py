@@ -143,7 +143,8 @@ class pnmain:
       else: last_sync_id = get_config_key('data', 'last_sync_id', '0')
       from pdbsync import DbSync
       remote_con = sqlite3.connect(remote_syncdb)      
-      sync_it_now = DbSync(self.app.dbcon, remote_con, base_id = int(last_sync_id) ) 
+      sync_it_now = DbSync(self.app.dbcon, remote_con, base_id = int(last_sync_id) - int(get_config_key('data', 'count_notes_sync', '250')) )
+      sync_it_now.do_sync().commit()
       save_config_key('data', 'last_sync_id', sync_it_now.last_sync_id)
       message_box('pnote - Information', sync_it_now.return_msg)
       
