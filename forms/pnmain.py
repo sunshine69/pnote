@@ -237,12 +237,32 @@ class pnmain:
     def calculate_total_time_spent(obj=None):
       msg = "Total time in minute: %2d:%2d" % divmod(sum([ get_a_note(app= self.app,note_id = _temp[0], dbname = _temp[1] )['time_spent'] for _temp in list_id_dbname ]), 60)
       message_box('pnote - Total time spent', msg)
+
+    def run_sql(obj=None):
+      sql = get_text_from_user('pnote - Enter', "Enter sql command to execute. I will append where note_id in (id1, id2, ..)\nExample: update from %s.lsnote set flags = 'New flasg'\nThe %s is required (be replaced by actual dbname)")
+      if sql != '' and sql != None:
+        no_error = True
+        for _id, dbname in list_id_dbname:
+          sql1 = sql % dbname
+          sql1 = "%s where note_id = %s" % (sql1, _id)
+          try: self.app.dbcon.execute(sql1)
+          except Exception, e:
+            no_error = False
+            message_box('pnote - error', "Sorry there is error: %s" % e)
+        if no_error:
+          self.app.dbcon.commit()
+          message_box('pnote - success', 'Operation completed successfuly')
+        
     # Add MORE Funtion to process here
     
+      
     menu = gtk.Menu()
     menuitem1 = gtk.MenuItem("Display total time spent")
     menuitem1.connect('activate', calculate_total_time_spent)
     menu.append(menuitem1); menuitem1.show()
+    menuitem2 = gtk.MenuItem("Run sql on these notes")
+    menuitem2.connect('activate', run_sql )
+    menu.append(menuitem2); menuitem2.show()
     return menu
     
   def on_result_list_button_press_event(self, treeview, event):
