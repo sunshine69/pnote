@@ -72,8 +72,10 @@ class DbSync:
         cursorA.execute("select * from deleted_notes where note_id = %s" % _note_id )
         ret_val = cursorA.fetchone()
         if ret_val != None:
-          if ret_val['timestamp'] >= dictB[_note_id]['timestamp']:
+          if ret_val['timestamp'] >= dictB[_note_id]['timestamp'] and ret_val['title'] == dictB[_note_id]['title']:
             cursorB.execute("delete from lsnote where note_id = %s" % (_note_id) )
+            cursorB.execute("delete from deleted_notes where note_id = %s" % (_note_id) )
+            cursorA.execute("delete from deleted_notes where note_id = %s" % (_note_id) )
             continue
           
         if self.DEBUG: print "gone to insert id: %s, title: %s"   % (_note_id, dictB[_note_id]['title'])
@@ -98,8 +100,10 @@ class DbSync:
         cursorB.execute("select * from deleted_notes where note_id = %s" % _note_id )
         ret_val = cursorB.fetchone()
         if ret_val != None:
-          if ret_val['timestamp'] >= dictA[_note_id]['timestamp']:
+          if ret_val['timestamp'] >= dictA[_note_id]['timestamp'] and ret_val['title'] == dictA[_note_id]['title']:
             cursorA.execute("delete from lsnote where note_id = %s" % (_note_id) )
+            cursorA.execute("delete from deleted_notes where note_id = %s" % (_note_id) )
+            cursorB.execute("delete from deleted_notes where note_id = %s" % (_note_id) )
             continue
         if self.DEBUG: print "gone to insert id: %s, title: %s"   % (_note_id, dictA[_note_id]['title'])
         cursorB.execute("insert into lsnote(note_id, title, datelog, flags, content, url, readonly, timestamp, format_tag, econtent, reminder_ticks, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) )" , (_note_id, dictA[_note_id]['title'] , dictA[_note_id]['datelog'], dictA[_note_id]['flags'] , dictA[_note_id]['content'], dictA[_note_id]['url'], dictA[_note_id]['readonly'], dictA[_note_id]['timestamp'], dictA[_note_id]['format_tag'], dictA[_note_id]['econtent'], dictA[_note_id]['reminder_ticks'], dictA[_note_id]['alert_count'], dictA[_note_id]['pixbuf_dict']) )

@@ -26,7 +26,7 @@ def first_upgrade(con):
     try: 
       con.executescript("""
       DROP TABLE lsnote;
-      CREATE TABLE lsnote(note_id integer primary key, title varchar(254) unique, datelog date, content text, url varchar(254), reminder_ticks unsigned long long default 0, flags varchar(50), timestamp unsigned long long, readonly integer default 0, format_tag BLOB, econtent BLOB, alert_count integer default 0, pixbuf_dict BLOB);
+      CREATE TABLE lsnote(note_id integer primary key, title varchar(254) unique, datelog date, content text, url varchar(254), reminder_ticks unsigned long long default 0, flags varchar(50), timestamp unsigned long long, readonly integer default 0, format_tag BLOB, econtent BLOB, alert_count integer default 0, pixbuf_dict BLOB, time_spent integer default 0);
       create index reminder_ticks_idx on lsnote(reminder_ticks DESC);
       create index timestamp_idx on lsnote(timestamp DESC);""")
       csor = con.cursor()
@@ -34,8 +34,10 @@ def first_upgrade(con):
       while (True):
         row = csor.fetchone()
         if row == None: break
+        try: _time_spent = row['time_spent'] # old db may not have this field
+        except: _time_spent = 0
         try:
-          con.cursor().execute("INSERT INTO lsnote(note_id, title, datelog, content, url, reminder_ticks, flags, timestamp, readonly, format_tag, econtent, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) ) ", (row['note_id'],row['title'], row['datelog'], row['content'], row['url'], row['reminder_ticks'], row['flags'], row['timestamp'], row['readonly'], row['format_tag'], row['econtent'], row['alert_count'], row['pixbuf_dict'] )  )
+          con.cursor().execute("INSERT INTO lsnote(note_id, title, datelog, content, url, reminder_ticks, flags, timestamp, readonly, format_tag, econtent, alert_count, pixbuf_dict, time_spent) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) ) ", (row['note_id'],row['title'], row['datelog'], row['content'], row['url'], row['reminder_ticks'], row['flags'], row['timestamp'], row['readonly'], row['format_tag'], row['econtent'], row['alert_count'], row['pixbuf_dict'], _time_spent )  )
         except Exception, e:
           print "Error, lets see what"
           if ("%s" % e).startswith('column title is not unique'):
@@ -47,7 +49,7 @@ def first_upgrade(con):
               new_title = "%s - %s" % ( row['title'], getNewSID2() )
               print "okay needed and new title is %s" % new_title
               try:
-                con.cursor().execute("INSERT INTO lsnote(note_id, title, datelog, content, url, reminder_ticks, flags, timestamp, readonly, format_tag, econtent, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) ) ", (row['note_id'], new_title, row['datelog'], row['content'], row['url'], row['reminder_ticks'], row['flags'], row['timestamp'], row['readonly'], row['format_tag'], row['econtent'], row['alert_count'], row['pixbuf_dict'] )  )
+                con.cursor().execute("INSERT INTO lsnote(note_id, title, datelog, content, url, reminder_ticks, flags, timestamp, readonly, format_tag, econtent, alert_count, pixbuf_dict, time_spent) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) ) ", (row['note_id'], new_title, row['datelog'], row['content'], row['url'], row['reminder_ticks'], row['flags'], row['timestamp'], row['readonly'], row['format_tag'], row['econtent'], row['alert_count'], row['pixbuf_dict'], _time_spent )  )
               except Exception, e: print "Still error? %s" % e
             _cs.close()  
 
@@ -64,10 +66,15 @@ def second_upgrade(con):
   except: pass
   try:
     con.executescript(r"""
-    CREATE TABLE deleted_notes(note_id int unique, timestamp integer );
+    CREATE TABLE deleted_notes(note_id int unique, timestamp integer, title varchar(254) );
     CREATE TRIGGER deleted_note AFTER DELETE ON lsnote
     BEGIN
-      INSERT INTO deleted_notes(note_id, timestamp) values(OLD.note_id, strftime('%s','now'));
+      INSERT INTO deleted_notes(note_id, timestamp, title) values(OLD.note_id, strftime('%s','now'), OLD.title);
+    END;
+    CREATE TRIGGER after_insert AFTER INSERT ON lsnote
+    --sqlite3 reuse ID, this avoid the non-deletable case when just new note inserted, got deleted, and inserted again then the note will be undeletable
+    BEGIN
+      DELETE FROM deleted_notes where note_id = NEW.note_id;
     END;
     """  )
   except: pass

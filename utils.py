@@ -156,10 +156,19 @@ def run_setup(dbpath=''):
   message_box('Information', msg)
   conn = sqlite3.connect(dbpath)
   conn.executescript("""
-  CREATE TABLE lsnote(note_id integer primary key, title varchar(254) unique, datelog date, content text, url varchar(254), reminder_ticks unsigned long long default 0, flags varchar(50), timestamp unsigned long long, readonly integer default 0, format_tag BLOB, econtent BLOB, alert_count integer default 0, pixbuf_dict BLOB);
+  CREATE TABLE lsnote(note_id integer primary key, title varchar(254) unique, datelog date, content text, url varchar(254), reminder_ticks unsigned long long default 0, flags varchar(50), timestamp unsigned long long, readonly integer default 0, format_tag BLOB, econtent BLOB, alert_count integer default 0, pixbuf_dict BLOB, time_spent integer default 0);
   create index reminder_ticks_idx on lsnote(reminder_ticks DESC);
   create index timestamp_idx on lsnote(timestamp DESC);
-  """)
+  CREATE TABLE deleted_notes(note_id int unique, timestamp integer, title varchar(254) );
+    CREATE TRIGGER deleted_note AFTER DELETE ON lsnote
+    BEGIN
+      INSERT INTO deleted_notes(note_id, timestamp, title ) values(OLD.note_id, strftime('%s','now'), OLD.title );
+    END;
+    CREATE TRIGGER after_insert AFTER INSERT ON lsnote
+    BEGIN
+      DELETE FROM deleted_notes where note_id = NEW.note_id;
+    END;
+    """)
   conn.commit()
   msg = "Completed. if you set a new database file you can attached it by editing the config file in your {0}{1}{2}{3}pnote.cfg".format(os.path.expanduser("~"), os.path.sep, CONFIGDIR, os.path.sep )
   print msg

@@ -143,6 +143,7 @@ class PnoteNew:
       url.set_text('' if row['url'] == None else row['url'] )
       self.readonly = row['readonly']
       self.timestamp = row['timestamp']
+      self.time_spent = row['time_spent']
       self.econtent = (row['econtent'] if not row['econtent'] == None else '')
       self.reminder_ticks = row['reminder_ticks']
       self.alert_count = row['alert_count']
@@ -168,7 +169,8 @@ class PnoteNew:
       _timenow = time.strftime("%d-%m-%Y %H:%M")
       self.datelog.set_text(_timenow)
       self.w.set_title('New note '+_timenow )
-
+      self.time_spent = 0
+      
     self.content.get_buffer().undo_reset()
     self.wTree.signal_autoconnect(evtmap)
     #self.content.get_buffer().connect('apply-tag', self.on_apply_tag)
@@ -425,7 +427,7 @@ class PnoteNew:
     save_config_key('data', 'list_flags', get_config_key('data', 'list_flags') + '|' + fname )
   
   def on_show_noteinfo(self, o=None):
-    msg = "note_id: {0}\nLast update: {1}\nDatabase name: {2}\nDatabase file path: {3}\n".format(self.note_id, time.ctime(self.timestamp), self.dbname, self.app.dbpaths[self.dbname] )
+    msg = "note_id: %s\nLast update: %s\nDatabase name: %s\nDatabase file path: %s\nTotal time (mins) spent: %s\n" % (self.note_id, time.ctime(self.timestamp), self.dbname, self.app.dbpaths[self.dbname], "%02d:%02d" % divmod(self.time_spent, 60) )
     NoteInfo(self, msg).w.show_all()
 
   def on_delete_note(self, o):
@@ -535,7 +537,9 @@ class PnoteNew:
         
   def on_end_update(self, o=None):
     if not self.start_time == 0:
-      period = "%02d:%02d" % divmod((int(time.time()) - self.start_time), 60)
+      _length_in_sec = int(time.time()) - self.start_time
+      period = "%02d:%02d" % divmod(_length_in_sec, 60)
+      self.time_spent += _length_in_sec
       end_date = time.strftime("%A %d %B %Y %H:%M:%S")
       tex = "\nEnd Update: {0}\nLength(min): {1}".format(end_date , period )
       buf = self.content.get_buffer()
@@ -632,9 +636,9 @@ class PnoteNew:
       try:
         dbc = self.dbcon.cursor()
         if self.note_id == None:
-          dbc.execute("insert into " + self.dbname + ".lsnote(title, datelog, flags, content, url, readonly, timestamp, format_tag, econtent, reminder_ticks, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) )", (self.title.get_text(), self.datelog.get_text(), self.flags.get_text(), tex, self.url.get_text(), self.readonly, int(time.time()), sqlite3.Binary(self.dump_format_tag()), sqlite3.Binary(self.econtent), self.reminder_ticks, self.alert_count, sqlite3.Binary(self.dump_pixbuf_dict()) ) )
+          dbc.execute("insert into " + self.dbname + ".lsnote(title, datelog, flags, content, url, readonly, timestamp, format_tag, econtent, reminder_ticks, alert_count, pixbuf_dict, time_spent) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) )", (self.title.get_text(), self.datelog.get_text(), self.flags.get_text(), tex, self.url.get_text(), self.readonly, int(time.time()), sqlite3.Binary(self.dump_format_tag()), sqlite3.Binary(self.econtent), self.reminder_ticks, self.alert_count, sqlite3.Binary(self.dump_pixbuf_dict()), self.time_spent ) )
         else:
-          dbc.execute("update " + self.dbname + ".lsnote set title = (?), datelog = (?), flags = (?), content = (?), url = (?), readonly = (?), timestamp = (?), format_tag = (?), econtent = (?), reminder_ticks = (?), alert_count = (?), pixbuf_dict = (?) where note_id = (?)", ( self.title.get_text(), self.datelog.get_text(), self.flags.get_text(), tex, self.url.get_text(), self.readonly, int(time.time()) , sqlite3.Binary(self.dump_format_tag()) , sqlite3.Binary(self.econtent) , self.reminder_ticks , self.alert_count, sqlite3.Binary(self.dump_pixbuf_dict()), self.note_id ) )
+          dbc.execute("update " + self.dbname + ".lsnote set title = (?), datelog = (?), flags = (?), content = (?), url = (?), readonly = (?), timestamp = (?), format_tag = (?), econtent = (?), reminder_ticks = (?), alert_count = (?), pixbuf_dict = (?), time_spent = (?) where note_id = (?)", ( self.title.get_text(), self.datelog.get_text(), self.flags.get_text(), tex, self.url.get_text(), self.readonly, int(time.time()) , sqlite3.Binary(self.dump_format_tag()) , sqlite3.Binary(self.econtent) , self.reminder_ticks , self.alert_count, sqlite3.Binary(self.dump_pixbuf_dict()), self.time_spent, self.note_id ) )
         if dbc.lastrowid != None:
           self.note_id = dbc.lastrowid
           self.app.note_list[self.note_id] = self
