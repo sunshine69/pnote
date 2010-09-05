@@ -340,6 +340,7 @@
                 <property name="can_focus">True</property>
                 <property name="border_width">1</property>
                 <property name="enable_grid_lines">vertical</property>
+                <signal name="button_press_event" handler="on_result_list_button_press_event"/>
                 <signal name="start_interactive_search" handler="on_result_list_start_interactive_search"/>
                 <signal name="key_press_event" handler="on_result_list_key_press"/>
                 <signal name="row_activated" handler="on_result_list_row_activated"/>

@@ -63,7 +63,7 @@ class pnmain:
     'on_sync_db_baseid': lambda o: self.sync_sqlite_db(ask_base_id = True), \
     'on_control_script_run': lambda o: self.on_control_script_run() ,\
     'on_run_script': lambda o: self.run_script() ,\
-
+    'on_result_list_button_press_event': self.on_result_list_button_press_event, \
     }
     statusbar = self.statusbar = self.wTree.get_widget("statusbar")
     msgid = statusbar.push(1, " welcome to pnote")
@@ -228,7 +228,44 @@ class pnmain:
       self.list_tooltip.remove_view()
       self.list_tooltip = None
     except: pass  
+
+  def create_menu_on_result_list(self, data=None):
+    # Run aggregate functions etc on list of selected notes
+    (model, paths) = data
+    #List comprehension woa. At least split first one to make it easier to read
+    list_id_dbname = [ (model[path][0], model[path][3]) for path in [ path_t[0] for path_t in paths ] ]
+    def calculate_total_time_spent(obj=None):
+      msg = "Total time in minute: %2d:%2d" % divmod(sum([ get_a_note(app= self.app,note_id = _temp[0], dbname = _temp[1] )['time_spent'] for _temp in list_id_dbname ]), 60)
+      message_box('pnote - Total time spent', msg)
+    # Add MORE Funtion to process here
     
+    menu = gtk.Menu()
+    menuitem1 = gtk.MenuItem("Display total time spent")
+    menuitem1.connect('activate', calculate_total_time_spent)
+    menu.append(menuitem1); menuitem1.show()
+    return menu
+    
+  def on_result_list_button_press_event(self, treeview, event):
+     if event.button == 3:
+         # Figure out which item they right clicked on
+         path = treeview.get_path_at_pos(int(event.x),int(event.y))
+         # Get the selection
+         selection = treeview.get_selection()
+         # Get the selected path(s)
+         rows = selection.get_selected_rows() # rows is (model, array_of_paths) , again a path is a tuple
+         # If they didnt right click on a currently selected row, change  the selection
+         if path[0] not in rows[1]:
+             selection.unselect_all()
+             selection.select_path(path[0])
+         if selection.count_selected_rows() > 1:
+             #popup multiple selection menu
+             self.create_menu_on_result_list(rows).popup(None, None, None, event.button, event.time, data=None)
+         else:
+             #popup single selection box
+             self.create_menu_on_result_list(rows).popup(None, None, None, event.button, event.time, data=None)
+         return True
+
+      
   def on_result_list_key_press(self, o=None, e=None, d=None):
     #print gtk.gdk.keyval_name(e.keyval)
     if gtk.gdk.keyval_name(e.keyval) == 'Delete':

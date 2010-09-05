@@ -834,3 +834,13 @@ class PnTips(TreeViewTooltips):
 
             # this will place the tooltip above and to the right
             return x + 10, y - (h + 10)
+        
+def get_a_note(app = None, note_id = None, dbname = None):
+  if app == None or note_id == None or dbname == None: return None
+  csor = app.dbcon.cursor()
+  sql = "select * from %s.lsnote WHERE note_id = %s" % (dbname, note_id)
+  csor.execute(sql)
+  return csor.fetchone()
+  
+  
+  
