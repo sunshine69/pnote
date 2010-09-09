@@ -119,9 +119,10 @@ class PnoteNew:
     tag_end_update.set_property('foreground-gdk', gtk.gdk.color_parse('#2B52FF') )
     _config_font = get_config_key('pnote_new', 'default_font', 'None')
     if _config_font != 'None':
+      self.app.last_font_desc = _config_font
       for widget in [self.content, self.datelog, self.title, self.flags, self.url]:
         widget.modify_font(pango.FontDescription(_config_font) )
-      
+    
     # Load note_content if note_id
     for tg in [tag_highlight, tag_start_update, tag_end_update]:
       tag_tab.add(tg)

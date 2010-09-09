@@ -74,6 +74,9 @@ class pnote:
     self.new_mail_list = []
     self.clipboards = PnClipboard()
     self.current_mailbox = 'INBOX'
+    self.last_font_desc = None
+    self.last_font_color = None
+    self.last_bgcolor = None
     
   def cleanup_process(self):
     for subp in self.list_popen:

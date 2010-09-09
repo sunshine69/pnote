@@ -131,7 +131,7 @@ class DbSync:
     for _note_id in both_A_B_has:
       _A, _B = dictA[_note_id], dictB[_note_id]
       if _A['title'] == _B['title']:
-        if _A['content'] == _B['content']:
+        if _A['content'] == _B['content'] and _A['readonly'] == _B['readonly'] and _A['url'] == _B['url'] and _A['flags'] == _B['flags'] and _A['econtent'] == _B['econtent']:
           continue
         else:
             #Okay do the dirty work :-)
@@ -153,12 +153,13 @@ class DbSync:
                   else:
                     _newer, _older = _B , _A
                     if self.DEBUG: print "B is newer"
-            patches = dmp.patch_make(_older['content'], _newer['content'])
-            _older_new_content = dmp.patch_apply( patches, _older['content'] )
-            # 'sqlite3.Row' object does not support item assignment so cannot assign _A['content'] ...
-            if _newer == _A: _new_contentA , _new_contentB = _A['content'], _older_new_content[0]
-            else: _new_contentA , _new_contentB = _older_new_content[0], _B['content']
-
+            if _A['content'] != _B['content']:
+                patches = dmp.patch_make(_older['content'], _newer['content'])
+                _older_new_content = dmp.patch_apply( patches, _older['content'] )
+                # 'sqlite3.Row' object does not support item assignment so cannot assign _A['content'] ...
+                if _newer == _A: _new_contentA , _new_contentB = _A['content'], _older_new_content[0]
+                else: _new_contentA , _new_contentB = _older_new_content[0], _B['content']
+            else: _new_contentA = _new_contentB = _A['content']
             try: cursorA.execute("update lsnote set title = (?), datelog = (?), flags = (?), content = (?), url = (?), readonly = (?), timestamp = (?), format_tag = (?), econtent = (?), reminder_ticks = (?), alert_count = (?), pixbuf_dict = (?) where note_id = (?)", (_A['title'], _A['datelog'], _A['flags'], _new_contentA, _A['url'], _A['readonly'], _A['timestamp'], _A['format_tag'], _A['econtent'], _A['reminder_ticks'], _A['alert_count'], _A['pixbuf_dict'], _note_id) )
             except Exception, e:
               if self.DEBUG: print "DEBUG 0 ", e

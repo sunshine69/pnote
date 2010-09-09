@@ -319,6 +319,7 @@ class FormatNote:
       self.buf.get_tag_table().add(tag)
       self.buf.apply_tag(tag, self.s, self.e)
       self.add_tag_to_table(tagn,'foreground-gdk', color, 'on' ,m1, m2 )
+      self.PnoteNew.app.last_font_color = color.to_string()
     if self.bgcolorset:
       color = self.bt_bgcolor.get_color()
       tagn = self.create_unique_tagname()
@@ -327,6 +328,7 @@ class FormatNote:
       self.buf.get_tag_table().add(tag)
       self.buf.apply_tag(tag, self.s, self.e)
       self.add_tag_to_table(tagn,'background_gdk', color, 'on' ,m1, m2 )
+      self.PnoteNew.app.last_bgcolor = color.to_string()
     if self.fontset:
       font_desc = self.bt_font.get_font_name()
       tagn = self.create_unique_tagname()
@@ -335,6 +337,7 @@ class FormatNote:
       self.buf.get_tag_table().add(tag)
       self.buf.apply_tag(tag, self.s,self.e)
       self.add_tag_to_table(tagn,'font', font_desc, 'on' ,m1, m2 )
+      self.PnoteNew.app.last_font_desc = font_desc
       
     self.buf.set_modified(True)
     self.w.destroy()
@@ -364,8 +367,11 @@ class FormatNote:
     self.cb_underline = self.wTree.get_widget('cb_underline')
     self.cb_strike = self.wTree.get_widget('cb_strike')
     self.bt_fontcolor = self.wTree.get_widget('bt_fontcolor')
+    if self.PnoteNew.app.last_font_color != None: self.bt_fontcolor.set_color(gtk.gdk.color_parse(self.PnoteNew.app.last_font_color))
     self.bt_bgcolor = self.wTree.get_widget('bt_bgcolor')
+    if self.PnoteNew.app.last_bgcolor != None: self.bt_bgcolor.set_color(gtk.gdk.color_parse(self.PnoteNew.app.last_bgcolor))
     self.bt_font = self.wTree.get_widget('bt_font')
+    if self.PnoteNew.app.last_font_desc != None: self.bt_font.set_font_name(self.PnoteNew.app.last_font_desc)
     self.fontcolorset = self.bgcolorset = self.fontset = False
     evtmap = { 'on_bt_cancel_activate': lambda o: self.destroy() ,\
       'destroy': lambda o: self.destroy,\
