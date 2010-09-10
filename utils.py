@@ -17,7 +17,7 @@ def get_text_from_user(title='Input text', msg = 'Enter text:', default_txt = ''
     if default_txt != None:
       e = gtk.Entry(); e.set_visibility(show_char)
       e.connect('activate', lambda o: d.response(gtk.RESPONSE_ACCEPT) )
-      if not size == '':
+      if size != -1:
         try: e.set_size_request(size ,-1)
         except: e.set_size_request(-1 ,-1)
       e.set_text(default_txt)
@@ -69,10 +69,22 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
     from email.mime.text import MIMEText
     COMMASPACE = ','
     buf = note.content.get_buffer()
+    _msgcontent = ''
+    _subject = note.title.get_text()
+    if _subject == '' or _subject == None:
+      _subject = _msgcontent[0:50].split(os.linesep)[0].replace("\r",' ')
+    try:
+        st, en = buf.get_selection_bounds()
+        _msgcontent = buf.get_text(st,en)
+        _subject = get_text_from_user('Enter subject', 'Enter subject of the msg: ', _subject, size = 300, completion = False)
+    except:
+      _msgcontent = buf.get_text(buf.get_start_iter(), buf.get_end_iter())
+            
     if mail_from == '':
           me = get_config_key('data', 'mail_from', 'none')
           if me == 'none': me = get_text_from_user('From', 'From: '); save_config_key('data', 'mail_from', me)
     else: me = mail_from
+    
     if to == '':
       to = get_text_from_user('To: ', 'Recipient address separated by %s ' % (COMMASPACE), size = 300)
       if to == None: message_box('error', 'Recipients required'); return
@@ -80,15 +92,8 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
     if pathstr != '':
         paths = pathstr.split('<|>')
         outer = MIMEMultipart()
-        #msg = MIMEText( buf.get_text(buf.get_start_iter(), buf.get_end_iter()) )
-        _subject = note.title.get_text()
-        
-        if _subject == '' or _subject == None:
-          texbuf = note.content.get_buffer()
-          _subject = texbuf.get_text(texbuf.get_start_iter(), texbuf.get_end_iter() )[0:50].split(os.linesep)[0].replace("\r",' ')
-          
         outer['Subject'] = (_subject if subject == '' else subject)
-        outer.attach( MIMEText(buf.get_text(buf.get_start_iter(), buf.get_end_iter()) , 'plain') )
+        outer.attach( MIMEText(_msgcontent , 'plain') )
         outer.preamble = 'You will not see this in a MIME-aware mail reader.\n'
         outer['From'] = me
         outer['To'] = to
@@ -121,8 +126,8 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
             msg.add_header('Content-Disposition', 'attachment', filename=filename)
             outer.attach(msg)
     else:
-      outer = MIMEText(buf.get_text(buf.get_start_iter(), buf.get_end_iter() ))
-      outer['Subject'] = (note.title.get_text() if subject == '' else subject)
+      outer = MIMEText(_msgcontent)
+      outer['Subject'] = (_subject if subject == '' else _subject)
       outer['From'] = me
       outer['To'] = to
       
@@ -367,11 +372,11 @@ class FormatNote:
     self.cb_underline = self.wTree.get_widget('cb_underline')
     self.cb_strike = self.wTree.get_widget('cb_strike')
     self.bt_fontcolor = self.wTree.get_widget('bt_fontcolor')
-    if self.PnoteNew.app.last_font_color != None: self.bt_fontcolor.set_color(gtk.gdk.color_parse(self.PnoteNew.app.last_font_color))
+    if self.PnoteNew.app.last_font_color != '': self.bt_fontcolor.set_color(gtk.gdk.color_parse(self.PnoteNew.app.last_font_color))
     self.bt_bgcolor = self.wTree.get_widget('bt_bgcolor')
-    if self.PnoteNew.app.last_bgcolor != None: self.bt_bgcolor.set_color(gtk.gdk.color_parse(self.PnoteNew.app.last_bgcolor))
+    if self.PnoteNew.app.last_bgcolor != '': self.bt_bgcolor.set_color(gtk.gdk.color_parse(self.PnoteNew.app.last_bgcolor))
     self.bt_font = self.wTree.get_widget('bt_font')
-    if self.PnoteNew.app.last_font_desc != None: self.bt_font.set_font_name(self.PnoteNew.app.last_font_desc)
+    if self.PnoteNew.app.last_font_desc != '': self.bt_font.set_font_name(self.PnoteNew.app.last_font_desc)
     self.fontcolorset = self.bgcolorset = self.fontset = False
     evtmap = { 'on_bt_cancel_activate': lambda o: self.destroy() ,\
       'destroy': lambda o: self.destroy,\

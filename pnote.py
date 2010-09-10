@@ -74,9 +74,9 @@ class pnote:
     self.new_mail_list = []
     self.clipboards = PnClipboard()
     self.current_mailbox = 'INBOX'
-    self.last_font_desc = None
-    self.last_font_color = None
-    self.last_bgcolor = None
+    self.last_font_desc = get_config_key('data', 'last_font_desc', '')
+    self.last_font_color = get_config_key('data', 'last_font_color','' )
+    self.last_bgcolor = get_config_key('data', 'last_bgcolor','' )
     
   def cleanup_process(self):
     for subp in self.list_popen:
@@ -275,6 +275,9 @@ class pnote:
         try: subp.kill()
         except: pass
     save_config_key('data', 'main_db_path',self.dbpath)
+    save_config_key('data', 'last_font_desc',self.last_font_desc)
+    save_config_key('data', 'last_font_color',self.last_font_color)
+    save_config_key('data', 'last_bgcolor',self.last_bgcolor)
     gtk.main_quit()
 
   def selectdb(self):
