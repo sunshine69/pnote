@@ -382,7 +382,6 @@ class FormatNote:
       self.bgcolorset = True
     self.bt_font = self.wTree.get_widget('bt_font')
     if self.PnoteNew.app.last_font_desc != '':
-      print "DEBUG, utils.py" , self.PnoteNew.app.last_font_desc
       self.bt_font.set_font_name(self.PnoteNew.app.last_font_desc)
       self.fontset = True
     
