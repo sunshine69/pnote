@@ -75,6 +75,7 @@ class pnote:
     self.clipboards = PnClipboard()
     self.current_mailbox = 'INBOX'
     self.last_font_desc = get_config_key('data', 'last_font_desc', '')
+    print "DEBUG pnote.py" ,self.last_font_desc
     self.last_font_color = get_config_key('data', 'last_font_color','' )
     self.last_bgcolor = get_config_key('data', 'last_bgcolor','' )
     

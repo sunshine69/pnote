@@ -76,7 +76,7 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
     try:
         st, en = buf.get_selection_bounds()
         _msgcontent = buf.get_text(st,en)
-        _subject = get_text_from_user('Enter subject', 'Enter subject of the msg: ', _subject, size = 300, completion = False)
+        _subject = get_text_from_user('Enter subject', 'Enter subject of the msg: ', "Re: %s" % _subject, size = 300, completion = False)
     except:
       _msgcontent = buf.get_text(buf.get_start_iter(), buf.get_end_iter())
             
@@ -372,12 +372,20 @@ class FormatNote:
     self.cb_underline = self.wTree.get_widget('cb_underline')
     self.cb_strike = self.wTree.get_widget('cb_strike')
     self.bt_fontcolor = self.wTree.get_widget('bt_fontcolor')
-    if self.PnoteNew.app.last_font_color != '': self.bt_fontcolor.set_color(gtk.gdk.color_parse(self.PnoteNew.app.last_font_color))
-    self.bt_bgcolor = self.wTree.get_widget('bt_bgcolor')
-    if self.PnoteNew.app.last_bgcolor != '': self.bt_bgcolor.set_color(gtk.gdk.color_parse(self.PnoteNew.app.last_bgcolor))
-    self.bt_font = self.wTree.get_widget('bt_font')
-    if self.PnoteNew.app.last_font_desc != '': self.bt_font.set_font_name(self.PnoteNew.app.last_font_desc)
     self.fontcolorset = self.bgcolorset = self.fontset = False
+    if self.PnoteNew.app.last_font_color != '':
+      self.bt_fontcolor.set_color(gtk.gdk.color_parse(self.PnoteNew.app.last_font_color))
+      self.fontcolorset = True
+    self.bt_bgcolor = self.wTree.get_widget('bt_bgcolor')
+    if self.PnoteNew.app.last_bgcolor != '':
+      self.bt_bgcolor.set_color(gtk.gdk.color_parse(self.PnoteNew.app.last_bgcolor))
+      self.bgcolorset = True
+    self.bt_font = self.wTree.get_widget('bt_font')
+    if self.PnoteNew.app.last_font_desc != '':
+      print "DEBUG, utils.py" , self.PnoteNew.app.last_font_desc
+      self.bt_font.set_font_name(self.PnoteNew.app.last_font_desc)
+      self.fontset = True
+    
     evtmap = { 'on_bt_cancel_activate': lambda o: self.destroy() ,\
       'destroy': lambda o: self.destroy,\
       'on_bt_apply_activate': self.do_format , \
