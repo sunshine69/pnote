@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import patch
 import time
-import sqlite3
+import sqlite3, random
+import shlex, subprocess, os, codecs
 
 class DbSync:
   
@@ -19,6 +19,7 @@ class DbSync:
 
   This will be interesting example of how to usse set :-)
   wierd problem there some IDs that just swapping around but seems no problempn
+  the problem is that sync with another note which have duplicate title. Need to write something to normalize these
   """
   def __init__(self, A, B, **args):
     A.row_factory = sqlite3.Row
@@ -28,17 +29,42 @@ class DbSync:
     self.A = A; self.B = B; self.args = args
     self.DEBUG = args.get('DEBUG', False)
 
-  def add_note_same_title(self):
+  def merge_two_text(self, text1, text2):
+          open("/tmp/_pnote_temp_text1", "wb").write(text1)
+          open("/tmp/_pnote_temp_text2", "wb").write(text2)
+          cmd = "cdiff -merge3 /tmp/_pnote_temp_text1 /tmp/_pnote_temp_text2"
+          (stdoutdata, stderrdata) = subprocess.Popen(shlex.split(cmd), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+          os.unlink("/tmp/_pnote_temp_text1"); os.unlink("/tmp/_pnote_temp_text2")
+          return stdoutdata
+          
+  def normalize_title(self, A):
     # A has many notes same title, Added to B with title changes
-    A = self.A; B = self.B    
-    dmp=patch.diff_match_patch()
-    cursorA, cursorB = A.cursor(), B.cursor()
-    cursorA.execute("select * from lsnote where flags like '%TRIGRAM%' or content like '%Tuan Khong%'")
+    cursorA = A.cursor()
+    cursorA.execute("select * from lsnote")
+    title_dict = dict()
+    while (True):
+            row = cursorA.fetchone()
+            if row == None: break
+            if row['title'] not in title_dict:
+                    title_dict[row['title']] = {'note_id': row['note_id'], 'datelog': row['datelog'], 'flags': row['flags'], 'content': row['content'], 'url': row['url'], 'readonly': row['readonly'], 'timestamp': row['timestamp'], 'format_tag': row['format_tag'], 'econtent': row['econtent'], 'reminder_ticks': row['reminder_ticks'], 'alert_count': row['alert_count'], 'pixbuf_dict': row['pixbuf_dict'] }
+            else:
+                    print "Need to merge/new title: title: '%s'" % row['title']
+                    if (row['title'].find('Upper trigram') != -1) or row['title'] == '':
+                            new_title = "%s - %s_%s" % (row['title'] , 'new_title' , str(random.randint(0,100000) ))
+                            print "Creating new title %s" % new_title
+                            title_dict[new_title] = {'note_id': row['note_id'], 'datelog': row['datelog'], 'flags': row['flags'], 'content': row['content'], 'url': row['url'], 'readonly': row['readonly'], 'timestamp': row['timestamp'], 'format_tag': row['format_tag'], 'econtent': row['econtent'], 'reminder_ticks': row['reminder_ticks'], 'alert_count': row['alert_count'], 'pixbuf_dict': row['pixbuf_dict'] }
+                    else:
+                            print "mergee using cdiff.."
+                            title_dict[row['title']]['content'] = self.merge_two_text(title_dict[row['title']]['content'], row['content'] )
+
+    cursorA.execute("delete from lsnote")
+    for key in dict.keys(title_dict):
+            cursorA.execute("insert into lsnote(note_id, title, datelog, flags, content, url, readonly, timestamp, format_tag, econtent, reminder_ticks, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) )" , (title_dict[key]['note_id'], key, title_dict[key]['datelog'], title_dict[key]['flags'], title_dict[key]['content'], title_dict[key]['url'], title_dict[key]['readonly'], title_dict[key]['timestamp'], title_dict[key]['format_tag'], title_dict[key]['econtent'] , title_dict[key]['reminder_ticks'], title_dict[key]['alert_count'], title_dict[key]['pixbuf_dict']) )
+    A.commit()
     # No not doing it
       
   def do_sync(self):
     A = self.A; B = self.B    
-    dmp=patch.diff_match_patch()
     cursorA, cursorB = A.cursor(), B.cursor()
     base_id = self.args.get('base_id', 0)
     self.return_msg = 'Started, base_id %s' % base_id
@@ -69,26 +95,34 @@ class DbSync:
       print A_not_have
     for _note_id in A_not_have:
       try:
-        cursorA.execute("select * from deleted_notes where note_id = %s" % _note_id )
-        ret_val = cursorA.fetchone()
-        if ret_val != None:
-          if ret_val['timestamp'] >= dictB[_note_id]['timestamp'] and ret_val['title'] == dictB[_note_id]['title']:
-            cursorB.execute("delete from lsnote where note_id = %s" % (_note_id) )
-            cursorB.execute("delete from deleted_notes where note_id = %s" % (_note_id) )
-            cursorA.execute("delete from deleted_notes where note_id = %s" % (_note_id) )
-            continue
-          
+        try:
+                cursorA.execute("select * from deleted_notes where note_id = %s" % _note_id )
+                ret_val = cursorA.fetchone()
+                if ret_val != None:
+                        if ret_val['timestamp'] >= dictB[_note_id]['timestamp'] and ret_val['title'] == dictB[_note_id]['title']:
+                                try: cursorB.execute("delete from lsnote where note_id = %s" % (_note_id) )
+                                except: pass
+                                try: cursorB.execute("delete from deleted_notes where note_id = %s" % (_note_id) )
+                                except: pass
+                                try: cursorA.execute("delete from deleted_notes where note_id = %s" % (_note_id) )
+                                except: pass
+                                continue
+        except Exception, e: print "Error: %s (ignored)" % e  
         if self.DEBUG: print "gone to insert id: %s, title: %s"   % (_note_id, dictB[_note_id]['title'])
         cursorA.execute("insert into lsnote(note_id, title, datelog, flags, content, url, readonly, timestamp, format_tag, econtent, reminder_ticks, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) )" , (_note_id, dictB[_note_id]['title'] , dictB[_note_id]['datelog'], dictB[_note_id]['flags'] , dictB[_note_id]['content'], dictB[_note_id]['url'], dictB[_note_id]['readonly'], dictB[_note_id]['timestamp'], dictB[_note_id]['format_tag'], dictB[_note_id]['econtent'], dictB[_note_id]['reminder_ticks'], dictB[_note_id]['alert_count'], dictB[_note_id]['pixbuf_dict']) )
         print "Insert to A OK: id: %s, title: %s" % (_note_id, dictB[_note_id]['title'])
       except Exception, e:
+        print "Colision detected. Trying to resolve .."
         if ("%s" % e).startswith('column title is not unique'):
-          try: cursorA.execute("update lsnote set note_id = (?) where title = (?)" , (_note_id, dictB[_note_id]['title'] ) )
+          print "because of same title"
+          try:
+                  cursorA.execute("update lsnote set note_id = (?) where title = (?)" , (_note_id, dictB[_note_id]['title'] ) )
+                  
           except Exception, e:
             print "Error updating A: %s" % e
             print "Error: when insert to A", e
             self.return_msg += "\nERROR when insert to A: %s: Title: %s" % ( e, dictB[_note_id]['title'])
-
+        else: print "Error %s" % e
       #self.A.commit()
     msg = "\nB_not_have: %s records." % len(B_not_have)
     self.return_msg += msg
@@ -97,18 +131,24 @@ class DbSync:
       print B_not_have
     for _note_id in B_not_have:
       try:
-        cursorB.execute("select * from deleted_notes where note_id = %s" % _note_id )
-        ret_val = cursorB.fetchone()
-        if ret_val != None:
-          if ret_val['timestamp'] >= dictA[_note_id]['timestamp'] and ret_val['title'] == dictA[_note_id]['title']:
-            cursorA.execute("delete from lsnote where note_id = %s" % (_note_id) )
-            cursorA.execute("delete from deleted_notes where note_id = %s" % (_note_id) )
-            cursorB.execute("delete from deleted_notes where note_id = %s" % (_note_id) )
-            continue
+        try:
+                cursorB.execute("select * from deleted_notes where note_id = %s" % _note_id )
+                ret_val = cursorB.fetchone()
+                if ret_val != None:
+                        if ret_val['timestamp'] >= dictA[_note_id]['timestamp'] and ret_val['title'] == dictA[_note_id]['title']:
+                                try: cursorA.execute("delete from lsnote where note_id = %s" % (_note_id) )
+                                except: pass
+                                try: cursorA.execute("delete from deleted_notes where note_id = %s" % (_note_id) )
+                                except: pass
+                                try: cursorB.execute("delete from deleted_notes where note_id = %s" % (_note_id) )
+                                except: pass
+                                continue
+        except Exception, e: print "Error: %s, ignored" % e        
         if self.DEBUG: print "gone to insert id: %s, title: %s"   % (_note_id, dictA[_note_id]['title'])
         cursorB.execute("insert into lsnote(note_id, title, datelog, flags, content, url, readonly, timestamp, format_tag, econtent, reminder_ticks, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) )" , (_note_id, dictA[_note_id]['title'] , dictA[_note_id]['datelog'], dictA[_note_id]['flags'] , dictA[_note_id]['content'], dictA[_note_id]['url'], dictA[_note_id]['readonly'], dictA[_note_id]['timestamp'], dictA[_note_id]['format_tag'], dictA[_note_id]['econtent'], dictA[_note_id]['reminder_ticks'], dictA[_note_id]['alert_count'], dictA[_note_id]['pixbuf_dict']) )
         print "Insert to B OK: id: %s, title: %s" % (_note_id, dictA[_note_id]['title'])
       except Exception, e:
+        print "Colision detected. Trying to resolve .."        
         if ("%s" % e).startswith('column title is not unique'):
           try: cursorB.execute("update lsnote set note_id = (?) where title = (?)" , (_note_id, dictA[_note_id]['title'] ) )
           except Exception, e:
@@ -116,6 +156,7 @@ class DbSync:
               print "Error updating B: %s" % e
               print "Error: when insert to B %s" % e
             self.return_msg += "\nERROR when insert to B: %s: Title: %s" % (e, dictA[_note_id]['title'])
+        else: print "Error %s" % e
 
       #self.B.commit()
     msg =  "\nBoth A and B has %s records. Will sync all of them. This will take a long time!" % len(both_A_B_has)
@@ -126,7 +167,7 @@ class DbSync:
 
     if self.args.get('skip_patch'):
       if self.DEBUG: print "skip_patch is true, skiping"
-      return self
+      return self.commit()
     
     for _note_id in both_A_B_has:
       _A, _B = dictA[_note_id], dictB[_note_id]
@@ -154,11 +195,9 @@ class DbSync:
                     _newer, _older = _B , _A
                     if self.DEBUG: print "B is newer"
             if _A['content'] != _B['content']:
-                patches = dmp.patch_make(_older['content'], _newer['content'])
-                _older_new_content = dmp.patch_apply( patches, _older['content'] )
+                _merge_content = self.merge_two_text(_older['content'], _newer['content'])
                 # 'sqlite3.Row' object does not support item assignment so cannot assign _A['content'] ...
-                if _newer == _A: _new_contentA , _new_contentB = _A['content'], _older_new_content[0]
-                else: _new_contentA , _new_contentB = _older_new_content[0], _B['content']
+                _new_contentA = _new_contentB =  _merge_content          
             else: _new_contentA = _new_contentB = _A['content']
             try: cursorA.execute("update lsnote set title = (?), datelog = (?), flags = (?), content = (?), url = (?), readonly = (?), timestamp = (?), format_tag = (?), econtent = (?), reminder_ticks = (?), alert_count = (?), pixbuf_dict = (?) where note_id = (?)", (_A['title'], _A['datelog'], _A['flags'], _new_contentA, _A['url'], _A['readonly'], _A['timestamp'], _A['format_tag'], _A['econtent'], _A['reminder_ticks'], _A['alert_count'], _A['pixbuf_dict'], _note_id) )
             except Exception, e:
@@ -192,7 +231,7 @@ class DbSync:
                 if self.DEBUG:  print "Error DEBUG2: %s" % e
             else:
               if self.DEBUG: print "Error: when insert to A / copying from B: %s " % e
-              self.return_msg += "\nError: when insert to when copying from: %s: Title A: %s, B: %s" % (e , _A['title'], _B['title']) 
+              self.return_msg += "\nError: when insert to when copying from: %s: Title A: %s, B: %s" % (e , _A['title'], _B['title'])
         try:
           cursorB.execute("insert into lsnote(note_id, title, datelog, flags, content, url, readonly, timestamp, format_tag, econtent, reminder_ticks, alert_count, pixbuf_dict) values((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?) )" , (_note_id, dictA[_note_id]['title'] , dictA[_note_id]['datelog'], dictA[_note_id]['flags'] , dictA[_note_id]['content'], dictA[_note_id]['url'], dictA[_note_id]['readonly'], dictA[_note_id]['timestamp'], dictA[_note_id]['format_tag'], dictA[_note_id]['econtent'], dictA[_note_id]['reminder_ticks'], dictA[_note_id]['alert_count'], dictA[_note_id]['pixbuf_dict']) )
         except Exception, e:
@@ -207,9 +246,11 @@ class DbSync:
           else:
               if self.DEBUG: print "Error: when insert to B / copying from A: %s " % e
               self.return_msg += "\nError: when insert to when copying from: %s: Title A: %s, B: %s" % (e , _A['title'], _B['title'])
-    return self
+    
+    return self.commit()
           
   def commit(self):
+    print "going to commit changes..."          
     self.A.commit()
     self.B.commit()
     msg = "\nOperation completed successfully"
@@ -238,9 +279,11 @@ if  __name__ == "__main__":
         sys.exit(1)
   try: base_id = sys.argv[3]
   except: base_id = 0
-  mydbsync = DbSync(con_list[0], con_list[1], base_id = base_id, skip_patch = True, DEBUG = True)
+  mydbsync = DbSync(con_list[0], con_list[1], base_id = base_id, skip_patch = False, DEBUG = True)
+  #mydbsync.normalize_title(con_list[0])
+  mydbsync.normalize_title(con_list[1])
   mydbsync.do_sync()
-  mydbsync.commit()
+  #mydbsync.commit()
   print "=================="
   print mydbsync.return_msg
   try:

@@ -206,13 +206,16 @@ class pnote:
     """
     if self.dbcon != None: return self.dbcon
     try:
+      print "dbpath is '%s'"       % self.dbpath
       dbcon = sqlite3.connect(self.dbpath)
       #dbc = dbcon.cursor()
       dbcon.row_factory = sqlite3.Row
       dbcon.text_factory = str # sqlite3.OptimizedUnicode
       if len(self.dbpaths) > 1:
         for dbname in dict.keys(self.dbpaths):
-          if not dbname == 'main': dbcon.execute("attach database (?) as (?)", (self.dbpaths[dbname], dbname ))
+          if not dbname == 'main':
+                  print "attach sub database file '%s'" % dbname
+                  dbcon.execute("attach database (?) as (?)", (self.dbpaths[dbname], dbname ))
       self.dbcon = dbcon
       return dbcon
     except Exception as e: print e; return False

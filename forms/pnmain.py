@@ -144,7 +144,7 @@ class pnmain:
       from pdbsync import DbSync
       remote_con = sqlite3.connect(remote_syncdb)      
       sync_it_now = DbSync(self.app.dbcon, remote_con, base_id = int(last_sync_id) - int(get_config_key('data', 'count_notes_sync', '250')) )
-      sync_it_now.do_sync().commit()
+      sync_it_now.do_sync()
       save_config_key('data', 'last_sync_id', sync_it_now.last_sync_id)
       message_box('pnote - Information', sync_it_now.return_msg)
       
@@ -427,7 +427,8 @@ class pnmain:
       if sqlcmd.startswith('select '): sqlcmd += " order by timestamp desc, note_id desc LIMIT " + get_config_key('data', 'SELECT_LIMIT', '250')
       dbc = self.dbcon.cursor()
       try:
-        dbc.execute(sqlcmd) #; print sqlcmd
+        #print sqlcmd      
+        dbc.execute(sqlcmd)
         if sqlcmd.startswith('select '):
           while (True): # Isn't it do: while hahaha
               row = dbc.fetchone()
