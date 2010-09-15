@@ -49,13 +49,13 @@ class DbSync:
                     title_dict[row['title']] = {'note_id': row['note_id'], 'datelog': row['datelog'], 'flags': row['flags'], 'content': row['content'], 'url': row['url'], 'readonly': row['readonly'], 'timestamp': row['timestamp'], 'format_tag': row['format_tag'], 'econtent': row['econtent'], 'reminder_ticks': row['reminder_ticks'], 'alert_count': row['alert_count'], 'pixbuf_dict': row['pixbuf_dict'] }
             else:
                     print "Need to merge/new title: title: '%s'" % row['title']
-                    if (row['title'].find('Upper trigram') != -1) or row['title'] == '':
-                            new_title = "%s - %s_%s" % (row['title'] , 'new_title' , str(random.randint(0,100000) ))
-                            print "Creating new title %s" % new_title
-                            title_dict[new_title] = {'note_id': row['note_id'], 'datelog': row['datelog'], 'flags': row['flags'], 'content': row['content'], 'url': row['url'], 'readonly': row['readonly'], 'timestamp': row['timestamp'], 'format_tag': row['format_tag'], 'econtent': row['econtent'], 'reminder_ticks': row['reminder_ticks'], 'alert_count': row['alert_count'], 'pixbuf_dict': row['pixbuf_dict'] }
-                    else:
+                    if row['datelog'] == title_dict[row['title']]['datelog']:
                             print "mergee using cdiff.."
                             title_dict[row['title']]['content'] = self.merge_two_text(title_dict[row['title']]['content'], row['content'] )
+                    else:
+                        new_title = "%s - %s_%s" % (row['title'] , 'new_title' , str(random.randint(0,100000) ))
+                        print "Creating new title %s" % new_title
+                        title_dict[new_title] = {'note_id': row['note_id'], 'datelog': row['datelog'], 'flags': row['flags'], 'content': row['content'], 'url': row['url'], 'readonly': row['readonly'], 'timestamp': row['timestamp'], 'format_tag': row['format_tag'], 'econtent': row['econtent'], 'reminder_ticks': row['reminder_ticks'], 'alert_count': row['alert_count'], 'pixbuf_dict': row['pixbuf_dict'] }
 
     cursorA.execute("delete from lsnote")
     for key in dict.keys(title_dict):
