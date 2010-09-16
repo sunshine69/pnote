@@ -127,8 +127,8 @@ class pnmain:
     if remote_syncdb == 'none' or ask_base_id:
       chooser = gtk.FileChooserDialog(title="Select second database file to sync with",action=gtk.FILE_CHOOSER_ACTION_OPEN, buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
       chooser.set_current_folder(self.app.filechooser_dir)
-      ffilter = gtk.FileFilter(); ffilter.add_pattern('*.sqlite3'); ffilter.set_name('sqlite3 Database')
-      ffilter1 = gtk.FileFilter(); ffilter1.add_pattern('*.db'); ffilter1.set_name('Database')
+      ffilter = gtk.FileFilter(); ffilter.add_pattern('*.db'); ffilter.set_name('db')
+      ffilter1 = gtk.FileFilter(); ffilter1.add_pattern('*.sqlite3'); ffilter1.set_name('sqlite3 Database')
       ffilter2 = gtk.FileFilter(); ffilter2.add_pattern('*.*'); ffilter2.set_name('All files')
       chooser.add_filter(ffilter);chooser.add_filter(ffilter1);chooser.add_filter(ffilter2)
       res = chooser.run()
@@ -139,13 +139,20 @@ class pnmain:
       chooser.destroy()
       
     if remote_syncdb != '' and os.path.isfile(remote_syncdb):
-      if ask_base_id: last_sync_id = get_text_from_user('pnote - Enter', 'Endter base id you want to sync ')
-      else: last_sync_id = get_config_key('data', 'last_sync_id', '0')
+      if ask_base_id: last_sync_id = get_text_from_user('pnote - Enter', 'Endter base id you want to sync ', get_config_key('data', 'last_sync_id', '') )
+      else:
+          last_sync_timestamp = get_config_key('data', 'last_sync_timestamp', int(time.time()) - 86400 )
       from pdbsync import DbSync
-      remote_con = sqlite3.connect(remote_syncdb)      
-      sync_it_now = DbSync(self.app.dbcon, remote_con, base_id = int(last_sync_id) - int(get_config_key('data', 'count_notes_sync', '250')) )
+      remote_con = sqlite3.connect(remote_syncdb)
+      if ask_base_id:
+            sync_it_now = DbSync(self.app.dbcon, remote_con, base_id = int(last_sync_id) - int(get_config_key('data', 'count_notes_sync', '250')) )
+            save_config_key('data', 'last_sync_id', sync_it_now.last_sync_id)
+            save_config_key('data', 'last_sync_timestamp', int(time.time()) )
+      else:
+          sync_it_now = DbSync(self.app.dbcon, remote_con, timestamp = int(last_sync_timestamp) )
+          save_config_key('data', 'last_sync_timestamp', last_sync_timestamp)
       sync_it_now.do_sync()
-      save_config_key('data', 'last_sync_id', sync_it_now.last_sync_id)
+      
       message_box('pnote - Information', sync_it_now.return_msg)
       
   def on_bt_find_button_release_event(self, o=None, evt=None):

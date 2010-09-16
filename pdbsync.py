@@ -28,6 +28,7 @@ class DbSync:
     B.text_factory = str # sqlite3.OptimizedUnicode
     self.A = A; self.B = B; self.args = args
     self.DEBUG = args.get('DEBUG', False)
+    self.return_msg = ''
 
   def merge_two_text(self, text1, text2):
           open("/tmp/_pnote_temp_text1", "wb").write(text1)
@@ -66,9 +67,14 @@ class DbSync:
   def do_sync(self):
     A = self.A; B = self.B    
     cursorA, cursorB = A.cursor(), B.cursor()
-    base_id = self.args.get('base_id', 0)
-    self.return_msg = 'Started, base_id %s' % base_id
-    sqlcmd = 'select * from lsnote where note_id >= %s' % base_id
+    timestamp = self.args.get('timestamp', 0)
+    if timestamp == 0:
+        base_id = self.args.get('base_id', 0)
+        self.return_msg += 'No timestamp supplied. use base_id %s' % base_id
+        sqlcmd = 'select * from lsnote where note_id >= %s' % base_id
+    else:
+        sqlcmd = 'select * from lsnote where timestamp > %s' % timestamp
+        
     cursorA.execute(sqlcmd)
     cursorB.execute(sqlcmd)
     setA, setB = set(), set()
