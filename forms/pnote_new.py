@@ -137,7 +137,7 @@ class PnoteNew:
       title.set_text(row['title'])
       self.w.set_title(row['title'][0:30])
       datelog.set_text(row['datelog'])
-      flags.set_text(row['flags'])
+      flags.set_text(row['flags'] if row['flags'] != None else '' )
       content.get_buffer().set_text(row['content'])
       self.content.get_buffer().set_modified(False)
       url.set_text('' if row['url'] == None else row['url'] )

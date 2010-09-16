@@ -115,8 +115,14 @@ class DbSync:
         print "Colision detected. Trying to resolve .."
         if ("%s" % e).startswith('column title is not unique'):
           print "because of same title"
+          cursorA.execute("select count(*) as rcount from lsnote where title = (?)", (dictB[_note_id]['title'],))
+          if cursorA.fetchone()['rcount'] > 1: print "Database A need to run normalize_title. Aborting ."; sys.exit(1)
           try:
-                  cursorA.execute("update lsnote set note_id = (?) where title = (?)" , (_note_id, dictB[_note_id]['title'] ) )
+              cursorA.execute("select *  from lsnote where title = (?)", (dictB[_note_id]['title'],))
+              r = cursorA.fetchone()
+              new_content = self.merge_two_text(r['content'], dictB[_note_id]['content'] )
+              cursorA.execute("update lsnote set note_id = (?), content = (?) where title = (?)" , (_note_id, new_content, dictB[_note_id]['title'] ) )
+              cursorB.execute("update lsnote set note_id = (?), content = (?) where title = (?)" , (_note_id, new_content, dictB[_note_id]['title'] ) )
                   
           except Exception, e:
             print "Error updating A: %s" % e
@@ -150,12 +156,20 @@ class DbSync:
       except Exception, e:
         print "Colision detected. Trying to resolve .."        
         if ("%s" % e).startswith('column title is not unique'):
-          try: cursorB.execute("update lsnote set note_id = (?) where title = (?)" , (_note_id, dictA[_note_id]['title'] ) )
-          except Exception, e:
-            if self.DEBUG:
-              print "Error updating B: %s" % e
-              print "Error: when insert to B %s" % e
-            self.return_msg += "\nERROR when insert to B: %s: Title: %s" % (e, dictA[_note_id]['title'])
+            cursorB.execute("select count(*) as rcount from lsnote where title = (?)", (dictA[_note_id]['title'],))
+            if cursorB.fetchone()['rcount'] > 1: print "Database B need to run normalize_title. Aborting ."; sys.exit(1)
+            try:
+                cursorB.execute("select *  from lsnote where title = (?)", (dictA[_note_id]['title'],))
+                r = cursorB.fetchone()
+                new_content = self.merge_two_text(r['content'], dictA[_note_id]['content'] )
+                cursorB.execute("update lsnote set note_id = (?), content = (?) where title = (?)" , (_note_id, new_content, dictA[_note_id]['title'] ) )
+                cursorA.execute("update lsnote set note_id = (?), content = (?) where title = (?)" , (_note_id, new_content, dictA[_note_id]['title'] ) )
+                
+            except Exception, e:
+                if self.DEBUG:
+                    print "Error updating B: %s" % e
+                    print "Error: when insert to B %s" % e
+                self.return_msg += "\nERROR when insert to B: %s: Title: %s" % (e, dictA[_note_id]['title'])
         else: print "Error %s" % e
 
       #self.B.commit()
