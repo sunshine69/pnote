@@ -149,7 +149,7 @@ class pnmain:
             save_config_key('data', 'last_sync_id', sync_it_now.last_sync_id)
             save_config_key('data', 'last_sync_timestamp', int(time.time()) )
       else:
-          sync_it_now = DbSync(self.app.dbcon, remote_con, timestamp = int(last_sync_timestamp) )
+          sync_it_now = DbSync(self.app.dbcon, remote_con, timestamp = int(last_sync_timestamp), DEBUG = True )
           save_config_key('data', 'last_sync_timestamp', last_sync_timestamp)
       sync_it_now.do_sync()
       

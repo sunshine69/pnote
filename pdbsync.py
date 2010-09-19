@@ -73,7 +73,8 @@ class DbSync:
         self.return_msg += 'No timestamp supplied. use base_id %s' % base_id
         sqlcmd = 'select * from lsnote where note_id >= %s' % base_id
     else:
-        sqlcmd = 'select * from lsnote where timestamp > %s' % timestamp
+        self.return_msg += 'Sync from \'%s\'' % time.strftime("%Y/%m/%d %H:%M:%S", time.localtime(timestamp))
+        sqlcmd = 'select * from lsnote where timestamp >= %s' % timestamp
         
     cursorA.execute(sqlcmd)
     cursorB.execute(sqlcmd)
@@ -134,7 +135,15 @@ class DbSync:
             print "Error updating A: %s" % e
             print "Error: when insert to A", e
             self.return_msg += "\nERROR when insert to A: %s: Title: %s" % ( e, dictB[_note_id]['title'])
-        else: print "Error %s" % e
+        else:
+            print "Error %s" % e
+            if ("%s" % e).startswith('PRIMARY KEY must be unique'):
+                cursorA.execute("select * from lsnote where note_id = %s " % _note_id )
+                r = cursorA.fetchone()
+                if r['title'] == dictB[_note_id]['title']:
+                    new_content = self.merge_two_text(r['content'],dictB[_note_id]['content'] )
+                    try: cursorA.execute("update lsnote set title = (?), datelog = (?), flags = (?), content = (?), url = (?), readonly = (?), timestamp = (?), format_tag = (?), econtent = (?), reminder_ticks = (?), alert_count = (?), pixbuf_dict = (?) where note_id = (?)", (dictB[_note_id]['title'], dictB[_note_id]['datelog'], dictB[_note_id]['flags'], new_content, dictB[_note_id]['url'], dictB[_note_id]['readonly'], dictB[_note_id]['timestamp'], dictB[_note_id]['format_tag'], dictB[_note_id]['econtent'], dictB[_note_id]['reminder_ticks'], dictB[_note_id]['alert_count'], dictB[_note_id]['pixbuf_dict'], _note_id) )
+                    except Exception, e: print "Error: %s" % e
       #self.A.commit()
     msg = "\nB_not_have: %s records." % len(B_not_have)
     self.return_msg += msg
@@ -176,7 +185,15 @@ class DbSync:
                     print "Error updating B: %s" % e
                     print "Error: when insert to B %s" % e
                 self.return_msg += "\nERROR when insert to B: %s: Title: %s" % (e, dictA[_note_id]['title'])
-        else: print "Error %s" % e
+        else:
+            print "Error %s" % e
+            if ("%s" % e).startswith('PRIMARY KEY must be unique'):
+                cursorB.execute("select * from lsnote where note_id = %s " % _note_id )
+                r = cursorB.fetchone()
+                if r['title'] == dictA[_note_id]['title']:
+                    new_content = self.merge_two_text(r['content'],dictA[_note_id]['content'] )
+                    try: cursorB.execute("update lsnote set title = (?), datelog = (?), flags = (?), content = (?), url = (?), readonly = (?), timestamp = (?), format_tag = (?), econtent = (?), reminder_ticks = (?), alert_count = (?), pixbuf_dict = (?) where note_id = (?)", (dictA[_note_id]['title'], dictA[_note_id]['datelog'], dictA[_note_id]['flags'], new_content, dictA[_note_id]['url'], dictA[_note_id]['readonly'], dictA[_note_id]['timestamp'], dictA[_note_id]['format_tag'], dictA[_note_id]['econtent'], dictA[_note_id]['reminder_ticks'], dictA[_note_id]['alert_count'], dictA[_note_id]['pixbuf_dict'], _note_id) )
+                    except Exception, e: print "Error: %s" % e
 
       #self.B.commit()
     msg =  "\nBoth A and B has %s records. Will sync all of them. This will take a long time!" % len(both_A_B_has)
