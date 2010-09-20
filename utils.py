@@ -138,7 +138,7 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
         if mail_use_auth: mailer.login(mail_user, mail_passwd)
         mailer.sendmail(me, to.split(COMMASPACE), outer.as_string())
         mailer.quit()
-      except Exception as ex: print "send_note_as_mail Error: " , ex
+      except Exception as ex: message_box('Sending mail error',  "send_note_as_mail Error: %s" % ex )
     if forked_to_sendmail == 'no': print "Sending mail in main thread"; fork_send()
     else: print "Forked to send mail"; threading.Thread(target = fork_send).start()
     

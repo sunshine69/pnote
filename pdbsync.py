@@ -137,6 +137,7 @@ class DbSync:
             self.return_msg += "\nERROR when insert to A: %s: Title: %s" % ( e, dictB[_note_id]['title'])
         else:
             print "Error %s" % e
+            # one has updated a note and the other not having it updated recently. Thus in first select the id not appear but in fact it has. Update it
             if ("%s" % e).startswith('PRIMARY KEY must be unique'):
                 cursorA.execute("select * from lsnote where note_id = %s " % _note_id )
                 r = cursorA.fetchone()
