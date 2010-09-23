@@ -96,7 +96,7 @@ class pnmain:
     win_pos = get_config_key('data', 'pnmain_win_pos', '0:0')
     wx,wy = win_pos.split(':')
     if wx != '0' and wy != '0': self.w.move(int(wx), int(wy))
-    startup_cmds = get_config_key('global', 'startup_cmds', '').split(':')
+    startup_cmds = get_config_key('global', 'startup_cmds', '').split('<|>')
     for _cmds in startup_cmds: self.run_script(file_name = _cmds)
     self.wTree.signal_autoconnect(evtmap)
     self.keyword.grab_focus()
@@ -333,7 +333,7 @@ class pnmain:
     else: self.bt_clear_popup_menu(evt)
 
   def bt_clear_popup_menu(self, evt):
-    list_flags = get_config_key('data', 'list_flags', 'TODO|IMPORTANT|URGENT').split('|')
+    list_flags = get_config_key('data', 'list_flags', 'TODO<|>IMPORTANT<|>URGENT').split('<|>')
     menu_flags  = gtk.Menu()
     for fl in list_flags:
       if not fl == '':

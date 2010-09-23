@@ -62,7 +62,7 @@ class pnote:
     dbpathstr = get_config_key('data', 'db_paths', 'None')
     if not dbpathstr == 'None':
       i = 0
-      for p in dbpathstr.split('|'):
+      for p in dbpathstr.split('<|>'):
         if (not p == '') and (not p == 'None') and (not p == None): self.dbpaths['sub' + str(i)] = p
         i += 1
     
@@ -224,7 +224,7 @@ class pnote:
     # popup menu
     ic_menu_tree = gtk.glade.XML('glade/icon_menu.glade')
     ic_menu = ic_menu_tree.get_widget('icon_menu')
-    list_flags = get_config_key('data', 'list_flags', 'TODO|IMPORTANT|URGENT').split('|')
+    list_flags = get_config_key('data', 'list_flags', 'TODO<|>IMPORTANT<|>URGENT').split('<|>')
     for fl in list_flags:
       if not fl == '':
         menuitem = gtk.MenuItem('List ' + fl)

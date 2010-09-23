@@ -386,7 +386,7 @@ class PnoteNew:
         self.note_search.do_search()
     
   def build_flags_menu(self):
-    list_flags = get_config_key('data', 'list_flags', 'TODO|IMPORTANT|URGENT').split('|')
+    list_flags = get_config_key('data', 'list_flags', 'TODO<|>IMPORTANT<|>URGENT').split('<|>')
     menu_flags  = gtk.Menu()
     sep = gtk.SeparatorMenuItem()
     menu_flags.append( sep )
@@ -416,15 +416,15 @@ class PnoteNew:
     return menu_flags
   def remove_flag(self, o=None):
     fname = get_text_from_user('Flag name', 'Enter flag name to remove from the list: ')
-    list_flags = get_config_key('data', 'list_flags').split('|')
+    list_flags = get_config_key('data', 'list_flags').split('<|>')
     try:
       list_flags.remove(fname)
-      save_config_key('data', 'list_flags', "|".join(list_flags) )
+      save_config_key('data', 'list_flags', "<|>".join(list_flags) )
     except: message_box("Information", "Error. Flasg does not exist" )
     
   def add_flag(self, o=None):
     fname = get_text_from_user('Flag name', 'Enter new flag name: ')
-    save_config_key('data', 'list_flags', get_config_key('data', 'list_flags') + '|' + fname )
+    save_config_key('data', 'list_flags', get_config_key('data', 'list_flags') + '<|>' + fname )
   
   def on_show_noteinfo(self, o=None):
     msg = "note_id: %s\nLast update: %s\nDatabase name: %s\nDatabase file path: %s\nTotal time (mins) spent: %s\n" % (self.note_id, time.ctime(self.timestamp), self.dbname, self.app.dbpaths[self.dbname], "%02d:%02d" % divmod(self.time_spent, 60) )
