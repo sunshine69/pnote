@@ -246,12 +246,15 @@ class pnmain:
       message_box('pnote - Total time spent', msg)
 
     def run_sql(obj=None):
-      sql = get_text_from_user('pnote - Enter', "Enter sql command to execute. I will append where note_id in (id1, id2, ..)\nExample: update from %s.lsnote set flags = 'New flasg'\nThe %s is required (be replaced by actual dbname)")
+      sql = get_text_from_user('pnote - Enter', "Enter sql command to execute. I will append WHERE|AND note_id in (id1, id2, ..)\nExample: update %s.lsnote set flags = 'New flasg'\nThe %s is required (be replaced by actual dbname)")
       if sql != '' and sql != None:
         no_error = True
         for _id, dbname in list_id_dbname:
           sql1 = sql % dbname
-          sql1 = "%s where note_id = %s" % (sql1, _id)
+          if sql1.find('where') != -1 or sql1.find('WHERE') != -1:
+                  sql1 = "%s AND note_id = %s" % (sql1, _id)
+          else:
+                sql1 = "%s where note_id = %s" % (sql1, _id)
           try: self.app.dbcon.execute(sql1)
           except Exception, e:
             no_error = False
