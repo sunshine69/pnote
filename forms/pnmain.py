@@ -96,8 +96,11 @@ class pnmain:
     win_pos = get_config_key('data', 'pnmain_win_pos', '0:0')
     wx,wy = win_pos.split(':')
     if wx != '0' and wy != '0': self.w.move(int(wx), int(wy))
-    startup_cmds = get_config_key('global', 'startup_cmds', '').split('<|>')
-    for _cmds in startup_cmds: self.run_script(file_name = _cmds)
+    if (get_config_key('global', 'run_startup_cmds', 'no') == 'yes' ):
+        startup_cmds = get_config_key('global', 'startup_cmds', '').split('<|>')
+        for _cmds in startup_cmds: self.run_script(file_name = _cmds)
+    else:
+        save_config_key('global', 'run_startup_cmds', 'no')
     self.wTree.signal_autoconnect(evtmap)
     self.keyword.grab_focus()
 
