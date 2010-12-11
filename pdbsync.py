@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import time
-import sqlite3, random
+import sqlite3, random, re
 import shlex, subprocess, os, codecs
 
 class DbSync:
@@ -29,14 +29,22 @@ class DbSync:
     self.A = A; self.B = B; self.args = args
     self.DEBUG = args.get('DEBUG', False)
     self.return_msg = ''
+    self.last_sync_id = 0
 
   def merge_two_text(self, text1, text2):
-          open("/tmp/_pnote_temp_text1", "wb").write(text1)
-          open("/tmp/_pnote_temp_text2", "wb").write(text2)
+          codecs.open("/tmp/_pnote_temp_text1", "wb").write(text1)
+          codecs.open("/tmp/_pnote_temp_text2", "wb").write(text2)
           cmd = "cdiff -merge3 /tmp/_pnote_temp_text1 /tmp/_pnote_temp_text2"
           (stdoutdata, stderrdata) = subprocess.Popen(shlex.split(cmd), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
           os.unlink("/tmp/_pnote_temp_text1"); os.unlink("/tmp/_pnote_temp_text2")
-          return stdoutdata
+          if re.search('[a-zA-Z]',stdoutdata): return stdoutdata
+          else:
+                  msg = "merge_two_text: Warning. Empty output. Will return the one bigger"
+                  if self.DEBUG: print "%s\nInput text1 is: \n%s\ntext2 is: \n%s\n" % (msg, text1, text2)
+                  self.return_msg += "\n%s" % (msg)
+                  stdoutdata = (text1 if len(text1) > len(text2) else text2)
+                  print "return_msg: '%s'\ntext1: '%s'\ntext2: '%s'" % (stdoutdata, text1, text2)
+                  return stdoutdata
           
   def normalize_title(self, A):
     # A has many notes same title, Added to B with title changes

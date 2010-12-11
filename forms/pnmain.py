@@ -149,13 +149,13 @@ class pnmain:
       remote_con = sqlite3.connect(remote_syncdb)
       if ask_base_id:
             sync_it_now = DbSync(self.app.dbcon, remote_con, base_id = int(last_sync_id) - int(get_config_key('data', 'count_notes_sync', '250')) )
-            save_config_key('data', 'last_sync_id', sync_it_now.last_sync_id)
-            save_config_key('data', 'last_sync_timestamp', int(time.time()) )
       else:
           sync_it_now = DbSync(self.app.dbcon, remote_con, timestamp = int(last_sync_timestamp), DEBUG = True )
-          save_config_key('data', 'last_sync_timestamp', last_sync_timestamp)
       sync_it_now.do_sync()
-      
+      if ask_base_id:
+            save_config_key('data', 'last_sync_id', sync_it_now.last_sync_id)
+            save_config_key('data', 'last_sync_timestamp', int(time.time()) )
+      else: save_config_key('data', 'last_sync_timestamp', last_sync_timestamp)
       message_box('pnote - Information', sync_it_now.return_msg)
       
   def on_bt_find_button_release_event(self, o=None, evt=None):
