@@ -1,0 +1,37 @@
+
+pnote - a note management program in python - pygtk2
+
+Features:
+
+- Easy to take note, contain date time stamp
+- Save note into sqlite3 database
+- search ntoes using keyword, understand & (and) or | (or)
+- Encrypted fields to store sensitive information
+- Multiple sqlite3 database supported
+- Various text formating including inserting Image
+- Filter note content using external command (perl -ne for exmaple)
+- Run the note as a script or a selection as a script
+- History tracking, time calculation for tasks, Nagivation based on highlight text and update history
+- Undo / Redo
+- Save content to a text file - insert from text file
+- Toggle readonly / read write mode
+- Clasify notes by Flags, can edit custom flags and list / search note by flasg - like TODO, URGENT, etc..
+- Pop up reminder if it is setup to remind
+- Send note as an email, supporting SSL smtp server like gmail
+- Check new emails from multiple IMAP servers, support IMAP ssl/tls . Can download and read email in text format
+- Manage clipboard text, work like a simple clipboard program
+- Fast and memory / cpu efficient.
+
+REQUIREMENT
+
+- Python 
+- PyGTK2 and its dependancies including support for libglade
+- PyCrypto
+
+STATUS
+
+- Tested and working stable in Linux and Windows where pygtk2 is supported
+
+Author: Steve Kieu <hanghieuuc@yahoo.com>
+License: GPL
+
