@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Main application. Read, Load config
+# Working with Huy prepare for new maintainer
 
 import os,sys
 if sys.platform=="win32":
