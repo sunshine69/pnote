@@ -234,7 +234,8 @@ class DbSync:
                 if ticksA > ticksB: _newer, _older = _A , _B
                 else:  _newer, _older = _B , _A
               except:
-                  if self.DEBUG: print "All methods failed. Do teh ugliest one now. ID: {0}".format(_note_id)
+                  if self.DEBUG: print "All methods failed. Do the ugliest one
+                  now. ID: %s" % _note_id
                   if len(_A['content']) > len(_B['content']):
                     _newer, _older = _A , _B
                     if self.DEBUG: print "A is newer"

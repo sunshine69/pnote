@@ -130,7 +130,7 @@ class pnote:
                 
                 for _item in self.new_mail_list:
                    _mail_msg_header = email.message_from_string(_item[2])
-                   _msg = "{0}\nFrom: {1}\nSubject: {2}\n".format(_msg, _mail_msg_header.get('FROM'),_mail_msg_header.get('SUBJECT') )
+                   _msg = "%s\nFrom: %s\nSubject: %s\n" % (_msg, _mail_msg_header.get('FROM'),_mail_msg_header.get('SUBJECT') )
               else:
                 _msg = 'No new mail' if _msg == '' else _msg
 
@@ -175,21 +175,23 @@ class pnote:
   def query_note_reminder(self):
     for dbname in dict.keys(self.dbpaths):
       dbcon = self.db_setup()
-      sql = "select note_id, alert_count from {0}.lsnote where reminder_ticks > 0 AND reminder_ticks <= {1}".format(dbname, int(time.time()) )
+      sql = "select note_id, alert_count from %s.lsnote where reminder_ticks >
+      0 AND reminder_ticks <= %s" % (dbname, int(time.time()) )
       cur = dbcon.cursor()
       cur.execute(sql)
       while (True):
         row = cur.fetchone()
         if (row == None): break
         note_id = row['note_id']
-        try: self.note_list["{0}_{1}".format(dbname,str(note_id))].w.present()
+        try: self.note_list["%s_%s" % (dbname,str(note_id))].w.present()
         except: pnote_new.PnoteNew(self, note_id, dbname).w.show_all()
         alert_mail_to = get_config_key('data', 'alert_mail_to', 'none')
         if not alert_mail_to  == 'none':
           alert_count = row['alert_count']
           if alert_count == 0:
             send_note_as_mail(note = self.note_list[dbname+str(note_id)], mail_from = get_config_key('data', 'mail_from'), to = alert_mail_to )
-            sql1 = "update {0}.lsnote set alert_count = {1} where note_id = {2}".format(dbname, alert_count + 1, note_id)
+            sql1 = "update {0}.lsnote set alert_count = %s where note_id = %s"
+            % (dbname, alert_count + 1, note_id)
             dbcon.execute(sql1)
             dbcon.commit()
       cur.close()
