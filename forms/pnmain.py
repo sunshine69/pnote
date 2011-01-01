@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import with_statement 
 # The main search window.
 import os
 
@@ -448,9 +449,9 @@ class pnmain:
               if (row == None): break
               rcount+=1
               try: self.result_list_model.append([(row['note_id']),(row['title']),time.strftime("%d %b %Y %H:%M", time.gmtime(row['timestamp'])) , dbname])
-              except Exception as e: print e[0]
+              except Exception , e: print e[0]
         else: self.dbcon.commit()        
-      except Exception as e: print e # sql exec error
+      except Exception , e: print e # sql exec error
     self.statusbar.push(1, " Found " + str(rcount) + " note" + ('s' if (rcount > 1) else '' ) + r'!')
     dbc.close()
     
@@ -482,7 +483,7 @@ class pnmain:
       #dbname = model.get_value(model.get_iter(path), 3)
       dbname = model[path][3]
       try: self.app.note_list["{0}_{1}".format(dbname,str(note_id))].w.present()
-      except Exception as e: pnote_new.PnoteNew(self.app, note_id, dbname).w.show_all()
+      except Exception , e: pnote_new.PnoteNew(self.app, note_id, dbname).w.show_all()
     else:
         data = self.imapdata
         #msgID =  model.get_value(model.get_iter(path), 0)

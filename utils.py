@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import with_statement 
 import pygtk,gtk,pango,gobject
 import os, ConfigParser, random, sqlite3, time, threading, base64, cPickle, subprocess, shlex
 from random import randrange
@@ -138,7 +139,7 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
         if mail_use_auth: mailer.login(mail_user, mail_passwd)
         mailer.sendmail(me, to.split(COMMASPACE), outer.as_string())
         mailer.quit()
-      except Exception as ex: message_box('Sending mail error',  "send_note_as_mail Error: %s" % ex )
+      except Exception , ex: message_box('Sending mail error',  "send_note_as_mail Error: %s" % ex )
     if forked_to_sendmail == 'no': print "Sending mail in main thread"; fork_send()
     else: print "Forked to send mail"; threading.Thread(target = fork_send).start()
     
@@ -270,7 +271,7 @@ class PnCompletion():
     while (True):
         if fiter == None: break
         try: tmpstr += model.get_value(fiter,0) + self.separator
-        except Exception as e: print "class: pCompletion: " + e # Not sure the first one value return None
+        except Exception , e: print "class: pCompletion: " + e # Not sure the first one value return None
         fiter = model.iter_next(fiter)
     return tmpstr
 

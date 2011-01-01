@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import with_statement 
 """html2text: Turn HTML into equivalent Markdown-structured text."""
 __version__ = "2.38"
 __author__ = "Aaron Swartz (me@aaronsw.com)"

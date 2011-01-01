@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # A new note
+from __future__ import with_statement 
 
 import os, sqlite3, time, shlex, subprocess, cPickle, random, StringIO, stat
 # from datetime import datetime # tzinfo, timedelta
@@ -49,7 +50,7 @@ class PnoteNew:
     if not self.window_size == '0x0':
       width,height = self.window_size.strip().split('x')
       try: self.w.resize(int(width),int(height))
-      except Exception as e:
+      except Exception , e:
         print e
         print "Unable to resize window. Reset to default"
         self.window_size = '0x0'
@@ -202,7 +203,7 @@ class PnoteNew:
               if item == 'highlight':  menu_flags.prepend(menuitem)
               else: menu_flags.append(menuitem)
               menuitem.show()
-            except Exception as e: print e
+            except Exception , e: print e
       menu_flags.popup(None, None, None, evt.button, evt.time, data=None)
       
   def on_bt_redo_clicked(self, obj, evt):
@@ -441,7 +442,7 @@ class PnoteNew:
         self.dbcon.execute("delete from "+self.dbname + ".lsnote where note_id = (?)", (self.note_id, ) )
         self.dbcon.commit()
         del self.app.note_list[self.dbname + str(self.note_id)]
-      except Exception as e:  print e
+      except Exception , e:  print e
       self.content.get_buffer().set_modified(False)
       self.destroy()
       
@@ -485,7 +486,7 @@ class PnoteNew:
         start, end = buf.get_selection_bounds()
         inputstr = buf.get_text(start, end)
         if not inputstr == '': self.app.show_main().do_search(inputstr)
-      except Exception as e: print e
+      except Exception , e: print e
     elif evt.button == 3: self.wTree.get_widget('menu_search').popup(None, None, None, evt.button, evt.time, data=None)
     
 
@@ -648,7 +649,7 @@ class PnoteNew:
         self.content.get_buffer().set_modified(False)
         self.wTree.get_widget('bt_cancel').set_label('_Close')
         dbc.close()
-      except Exception as e: message_box('Error in insert or update', "Sorry there is error: %s\nUsually the title is duplicated. Try to change the title of the note and try again" % e)
+      except Exception , e: message_box('Error in insert or update', "Sorry there is error: %s\nUsually the title is duplicated. Try to change the title of the note and try again" % e)
     else: print "Not modified. No save"
     if flag != 'NO_SAVE_SIZE': self.save_window_size()
     self.w.set_title(self.title.get_text()[0:30])
@@ -671,7 +672,7 @@ class PnoteNew:
     #else:
     self.do_save(flag = 'NO_SAVE_SIZE') # If saved here, race condition will reset size to default
     try: del self.app.note_list["%s_%s" % (self.dbname , self.note_id)]
-    except Exception as e: pass
+    except Exception , e: pass
     self.w.destroy()
     self.wTree = None
     return True
