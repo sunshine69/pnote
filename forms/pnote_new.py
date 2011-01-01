@@ -131,7 +131,7 @@ class PnoteNew:
 
     if  note_id != None:
       dbc = self.dbcon.cursor()
-      sql = "select * from {0}.lsnote WHERE note_id = {1}".format(self.dbname, self.note_id)
+      sql = "select * from %s.lsnote WHERE note_id = %s" % (self.dbname, self.note_id)
       #print sql
       dbc.execute(sql)
       row = dbc.fetchone()
@@ -149,7 +149,7 @@ class PnoteNew:
       self.reminder_ticks = row['reminder_ticks']
       self.alert_count = row['alert_count']
       if not self.reminder_ticks == 0: bt_reminder.set_active(True)
-      self.app.note_list["{0}_{1}".format(dbname,str(note_id))] = self
+      self.app.note_list["%s_%s" % (dbname,str(note_id))] = self
       if self.readonly == 1:
         self.content.set_editable(False)
         self.bt_ro.set_label('ro')
@@ -270,7 +270,7 @@ class PnoteNew:
     os.system("xterm -hold -e " + f.name)
 
   def do_save_html(self, o=None):
-    htmltext = "<html><head><title>{0}</title></head><body>{1}</body></html>".format(self.title.get_text(),  self.dump_to_html() )
+    htmltext = "<html><head><title>%s</title></head><body>%s</body></html>" % (self.title.get_text(),  self.dump_to_html() )
     self.do_save_insert_txt(do='save', text = htmltext )
     
   def dump_to_html(self): # TODO For now Just like this
@@ -280,7 +280,7 @@ class PnoteNew:
       print format_tab[tagn][0]
 
     return 'TODO'
-    #return "<PRE>{0}</PRE>".format(buf.get_text(buf.get_start_iter(), buf.get_end_iter() ) )
+    #return "<PRE>%s</PRE>" % (buf.get_text(buf.get_start_iter(), buf.get_end_iter() ) )
     #stringIO = StringIO()
     #itr = buf.get_start_iter()
     #while True:
@@ -395,12 +395,12 @@ class PnoteNew:
     for fl in list_flags:
       if not fl == '':
         menuitem = gtk.MenuItem('Flag as ' + fl)
-        tmpstr = "lambda m,o: o.flags.set_text( o.flags.get_text() + ':' + '{0}' ) ".format(fl)
+        tmpstr = "lambda m,o: o.flags.set_text( o.flags.get_text() + ':' + '%s' ) " % fl
         menuitem.connect('activate', eval( tmpstr ) , self )
         menu_flags.prepend(menuitem)
         menuitem.show()
         menuitem1 = gtk.MenuItem('List ' + fl)
-        tmpstr = "lambda m,o: o.app.show_main().do_search( 'FLAGS:' + '{0}' ) ".format(fl)
+        tmpstr = "lambda m,o: o.app.show_main().do_search( 'FLAGS:' + '%s' ) " % fl
         menuitem1.connect('activate', eval(tmpstr), self )
         menu_flags.append(menuitem1)
         menuitem1.show()
@@ -521,7 +521,7 @@ class PnoteNew:
     if evt.button == 1:
       if self.start_time == 0: self.start_time = int(time.time())
       start_date = time.strftime("%A %d %B %Y %H:%M:%S")
-      tex = "\n=======================\nUpdate: {0}".format(start_date)
+      tex = "\n=======================\nUpdate: %s" % start_date
       buf = self.content.get_buffer()
       s = buf.get_iter_at_mark(buf.get_insert() )
       m1 = buf.create_mark(None, s, True )
@@ -542,7 +542,7 @@ class PnoteNew:
       period = "%02d:%02d" % divmod(_length_in_sec, 60)
       self.time_spent += _length_in_sec
       end_date = time.strftime("%A %d %B %Y %H:%M:%S")
-      tex = "\nEnd Update: {0}\nLength(min): {1}".format(end_date , period )
+      tex = "\nEnd Update: %s\nLength(min): %s" % (end_date , period )
       buf = self.content.get_buffer()
       s = buf.get_iter_at_mark(buf.get_insert() )
       m1 = buf.create_mark(None, s, True )

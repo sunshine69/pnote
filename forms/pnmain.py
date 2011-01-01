@@ -208,7 +208,7 @@ class pnmain:
           self.list_tooltip = PnTips(self.result_list.get_column(0), self.tempdata['mail'], 0)
           self.list_tooltip.add_view(self.result_list)
           self.tempdata['mail'][msgID] = _mail_msg_header
-          self.tempdata['mail']['TIP_' + msgID] = "From: {0}\nDate: {1}".format(_mail_msg_header.get('FROM'), _mail_msg_header.get('DATE'))
+          self.tempdata['mail']['TIP_' + msgID] = "From: %s\nDate: %s" % (_mail_msg_header.get('FROM'), _mail_msg_header.get('DATE'))
           _path = self.result_list_model.get_path(_iter)
           self.bt_menu.set_label(iserver.split('.')[-2])
           _count += 1
@@ -346,7 +346,7 @@ class pnmain:
       if not fl == '':
         menuitem1 = gtk.MenuItem('List ' + fl)
 	myself = self
-        tmpstr = "lambda m,o: o.do_search( 'FLAGS:' + '{0}' ) ".format(fl)
+        tmpstr = "lambda m,o: o.do_search( 'FLAGS:' + '%s' ) " % (fl)
         menuitem1.connect('activate', eval(tmpstr), self )
         menu_flags.append(menuitem1)
         menuitem1.show()
@@ -424,7 +424,7 @@ class pnmain:
       elif keyword.startswith('FLAGS:'):
         mykeys = keyword[5:].split(':')
         mykeys = [ x for x in mykeys if not x == '' ]
-        sqlcmd = "select note_id, title, timestamp from {0}.lsnote where".format(dbname)
+        sqlcmd = "select note_id, title, timestamp from %s.lsnote where" % dbname
         for i in xrange(len(mykeys)):
           kw = mykeys[i].strip()
           sqlcmd += (r" AND " if (i > 0) else " ") + r" flags like '%" + kw + r"%' "
@@ -432,7 +432,7 @@ class pnmain:
       else:
           # Parse & as and
           kwlist = keyword.split(r'&')
-          sqlcmd = "select note_id, title, timestamp from {0}.lsnote ".format(dbname)
+          sqlcmd = "select note_id, title, timestamp from %s.lsnote " % dbname
           kwlist = [ x for x in kwlist if not x == '' ]
           for i in xrange(len(kwlist)):
               kw = kwlist[i].strip()
@@ -482,7 +482,7 @@ class pnmain:
       note_id = model[path][0]
       #dbname = model.get_value(model.get_iter(path), 3)
       dbname = model[path][3]
-      try: self.app.note_list["{0}_{1}".format(dbname,str(note_id))].w.present()
+      try: self.app.note_list["%s_%s" % (dbname,str(note_id))].w.present()
       except Exception , e: pnote_new.PnoteNew(self.app, note_id, dbname).w.show_all()
     else:
         data = self.imapdata
