@@ -94,6 +94,7 @@ get_tooltip() is implemented).
 '''
 
 
+from __future__ import with_statement 
 import pygtk
 pygtk.require('2.0')
 

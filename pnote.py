@@ -4,6 +4,8 @@
 # Main application. Read, Load config
 # Working with Huy prepare for new maintainer
 
+from __future__ import with_statement 
+
 import os,sys
 if sys.platform=="win32":
   [ GTKDIR ] = [ x  for x in os.getenv('PATH').split(';') if x.find('GTK') != -1 ]
@@ -219,7 +221,7 @@ class pnote:
                   dbcon.execute("attach database (?) as (?)", (self.dbpaths[dbname], dbname ))
       self.dbcon = dbcon
       return dbcon
-    except Exception as e: print e; return False
+    except Exception , e: print e; return False
         
   def icon_popup_menu(self, status_icon, button, activate_time, data=None):
     # popup menu
@@ -302,7 +304,7 @@ if __name__ == "__main__":
      dbpath = sys.argv[1]
      print "Using database file ", dbpath
      app = pnote(dbpath)
-  except Exception as e:
+  except Exception , e:
     print e
     app = pnote()
 

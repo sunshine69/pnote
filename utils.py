@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import with_statement 
 import pygtk,gtk,pango,gobject
 import os, ConfigParser, random, sqlite3, time, threading, base64, cPickle, subprocess, shlex
 from random import randrange
@@ -138,7 +139,7 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
         if mail_use_auth: mailer.login(mail_user, mail_passwd)
         mailer.sendmail(me, to.split(COMMASPACE), outer.as_string())
         mailer.quit()
-      except Exception as ex: message_box('Sending mail error',  "send_note_as_mail Error: %s" % ex )
+      except Exception , ex: message_box('Sending mail error',  "send_note_as_mail Error: %s" % ex )
     if forked_to_sendmail == 'no': print "Sending mail in main thread"; fork_send()
     else: print "Forked to send mail"; threading.Thread(target = fork_send).start()
     
@@ -156,7 +157,7 @@ def run_setup(dbpath=''):
   if dbpath == '':
     message_box("You need to enter new file for the database")
     return False
-  msg = "Setup new database at {0}. Click OK to proceed".format(dbpath)
+  msg = "Setup new database at %s. Click OK to proceed" % (dbpath)
   print msg
   message_box('Information', msg)
   conn = sqlite3.connect(dbpath)
@@ -175,21 +176,21 @@ def run_setup(dbpath=''):
     END;
     """)
   conn.commit()
-  msg = "Completed. if you set a new database file you can attached it by editing the config file in your {0}{1}{2}{3}pnote.cfg".format(os.path.expanduser("~"), os.path.sep, CONFIGDIR, os.path.sep )
+  msg = "Completed. if you set a new database file you can attached it by editing the config file in your %s%s%s%spnote.cfg" % (os.path.expanduser("~"), os.path.sep, CONFIGDIR, os.path.sep )
   print msg
   message_box('Information', msg)
   return dbpath
   
 def get_config_key(section='data',key='', default_val=''):
-    if not os.path.exists("{0}{1}{2}".format( os.path.expanduser("~"), os.path.sep, CONFIGDIR) ): os.mkdir("{0}{1}{2}".format(os.path.expanduser("~"), os.path.sep, CONFIGDIR) )
+    if not os.path.exists("%s%s%s" % ( os.path.expanduser("~"), os.path.sep, CONFIGDIR) ): os.mkdir("%s%s%s" % (os.path.expanduser("~"), os.path.sep, CONFIGDIR) )
     config = ConfigParser.RawConfigParser()
-    config.read("{0}{1}{2}{3}pnote.cfg".format(os.path.expanduser("~"), os.path.sep, CONFIGDIR,os.path.sep  ) )
+    config.read("%s%s%s%spnote.cfg" % (os.path.expanduser("~"), os.path.sep, CONFIGDIR,os.path.sep  ) )
     retval = ''
     def tmpfunc():
       try: config.add_section(section)
       except: pass
       config.set(section, key, default_val)
-      with open("{0}{1}{2}{3}pnote.cfg".format(os.path.expanduser("~"), os.path.sep, CONFIGDIR,os.path.sep  ), 'wb') as configfile: config.write(configfile)
+      with open("%s%s%s%spnote.cfg" % (os.path.expanduser("~"), os.path.sep, CONFIGDIR,os.path.sep  ), 'wb') as configfile: config.write(configfile)
       return default_val
     try: retval = config.get(section, key).strip()
     except: retval = tmpfunc()
@@ -198,14 +199,14 @@ def get_config_key(section='data',key='', default_val=''):
       
 def save_config_key(section='data', key='', value=''):
     config = ConfigParser.RawConfigParser()
-    config.read("{0}{1}{2}{3}pnote.cfg".format(os.path.expanduser("~"), os.path.sep, CONFIGDIR,os.path.sep  ))
+    config.read("%s%s%s%spnote.cfg" % (os.path.expanduser("~"), os.path.sep, CONFIGDIR,os.path.sep  ))
     try: config.set(section, key, value)
     except:
       try:
         config.add_section(section)
         config.set(section, key, value)
       except: return False
-    with open("{0}{1}{2}{3}pnote.cfg".format(os.path.expanduser("~"), os.path.sep, CONFIGDIR,os.path.sep  ), 'wb') as configfile: config.write(configfile)
+    with open("%s%s%s%spnote.cfg" % (os.path.expanduser("~"), os.path.sep, CONFIGDIR,os.path.sep  ), 'wb') as configfile: config.write(configfile)
     return True      
 
 def message_box(title = 'Message', msg = ''):
@@ -270,7 +271,7 @@ class PnCompletion():
     while (True):
         if fiter == None: break
         try: tmpstr += model.get_value(fiter,0) + self.separator
-        except Exception as e: print "class: pCompletion: " + e # Not sure the first one value return None
+        except Exception , e: print "class: pCompletion: " + e # Not sure the first one value return None
         fiter = model.iter_next(fiter)
     return tmpstr
 
@@ -475,7 +476,7 @@ class NoteReminder:
     
   def on_bt_ok_clicked(self,o=None):
     y,m,d = self.calendar.get_date()
-    timestr = "{0}/{1}/{2} {3}:{4}".format(d, m+1, y, self.hour.get_active_text(), self.minute.get_active_text())
+    timestr = "%s/%s/%s %s:%s" % (d, m+1, y, self.hour.get_active_text(), self.minute.get_active_text())
     self.note.reminder_ticks = time.mktime(time.strptime(timestr, "%d/%m/%Y %H:%M") )
     self.note.content.get_buffer().set_modified(True)
     self.w.destroy()
@@ -842,7 +843,7 @@ class PnTips(TreeViewTooltips):
             if column is self.column:
                 model = view.get_model()
                 key = model[path][self.key_col]
-                return self.data.get("TIP_{0}".format(key), None )
+                return self.data.get("TIP_%s" % key, None )
 
         def XX_location(self, x, y, w, h):
             # rename me to "location" so I override the base class

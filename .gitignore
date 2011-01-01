@@ -7,3 +7,4 @@ test*
 *.gz
 dll
 *.dll
+*~

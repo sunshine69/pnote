@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import with_statement 
 import time
 import sqlite3, random, re
 import shlex, subprocess, os, codecs
