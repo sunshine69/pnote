@@ -175,8 +175,7 @@ class pnote:
   def query_note_reminder(self):
     for dbname in dict.keys(self.dbpaths):
       dbcon = self.db_setup()
-      sql = r"""select note_id, alert_count from %s.lsnote where reminder_ticks >
-      0 AND reminder_ticks <= %s""" % (dbname, int(time.time()) )
+      sql = r"""select note_id, alert_count from %s.lsnote where reminder_ticks > 0 AND reminder_ticks <= %s""" % (dbname, int(time.time()) )
       cur = dbcon.cursor()
       cur.execute(sql)
       while (True):
