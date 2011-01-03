@@ -4,7 +4,7 @@
 # Main application. Read, Load config
 # Working with Huy prepare for new maintainer
 
-from __future__ import with_statement 
+#from __future__ import with_statement 
 
 import os,sys
 if sys.platform=="win32":
@@ -175,8 +175,8 @@ class pnote:
   def query_note_reminder(self):
     for dbname in dict.keys(self.dbpaths):
       dbcon = self.db_setup()
-      sql = "select note_id, alert_count from %s.lsnote where reminder_ticks >
-      0 AND reminder_ticks <= %s" % (dbname, int(time.time()) )
+      sql = r"""select note_id, alert_count from %s.lsnote where reminder_ticks >
+      0 AND reminder_ticks <= %s""" % (dbname, int(time.time()) )
       cur = dbcon.cursor()
       cur.execute(sql)
       while (True):
@@ -190,8 +190,7 @@ class pnote:
           alert_count = row['alert_count']
           if alert_count == 0:
             send_note_as_mail(note = self.note_list[dbname+str(note_id)], mail_from = get_config_key('data', 'mail_from'), to = alert_mail_to )
-            sql1 = "update {0}.lsnote set alert_count = %s where note_id = %s"
-            % (dbname, alert_count + 1, note_id)
+            sql1 = "update %s.lsnote set alert_count = %s where note_id = %s" % (dbname, alert_count + 1, note_id)
             dbcon.execute(sql1)
             dbcon.commit()
       cur.close()
