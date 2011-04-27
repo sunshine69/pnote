@@ -1,21 +1,20 @@
-
 pnote - a note management program in python - pygtk2
 
 Features:
 
 - Easy to take note, contain date time stamp
 - Save note into sqlite3 database
-- search ntoes using keyword, understand & (and) or | (or)
+- search notes using keyword, understand & (and) or | (or)
 - Encrypted fields to store sensitive information
 - Multiple sqlite3 database supported
-- Various text formating including inserting Image
-- Filter note content using external command (perl -ne for exmaple)
+- Various text formatting including inserting Image
+- Filter note content using external command (perl -ne for example)
 - Run the note as a script or a selection as a script
-- History tracking, time calculation for tasks, Nagivation based on highlight text and update history
+- History tracking, time calculation for tasks, Navigation based on highlight text and update history
 - Undo / Redo
 - Save content to a text file - insert from text file
-- Toggle readonly / read write mode
-- Clasify notes by Flags, can edit custom flags and list / search note by flasg - like TODO, URGENT, etc..
+- Toggle read-only / read write mode
+- Classify notes by Flags, can edit custom flags and list / search note by flasg - like TODO, URGENT, etc..
 - Pop up reminder if it is setup to remind
 - Send note as an email, supporting SSL smtp server like gmail
 - Check new emails from multiple IMAP servers, support IMAP ssl/tls . Can download and read email in text format
@@ -25,7 +24,7 @@ Features:
 REQUIREMENT
 
 - Python 
-- PyGTK2 and its dependancies including support for libglade
+- PyGTK2 and its dependencies including support for libglade
 - PyCrypto
 
 STATUS
@@ -35,3 +34,46 @@ STATUS
 Author: Steve Kieu <hanghieuuc@yahoo.com>
 License: GPL
 
+INSTALLATION
+* Ubuntu Linux:
+ - dependencies: apt-get install python-gtk2 python-glade2 python-crypto 
+ - Download the package and extract it. It wil create a directory called pnote
+ - cd pnote
+ - Run it using command python pnote.py
+
+* Other Linuxes - just install the gtk2 and glade binding for python and python-crypto
+* Windows - Yeah
+
+- It runs fine provided that you install these python extensions above. Below is the step by step guide which works and tested by me at least.
+
+pnote installation on window
+
+Follow this exactly steps by steps :-). It is Windowz anyway
+
+ok basically need to copy libxm2.dll and rename it to libxml2-2.dll to c:\Python26. The bundle gtk above is a bit big, maybe use the sas version and extract libglade later
+So the step is below:
+
+. Install python 2.6 from www.python.org
+
+. Install gtk runtime for window from http://sourceforge.net/projects/gtk-win/
+
+. Get iconv.dll somwhere and copy into gtk dir
+
+. download libglade (tested version 2.6.4-1 from http://ftp.gnome.org/pub/gnome/binaries/win32/libglade/2.6/. This url has many other up-to-date win32 binaries! 
+
+. Exact the libglade-2.0.0.dll and copy to gtk installation dir (c:\Program Files\gtk2-runtime or similar)
+
+. Download libxml2 from 
+ http://www.xmlsoft.org/sources/win32/libxml2-2.7.6.win32.zip  extract it , rename to libxml2-2.dll and copy it to gtk2 runtime dir like above.
+
+. Download three pygtk installation files, pycairo, pygtk, pygobject from  http://ftp.gnome.org/pub/gnome/binaries/win32/. Click in the directory and select latest version. pygtk select the glade version.
+
+. Install in order, pygobject, pycairo and pygtk
+
+. Download pycrypto from http://www.voidspace.org.uk
+/downloads/pycrypto-2.1.0.win32-py2.6.zip and install it
+
+. Download pnote, extract and run pnote.py inside the dir
+
+The whole thing is that user does not need to edit PATH manually, gtk runtime installer does it, and it is smaller
+Only two thing, libglade and libxml need manually copied/renamed. Can write an installer to do it automatically
