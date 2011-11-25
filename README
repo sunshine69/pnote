@@ -77,3 +77,8 @@ So the step is below:
 
 The whole thing is that user does not need to edit PATH manually, gtk runtime installer does it, and it is smaller
 Only two thing, libglade and libxml need manually copied/renamed. Can write an installer to do it automatically
+
+* TODO
+- Integrate with ldap for email address lookup
+- Sent/Put to Sent Folder after sending note as email
+
