@@ -14,7 +14,7 @@ class ldap_search:
         self.retval = ''
         self.ldap_srv.set_text(get_config_key('ldap', 'server', '') )
         self.base_dn.set_text(get_config_key('ldap', 'base_dn', '') )
-        self.ldap_filter.set_text(get_config_key('ldap', 'filter', '(uid=*))') )
+        self.ldap_filter.set_text(get_config_key('ldap', 'filter', '(uid=*)') )
         self.result_list_model = gtk.ListStore(str,str,str) # cn, uid, email
         self.result_list.set_model(self.result_list_model)
         self.result_list.set_headers_visible(True)
