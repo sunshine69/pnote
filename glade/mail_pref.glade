@@ -198,7 +198,7 @@ If it is Imap then check the box Is Imap server below</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
-                    <property name="tooltip" translatable="yes">click to set the port value as default standard port</property>
+                    <property name="tooltip" translatable="yes">click to set the port value as default standard port bases in SSL setting. If you check/uncheck Use SSL/TLS below, then you ned to click me again after that</property>
                     <property name="focus_on_click">False</property>
                     <signal name="clicked" handler="on_bt_set_port_default_clicked"/>
                   </widget>
