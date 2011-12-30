@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <glade-interface>
   <!-- interface-requires gtk+ 2.16 -->
   <!-- interface-naming-policy project-wide -->
@@ -29,6 +29,8 @@
             <child>
               <widget class="GtkLabel" id="label2">
                 <property name="visible">True</property>
+                <property name="tooltip" translatable="yes">Add new account, just type the new server name in, click save will save as new account.
+If it is Imap then check the box Is Imap server below</property>
                 <property name="label" translatable="yes">Mail (or imap) server:</property>
               </widget>
               <packing>
@@ -36,20 +38,10 @@
               </packing>
             </child>
             <child>
-              <widget class="GtkLabel" id="label3">
-                <property name="visible">True</property>
-                <property name="label" translatable="yes">Port:</property>
-              </widget>
-              <packing>
-                <property name="top_attach">1</property>
-                <property name="bottom_attach">2</property>
-              </packing>
-            </child>
-            <child>
               <widget class="GtkEntry" id="e_port">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="invisible_char">&#x25CF;</property>
+                <property name="invisible_char">●</property>
                 <property name="text" translatable="yes">25</property>
               </widget>
               <packing>
@@ -77,6 +69,7 @@
             <child>
               <widget class="GtkLabel" id="label5">
                 <property name="visible">True</property>
+                <property name="tooltip" translatable="yes">If account is IMAP then it is usually your email address</property>
                 <property name="label" translatable="yes">User name:</property>
               </widget>
               <packing>
@@ -89,7 +82,7 @@
                 <property name="width_request">250</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="invisible_char">&#x25CF;</property>
+                <property name="invisible_char">●</property>
               </widget>
               <packing>
                 <property name="left_attach">1</property>
@@ -112,7 +105,7 @@
               <widget class="GtkEntry" id="e_passwd">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="invisible_char">&#x25CF;</property>
+                <property name="invisible_char">●</property>
                 <property name="invisible_char_set">True</property>
               </widget>
               <packing>
@@ -138,7 +131,6 @@
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
                 <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="on_cbox_use_ssl_toggled"/>
               </widget>
               <packing>
                 <property name="left_attach">1</property>
@@ -178,6 +170,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
+                <property name="tooltip" translatable="yes">check if you want to edit/add your IMAP accounts</property>
                 <property name="draw_indicator">True</property>
                 <signal name="toggled" handler="on_cbox_is_imap_server_toggled"/>
               </widget>
@@ -185,6 +178,41 @@
                 <property name="top_attach">2</property>
                 <property name="bottom_attach">3</property>
                 <property name="x_options">GTK_EXPAND</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="GtkHBox" id="hbox2">
+                <property name="visible">True</property>
+                <child>
+                  <widget class="GtkLabel" id="label3">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Port:</property>
+                  </widget>
+                  <packing>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <widget class="GtkButton" id="bt_set_port_default">
+                    <property name="label" translatable="yes">set</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="tooltip" translatable="yes">click to set the port value as default standard port</property>
+                    <property name="focus_on_click">False</property>
+                    <signal name="clicked" handler="on_bt_set_port_default_clicked"/>
+                  </widget>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="pack_type">end</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </widget>
+              <packing>
+                <property name="top_attach">1</property>
+                <property name="bottom_attach">2</property>
               </packing>
             </child>
             <child>

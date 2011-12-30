@@ -577,6 +577,7 @@ class MailPref:
     'destroy': lambda o: self.destroy() ,\
     'on_cbox_is_imap_server_toggled': self.on_cbox_is_imap_server_toggled,\
     'on_bt_del_imap_clicked': self.on_bt_del_imap_clicked,\
+    'on_bt_set_port_default_clicked': self.on_bt_set_port_default_clicked
     }
     self.load_smtp_config()
     self.response = 1
@@ -584,6 +585,14 @@ class MailPref:
     self.combo_handler_id1 = None
     self.wTree.signal_autoconnect(evtmap)
     
+  def on_bt_set_port_default_clicked(self, o=None):
+        if self.cbox_use_ssl.get_active():
+            if self.cbox_is_imap_server.get_active(): self.e_port.set_text('993')
+            else: self.e_port.set_text('465')
+        else:
+            if self.cbox_is_imap_server.get_active(): self.e_port.set_text('143')
+            else: self.e_port.set_text('25')
+  
   def on_cbox_is_imap_server_toggled(self,o=None):
     flag = self.cbox_is_imap_server.get_active()
     if flag:
@@ -625,6 +634,8 @@ class MailPref:
         self.cbox_use_auth.set_active(True) # imap always requires auth, this refuse to confuse user
         self.cbox_use_auth.set_sensitive(False)
         self.bt_cancel.set_label('Cancel')
+      else: self.e_port.set_text( '143' )
+            
     else: self.load_smtp_config()
     self.bt_cancel.set_label('Cancel')
     
