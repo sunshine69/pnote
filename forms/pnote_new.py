@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# A new note
+# A new note window - data object
 from __future__ import with_statement 
 
 import os, sqlite3, time, shlex, subprocess, cPickle, random, StringIO, stat
@@ -377,7 +377,7 @@ class PnoteNew:
           self.note_search =  NoteSearch(self)
           self.note_search.w.show_all()
       elif gtk.gdk.keyval_name(e.keyval) == 'h':
-        msg = "What? you need help? :-)\nJust use your common sense, hover the mouse to each small button on the right to see what it does and right click for menu, etc.\nCtrl+f to search text within the note. Press F3 to search again\nThe export, print function not implemented yet, I will do later\nBest luck"
+        msg = "What, you need help? :-)\nJust use your common sense, hover the mouse to each small button on the right to see what it does and right click for menu, etc.\nCtrl+f to search text within the note. Press F3 to search again\nThe export, print function not implemented yet, I will do later\nBest luck"
         message_box('Oh my god', msg)
         return True
     elif gtk.gdk.keyval_name(e.keyval) == 'F3':

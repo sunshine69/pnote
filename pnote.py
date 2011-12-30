@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 # Main application. Read, Load config
-# Working with Huy prepare for new maintainer
 
 #from __future__ import with_statement 
 

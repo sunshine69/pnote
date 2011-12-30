@@ -8,15 +8,33 @@ from random import randrange
 from Crypto.Cipher import Blowfish
 from TreeViewTooltips import TreeViewTooltips
 
+LDAP_ENABLED=None
+try:
+    import ldap
+    LDAP_ENABLED = True
+except: pass    
+    
 CONFIGDIR = '.pnote'
 
-def get_text_from_user(title='Input text', msg = 'Enter text:', default_txt = '', size = -1, show_char = True, completion = True):
+def get_text_from_user(title='Input text', msg = 'Enter text:', default_txt = '', size = -1, show_char = True, completion = True, search_dlg = None):
+    # search_dlg_obj is any window object that has the show_all() method and then when it is closed, return a string. So when we are at the text entry, press Ctrl+f will show this dlg
     d = gtk.Dialog(title, None, 0, (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT, gtk.STOCK_OK, gtk.RESPONSE_ACCEPT) )
     l = gtk.Label(msg); l.set_line_wrap(True)
     d.vbox.pack_start(l)
     l.show()
     if default_txt != None:
       e = gtk.Entry(); e.set_visibility(show_char)
+      if search_dlg:
+          def mycb(o,evt):
+              if evt.state & gtk.gdk.CONTROL_MASK:
+                if gtk.gdk.keyval_name(evt.keyval) == 'f':
+                    #d.set_modal(False)
+                    #search_dlg.w.set_transient_for(d)
+                    rcode = search_dlg.run()
+                    print "Got %s" % search_dlg.get_result()
+                    e.set_text(search_dlg.get_result())
+                    #d.set_modal(True)
+          e.connect('key_press_event', mycb )
       e.connect('activate', lambda o: d.response(gtk.RESPONSE_ACCEPT) )
       if size != -1:
         try: e.set_size_request(size ,-1)
@@ -41,7 +59,7 @@ def get_text_from_user(title='Input text', msg = 'Enter text:', default_txt = ''
     else: retval = None
     d.destroy()
     return retval
-
+        
 def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
     forked_to_sendmail = get_config_key('data', 'mail_forked_send', 'no')
     if note == None: print "Need to pass me a note"; return
@@ -87,8 +105,14 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
     else: me = mail_from
     
     if to == '':
-      to = get_text_from_user('To: ', 'Recipient address separated by %s ' % (COMMASPACE), size = 300)
-      if to == None: message_box('error', 'Recipients required'); return
+        _ldap_search = None
+        if LDAP_ENABLED:
+            from forms.ldap_search import ldap_search
+            _ldap_search = ldap_search()
+      
+        to = get_text_from_user('To: ', 'Recipient address separated by %s ' % (COMMASPACE), size = 300, search_dlg = _ldap_search)
+        if to == None or to == '': message_box('error', 'Recipients required'); return
+      
     pathstr = note.url.get_text()
     if pathstr != '':
         paths = pathstr.split('<|>')
@@ -138,6 +162,14 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
         else: mailer = smtplib.SMTP(mail_server, port)
         if mail_use_auth: mailer.login(mail_user, mail_passwd)
         mailer.sendmail(me, to.split(COMMASPACE), outer.as_string())
+        _tmpstr = get_config_key('data','sent_folder', '')
+        if _tmpstr != '':
+            imap_srv, sent_folder = _tmpstr.split(',')
+            app = note.app; app.load_list_imap_acct(connect=True)
+            imapcon = app.imapconn[imap_srv]
+            import imaplib
+            imapcon.append(sent_folder, 'Read', imaplib.Time2Internaldate(time.time()) ,outer.as_string() )
+
         mailer.quit()
       except Exception , ex: message_box('Sending mail error',  "send_note_as_mail Error: %s" % ex )
     if forked_to_sendmail == 'no': print "Sending mail in main thread"; fork_send()
