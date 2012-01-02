@@ -164,7 +164,7 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
         mailer.sendmail(me, to.split(COMMASPACE), outer.as_string())
         _tmpstr = get_config_key('data','sent_folder', '')
         if _tmpstr != '':
-            imap_srv, sent_folder = _tmpstr.split(',')
+            imap_srv, sent_folder = _tmpstr.split('/')
             app = note.app; app.load_list_imap_acct(connect=True)
             imapcon = app.imapconn[imap_srv]
             import imaplib

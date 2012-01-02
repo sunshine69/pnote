@@ -84,7 +84,7 @@ Only two thing, libglade and libxml need manually copied/renamed. Can write an i
 
 * Completed above items
 1. When click send mail, the dialog asking recipient appear, press Ctrl + f to display the ldap search dialog.
-2. Click preference and add in the [data] section a key  sent_folder=IMAP_SERVER:IMAPFOLDER  IMAP_SERVER is the server string defined when run mail setup - IMAPFOLDER is the folder you want to put your sent message in.
+2. Click preference and add in the [data] section a key  sent_folder=IMAP_SERVER/IMAPFOLDER  IMAP_SERVER is the server string or IP defined when run mail setup - IMAPFOLDER is the folder you want to put your sent message in.
 
 Note that the FOLDER might not be the same as it appear on your mail client, example gmail Sent is [Gmail]/Sent Mail - To find out best is to run the IMAP list command and see the output manually. The following python snippet will dothat
 
