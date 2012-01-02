@@ -168,7 +168,7 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
             app = note.app; app.load_list_imap_acct(connect=True)
             imapcon = app.imapconn[imap_srv]
             import imaplib
-            imapcon.append(sent_folder, 'Read', imaplib.Time2Internaldate(time.time()) ,outer.as_string() )
+            imapcon.append(sent_folder, '\Seen', imaplib.Time2Internaldate(time.time()) ,outer.as_string() )
 
         mailer.quit()
       except Exception , ex: message_box('Sending mail error',  "send_note_as_mail Error: %s" % ex )
