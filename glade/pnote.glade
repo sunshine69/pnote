@@ -310,7 +310,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="tooltip" translatable="yes">Select Imap mail server and right click me for selecting mailbox</property>
+                <property name="tooltip" translatable="yes">Select Imap mail server (click dropdown menu NoteDB) and right click me for selecting mailbox</property>
                 <property name="use_stock">True</property>
                 <signal name="activate" handler="do_search"/>
                 <signal name="button_release_event" handler="on_bt_find_button_release_event"/>

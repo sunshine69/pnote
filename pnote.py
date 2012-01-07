@@ -101,7 +101,7 @@ class pnote:
     gobject.timeout_add_seconds(120, self.save_pnmain_pos )
     gobject.timeout_add_seconds(600, self.cleanup_process )
     if get_config_key('global', 'checkmail', 'no') == 'yes':
-      gobject.timeout_add_seconds(int(get_config_key('global', 'check_mail_interval', '60') ), self.checkmail, False )
+      gobject.timeout_add_seconds(int(get_config_key('global', 'check_mail_interval', '60') ), self.fork_checkmail)
 
   def save_pnmain_pos(self):
     try:
@@ -110,9 +110,11 @@ class pnote:
       save_config_key('data', 'pnmain_win_pos', "%s:%s" % (x,y) )
       return False
     except: return True
-      
+
+  def fork_checkmail(self): threading.Thread(target=self.checkmail,  kwargs = {'locking': True} ).start(); return True
+          
   def checkmail(self, locking = True, server = None ):
-    # INFO - must be called from non gtk.main() thread (use threading.Thread). If called form main thread, pass locking=False
+    # INFO - must be called from non gtk.main() thread (use threading.Thread). If called from main thread, pass locking=False
     try:
         imapconn = None
         _msg = ''
@@ -123,7 +125,7 @@ class pnote:
             imapconn = self.imapconn[server]
             imapconn.select(self.current_mailbox, readonly=1)
           except:
-            self.load_list_imap_acct(connect=True)
+            self.load_list_imap_acct(connect=True, locking = locking)
             try: imapconn = self.imapconn[server]
             except: pass
           if imapconn != None:
@@ -149,7 +151,7 @@ class pnote:
     return True
               
   def load_list_imap_acct(self, connect=False, server = None, locking = True):
-    # INFO - must be called from non gtk.main() thread (use threading.Thread). If called form main thread, pass locking=False
+    # INFO - must be called from non gtk.main() thread (use threading.Thread). If called from main thread, pass locking=False
     list_imap_account_str = get_config_key('global', 'list_imap_account','')
     if list_imap_account_str != '': self.list_imap_account_dict = cPickle.loads(base64.b64decode( list_imap_account_str ) )
     else: self.list_imap_account_dict = dict()
