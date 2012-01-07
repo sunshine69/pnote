@@ -61,7 +61,7 @@ def get_text_from_user(title='Input text', msg = 'Enter text:', default_txt = ''
     return retval
         
 def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
-    forked_to_sendmail = get_config_key('data', 'mail_forked_send', 'no')
+    #forked_to_sendmail = get_config_key('data', 'forked_to_sendmail', 'yes')
     if note == None: print "Need to pass me a note"; return
     mail_server = get_config_key('data','mail_server', 'newhost')
     if mail_server == 'newhost':
@@ -162,18 +162,21 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
         else: mailer = smtplib.SMTP(mail_server, port)
         if mail_use_auth: mailer.login(mail_user, mail_passwd)
         mailer.sendmail(me, to.split(COMMASPACE), outer.as_string())
+        gtk.gdk.threads_enter()
+        message_box("OK", "Mail sent")
+        gtk.gdk.threads_leave()
+        mailer.quit()
         _tmpstr = get_config_key('data','sent_folder', '')
         if _tmpstr != '':
             imap_srv, sent_folder = _tmpstr.split('/')
             app = note.app; app.load_list_imap_acct(connect=True)
             imapcon = app.imapconn[imap_srv]
             import imaplib
+            print "DEBUG - fork_send"
             imapcon.append(sent_folder, '\Seen', imaplib.Time2Internaldate(time.time()) ,outer.as_string() )
-
-        mailer.quit()
+        
       except Exception , ex: message_box('Sending mail error',  "send_note_as_mail Error: %s" % ex )
-    if forked_to_sendmail == 'no': print "Sending mail in main thread"; fork_send()
-    else: print "Forked to send mail"; threading.Thread(target = fork_send).start()
+    threading.Thread(target = fork_send).start()
     
 def run_setup(dbpath=''):
   global CONFIGDIR
@@ -791,13 +794,13 @@ class PopUpNotification():
     eventbox.add(label)
     self.w.add(eventbox)
     eventbox.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#FFF045") )
-    gobject.timeout_add_seconds(20, self.w.destroy)
+    #gobject.timeout_add_seconds(20, self.w.destroy)
     self.w.show_all()
 
   def do_exit(self, o=None, evt=None):
     self.w.destroy()
     if self.callback != None: self.callback()
-  
+
 class PnImap:
   def __init__(self, app, imapcon):
     self.app = app

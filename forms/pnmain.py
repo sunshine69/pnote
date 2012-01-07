@@ -56,8 +56,8 @@ class pnmain:
     'on_setup_mail': lambda o: MailPref(self.app).run() ,\
     'do_export_selected_html': self.do_export_selected_html,\
     'on_toolbar_menu': self.on_toolbar_menu,\
-    'on_toolbar_menu_clicked': self.on_toolbar_menu_clicked,\
-    'do_check_mail': lambda o: self.app.checkmail(server=None if self.search_mode=='note' else self.search_mode ) ,\
+    'on_toolbar_menu_clicked': self.on_toolbar_menu_clicked, \
+    'do_check_mail': self.on_check_mail, \
     'on_bt_find_button_release_event': self.on_bt_find_button_release_event,\
     'on_run_vacuum': lambda o: self.dbcon.cursor().execute('VACUUM'),\
     'on_sync_db': lambda o: self.sync_sqlite_db(),\
@@ -104,6 +104,15 @@ class pnmain:
         save_config_key('global', 'run_startup_cmds', 'no')
     self.wTree.signal_autoconnect(evtmap)
     self.keyword.grab_focus()
+
+  def test_dlg(self):
+      if not self.app.is_checking_mail:
+          self.app.is_checking_mail = True
+          self.app.checkmail(server=None if self.search_mode=='note' else self.search_mode )
+          self.app.is_checking_mail = None
+
+  def on_check_mail(self, evt, data=None):
+      threading.Thread(target = self.test_dlg).start()
 
   def run_script(self, file_name = None):
       if file_name == None:
@@ -170,7 +179,7 @@ class pnmain:
           imapconn = self.app.imapconn[server]
           imapconn.select(readonly=1)
         except:
-              self.app.load_list_imap_acct(connect=True, server=self.search_mode)
+              self.app.load_list_imap_acct(connect=True, server=self.search_mode, locking = False)
               try: imapconn = self.app.imapconn[server]
               except: pass
         list_imap_account = self.app.list_imap_account_dict
@@ -329,7 +338,7 @@ class pnmain:
           _target = model[path[0]][3]
           try: conn.select(_target,readonly=0)
           except:
-            self.app.load_list_imap_acct(connect = True, server = iserver)
+            self.app.load_list_imap_acct(connect = True, server = iserver, locking = False)
             conn = self.app.imapconn[iserver]
             conn.select(_target,readonly=0)
           print "DEBUG, gonna delete msgID ", msgID  
@@ -465,7 +474,7 @@ class pnmain:
           imapconn = self.app.imapconn[self.search_mode]
           imapconn.select(readonly = 1) # try to make sure all okay
         except:
-          self.app.load_list_imap_acct(connect=True, server = self.search_mode)
+          self.app.load_list_imap_acct(connect=True, server = self.search_mode, locking = False)
           imapconn = self.app.imapconn[self.search_mode]
         if imapconn:
           pn_imap = PnImap(self.app, imapconn)

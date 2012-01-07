@@ -13,10 +13,13 @@ if sys.platform=="win32":
 sys.path.append(sys.path[0])
 os.chdir(sys.path[0])
 
-import pygtk, gtk, gobject, time
-import ConfigParser, sqlite3, base64
+import pygtk, gtk, gobject
+import ConfigParser, sqlite3, base64, time
 import imaplib, email, subprocess
 
+gobject.threads_init()
+gtk.gdk.threads_init()
+ 
 SETTINGS = gtk.settings_get_default()
 
 if sys.platform=="win32": SETTINGS.set_long_property("gtk-button-images", True, "main")
@@ -61,6 +64,8 @@ class pnote:
     self.new_note_list = []
     self.list_popen = [] # List forked process in Run Script
     self.imapconn = dict()
+    self.is_checking_mail = None
+    
     dbpathstr = get_config_key('data', 'db_paths', 'None')
     if not dbpathstr == 'None':
       i = 0
@@ -96,7 +101,7 @@ class pnote:
     gobject.timeout_add_seconds(120, self.save_pnmain_pos )
     gobject.timeout_add_seconds(600, self.cleanup_process )
     if get_config_key('global', 'checkmail', 'no') == 'yes':
-      gobject.timeout_add_seconds(int(get_config_key('global', 'check_mail_interval', '60') ), self.checkmail )
+      gobject.timeout_add_seconds(int(get_config_key('global', 'check_mail_interval', '60') ), self.checkmail, False )
 
   def save_pnmain_pos(self):
     try:
@@ -106,7 +111,8 @@ class pnote:
       return False
     except: return True
       
-  def checkmail(self, server = None):
+  def checkmail(self, locking = True, server = None ):
+    # INFO - must be called from non gtk.main() thread (use threading.Thread). If called form main thread, pass locking=False
     try:
         imapconn = None
         _msg = ''
@@ -133,19 +139,27 @@ class pnote:
               else:
                 _msg = 'No new mail' if _msg == '' else _msg
 
+        if locking: gtk.gdk.threads_enter()
         self.icon.set_tooltip(_msg)
         if _msg != 'No new mail':
           PopUpNotification(_msg, callback = lambda: self.show_main().display_new_mail(_data)  )
+        if locking: gtk.gdk.threads_leave()
+        
     except Exception, e: print "DEBUG pnmain.checkmail",e
-    return True        
+    return True
               
-  def load_list_imap_acct(self, connect=False, server = None):
+  def load_list_imap_acct(self, connect=False, server = None, locking = True):
+    # INFO - must be called from non gtk.main() thread (use threading.Thread). If called form main thread, pass locking=False
     list_imap_account_str = get_config_key('global', 'list_imap_account','')
     if list_imap_account_str != '': self.list_imap_account_dict = cPickle.loads(base64.b64decode( list_imap_account_str ) )
     else: self.list_imap_account_dict = dict()
     if connect:
         _msg = ''
-        if not set_password(self): return
+        if locking: gtk.gdk.threads_enter()
+        if not set_password(self):
+            gtk.gdk.threads_leave()
+            return
+        if locking: gtk.gdk.threads_leave()
         _list_server = ([server] if server != None else dict.keys(self.list_imap_account_dict) )
         for key in _list_server:
           _logname, _pass, _use_ssl, _port  = self.list_imap_account_dict[key]
@@ -162,7 +176,7 @@ class pnote:
             print sys.exc_info()[1]
             print "DEBUG", e
             _msg += "\nLogin to imap server error. Server: " + key + "\nsystem msg: "
-            
+
   def change_passwd(self):
     if self.cipherkey == None:
       if get_text_from_user('CRITICAL WARNING', "It seems you failed to unlock this field before. Changing password now AND if the password is not the same as the old correct one you will LOSE old information\nIf you still want to try to enter password to unlock this field, click Cancel, and then click Cancel in the popup window. Then click the lock button again\nIf you really want to DISCARD old information and reset to use newpass then click OK now", default_txt = None) != 0:
@@ -295,9 +309,6 @@ class pnote:
     chooser.destroy()
     return dbpath
 
-  def run(self):
-    gtk.main()
-
 if __name__ == "__main__":
   try:
      dbpath = sys.argv[1]
@@ -308,4 +319,6 @@ if __name__ == "__main__":
     app = pnote()
 
   app.show_main()
-  app.run()
+  #gtk.gdk.threads_enter()
+  gtk.main()
+  #gtk.gdk.threads_leave()
