@@ -163,7 +163,7 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
         if mail_use_auth: mailer.login(mail_user, mail_passwd)
         mailer.sendmail(me, to.split(COMMASPACE), outer.as_string())
         gtk.gdk.threads_enter()
-        message_box("OK", "Mail sent")
+        message_box("pnote - OK", "Mail sent")
         gtk.gdk.threads_leave()
         mailer.quit()
         _tmpstr = get_config_key('data','sent_folder', '')
@@ -172,7 +172,6 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
             app = note.app; app.load_list_imap_acct(connect=True)
             imapcon = app.imapconn[imap_srv]
             import imaplib
-            print "DEBUG - fork_send"
             imapcon.append(sent_folder, '\Seen', imaplib.Time2Internaldate(time.time()) ,outer.as_string() )
         
       except Exception , ex: message_box('Sending mail error',  "send_note_as_mail Error: %s" % ex )
@@ -549,7 +548,7 @@ class Preference:
 def set_password(app, change = False):
     retval = True
     if app.cipherkey == None or change:
-      app.cipherkey = get_text_from_user('Password required','Enter password to lock/unlock config file', show_char=False, completion = False, default_txt = 'none')
+      app.cipherkey = get_text_from_user('pnote - authentication required','Enter password to lock/unlock config file', show_char=False, completion = False, default_txt = 'none')
       if app.cipherkey == 'none':
         if not change: app.cipherkey = None
         message_box('error', 'Aborted')
@@ -794,7 +793,7 @@ class PopUpNotification():
     eventbox.add(label)
     self.w.add(eventbox)
     eventbox.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#FFF045") )
-    #gobject.timeout_add_seconds(20, self.w.destroy)
+    gobject.timeout_add_seconds(20, self.w.destroy)
     self.w.show_all()
 
   def do_exit(self, o=None, evt=None):

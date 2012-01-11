@@ -4,7 +4,7 @@
 # A new note window - data object
 from __future__ import with_statement 
 
-import os, sqlite3, time, shlex, subprocess, cPickle, random, StringIO, stat
+import os, sqlite3, time, shlex, subprocess, cPickle, random, StringIO, stat, threading
 # from datetime import datetime # tzinfo, timedelta
 from tempfile import *
 
@@ -78,8 +78,8 @@ class PnoteNew:
     'do_insert_from': lambda o: self.do_save_insert_txt(do='insert') ,\
     'on_content_delete_from_cursor': self.on_content_delete_from_cursor,\
     'do_save_html': self.do_save_html ,\
-    'on_run_as_script': lambda o: self.on_run_as_script(isselection = 'no'),\
-    'on_run_selection_as_script': lambda o: self.on_run_as_script(isselection = 'yes'),\
+    'on_run_as_script': lambda o: self.on_run_as_script(isselection=  'no'),\
+    'on_run_selection_as_script': lambda o: self.on_run_as_script(isselection= 'yes'),\
     'on_bt_undo_clicked': self.on_bt_undo_clicked ,\
     'on_bt_redo_clicked': self.on_bt_redo_clicked ,\
     'on_label_url_bt_released': self.on_label_url_button_press_event,\
@@ -256,18 +256,11 @@ class PnoteNew:
         text = buf.get_text(st,en)
       except: pass
     else: text = buf.get_text(buf.get_start_iter(), buf.get_end_iter())
-    f.write(text)
-    f.close()
+    f.write(text); f.close()
     os.chmod(f.name, stat.S_IEXEC+stat.S_IREAD+stat.S_IWRITE )
     self.tmpfile.append(f.name)
-    #os.system("cat " + f.name)
-    #os .system("ls -lha " + f.name)
-    #p1 = subprocess.Popen(shlex.split(f.name), stdin = subprocess.PIPE, stdout = subprocess.PIPE )
-    #result = p1.communicate()[0]
-    #new_note = PnoteNew(self.app, None, self.dbname)
-    #new_note.content.get_buffer().set_text(result)
-    #new_note.w.show_all()
-    os.system("xterm -hold -e " + f.name)
+    def _temp(): os.system("xterm -hold -e %s; rm -f %s" % (f.name, f.name) )
+    threading.Thread(target= _temp).start()
 
   def do_save_html(self, o=None):
     htmltext = "<html><head><title>%s</title></head><body>%s</body></html>" % (self.title.get_text(),  self.dump_to_html() )

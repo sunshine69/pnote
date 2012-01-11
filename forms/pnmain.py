@@ -41,10 +41,6 @@ class pnmain:
     "on_pnote_close": self.on_pnote_close, \
     "do_new_note": lambda o: pnote_new.PnoteNew(self.app).w.show_all(), \
     "do_show_pref": self.do_show_pref, \
-    "do_export": self.do_export, \
-    "do_export_selected": self.do_export_selected, \
-    "do_import": self.do_import, \
-    "do_export_html": self.do_export_html, \
     "do_send_mail": self.do_send_mail, \
     "do_print": self.do_print, \
     "bt_clear_button_press": self.bt_clear_button_press, \
@@ -54,7 +50,6 @@ class pnmain:
     "on_result_list_start_interactive_search": self.on_result_list_start_interactive_search, \
     "on_result_list_key_press": self.on_result_list_key_press, \
     'on_setup_mail': lambda o: MailPref(self.app).run() ,\
-    'do_export_selected_html': self.do_export_selected_html,\
     'on_toolbar_menu': self.on_toolbar_menu,\
     'on_toolbar_menu_clicked': self.on_toolbar_menu_clicked, \
     'do_check_mail': self.on_check_mail, \
@@ -62,7 +57,6 @@ class pnmain:
     'on_run_vacuum': lambda o: self.dbcon.cursor().execute('VACUUM'),\
     'on_sync_db': lambda o: self.sync_sqlite_db(),\
     'on_sync_db_baseid': lambda o: self.sync_sqlite_db(ask_base_id = True), \
-    'on_control_script_run': lambda o: self.on_control_script_run() ,\
     'on_run_script': lambda o: self.run_script() ,\
     'on_result_list_button_press_event': self.on_result_list_button_press_event, \
     }
@@ -132,8 +126,6 @@ class pnmain:
         subp = subprocess.Popen(shlex.split(cmds), stdin=subprocess.PIPE, stdout=subprocess.PIPE)
       threading.Thread(target = lambda: subp.wait() ).start()
       self.app.list_popen.append(subp)
-      
-  def on_control_script_run(self): pass
       
   def sync_sqlite_db(self, ask_base_id = False):
     remote_syncdb = get_config_key('data', 'remote_syncdb', 'none')
@@ -384,16 +376,6 @@ class pnmain:
     
   def do_show_pref(self, obj, data=None): Preference(app=self.app).w.show_all()
     
-  def do_export(self,obj, data=None): pass
-    
-  def do_export_selected(self, obj, data=None):    pass
-    
-  def do_import(self,obj, data=None):    pass
-
-  def do_export_html(self, obj, data=None):    pass
-  
-  def do_export_selected_html(self,o): pass
-  
   def get_list_notes_from_selection(self):
     list_notes = []
     def func(model, path, iter):

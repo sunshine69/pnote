@@ -321,6 +321,6 @@ if __name__ == "__main__":
     app = pnote()
 
   app.show_main()
-  #gtk.gdk.threads_enter()
+  gtk.gdk.threads_enter()
   gtk.main()
-  #gtk.gdk.threads_leave()
+  gtk.gdk.threads_leave()
