@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <glade-interface>
   <!-- interface-requires gtk+ 2.16 -->
   <!-- interface-naming-policy project-wide -->
@@ -38,7 +38,7 @@
                   <widget class="GtkEntry" id="title">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="invisible_char">&#x25CF;</property>
+                    <property name="invisible_char">●</property>
                     <signal name="changed" handler="on_edit_changed"/>
                   </widget>
                   <packing>
@@ -86,7 +86,7 @@
                       <widget class="GtkEntry" id="datelog">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="invisible_char">&#x25CF;</property>
+                        <property name="invisible_char">●</property>
                         <signal name="changed" handler="on_edit_changed"/>
                       </widget>
                       <packing>
@@ -97,7 +97,7 @@
                       <widget class="GtkEntry" id="flags">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="invisible_char">&#x25CF;</property>
+                        <property name="invisible_char">●</property>
                         <signal name="changed" handler="on_edit_changed"/>
                       </widget>
                       <packing>
@@ -310,7 +310,7 @@
                   <widget class="GtkEntry" id="url">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="invisible_char">&#x25CF;</property>
+                    <property name="invisible_char">●</property>
                     <signal name="changed" handler="on_edit_changed"/>
                   </widget>
                   <packing>
@@ -476,6 +476,14 @@
       </widget>
     </child>
     <child>
+      <widget class="GtkMenuItem" id="menuitem1">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Insert Image at cursor</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_insert_img"/>
+      </widget>
+    </child>
+    <child>
       <widget class="GtkMenuItem" id="menuitem10">
         <property name="visible">True</property>
         <property name="label" translatable="yes">Delete this note</property>
@@ -486,14 +494,6 @@
   </widget>
   <widget class="GtkMenu" id="menu_search">
     <property name="visible">True</property>
-    <child>
-      <widget class="GtkMenuItem" id="menuitem11">
-        <property name="visible">True</property>
-        <property name="label" translatable="yes">Filter selection using custom command</property>
-        <property name="use_underline">True</property>
-        <signal name="activate" handler="on_filter_selection"/>
-      </widget>
-    </child>
     <child>
       <widget class="GtkMenuItem" id="menuitem6">
         <property name="visible">True</property>
@@ -519,11 +519,20 @@
       </widget>
     </child>
     <child>
-      <widget class="GtkMenuItem" id="menuitem1">
+      <widget class="GtkMenuItem" id="menuitem11">
         <property name="visible">True</property>
-        <property name="label" translatable="yes">Insert Image at cursor</property>
+        <property name="label" translatable="yes">Filter selection using custom command</property>
         <property name="use_underline">True</property>
-        <signal name="activate" handler="on_insert_img"/>
+        <signal name="activate" handler="on_filter_selection"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkMenuItem" id="menuitem8">
+        <property name="visible">True</property>
+        <property name="tooltip" translatable="yes">Use source code viewer</property>
+        <property name="label" translatable="yes">Edit (note|selection) as source code</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_edit_sourcecode"/>
       </widget>
     </child>
   </widget>

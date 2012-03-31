@@ -4,7 +4,7 @@
 # A new note window - data object
 from __future__ import with_statement 
 
-import os, sqlite3, time, shlex, subprocess, cPickle, random, StringIO, stat, threading
+import os, sqlite3, time, shlex, subprocess, cPickle, random, StringIO, stat, threading, sys
 # from datetime import datetime # tzinfo, timedelta
 from tempfile import *
 
@@ -80,6 +80,7 @@ class PnoteNew:
     'do_save_html': self.do_save_html ,\
     'on_run_as_script': lambda o: self.on_run_as_script(isselection=  'no'),\
     'on_run_selection_as_script': lambda o: self.on_run_as_script(isselection= 'yes'),\
+    'on_edit_sourcecode': lambda o: self.on_edit_sourcecode(), \
     'on_bt_undo_clicked': self.on_bt_undo_clicked ,\
     'on_bt_redo_clicked': self.on_bt_redo_clicked ,\
     'on_label_url_bt_released': self.on_label_url_button_press_event,\
@@ -167,7 +168,7 @@ class PnoteNew:
     else:
       self.app.new_note_list.append(self)
       self.start_time = int(time.time())
-      _timenow = time.strftime("%d-%m-%Y %H:%M")
+      _timenow = time.strftime("%d-%m-%Y %H:%M:%S")
       self.datelog.set_text(_timenow)
       self.w.set_title('New note '+_timenow )
       self.time_spent = 0
@@ -481,7 +482,6 @@ class PnoteNew:
         if not inputstr == '': self.app.show_main().do_search(inputstr)
       except Exception , e: print e
     elif evt.button == 3: self.wTree.get_widget('menu_search').popup(None, None, None, evt.button, evt.time, data=None)
-    
 
   def on_filter_selection(self, o, d = None):
     try:
@@ -501,7 +501,26 @@ class PnoteNew:
             buf.delete(start, end)
             buf.insert_interactive(start, result, self.content.get_editable())
     except: pass    
-
+    
+  def on_edit_sourcecode(self):
+        f = NamedTemporaryFile(delete=False)
+        buf = self.content.get_buffer()
+        st,en, text = None,None,''
+        try:
+            st, en = buf.get_selection_bounds()
+            text = buf.get_text(st,en)
+        except Exception as e: text = buf.get_text(buf.get_start_iter(), buf.get_end_iter())
+        f.write(text); f.close()
+        os.chmod(f.name, stat.S_IEXEC+stat.S_IREAD+stat.S_IWRITE )
+        self.tmpfile.append(f.name)
+        os.system("%s/sourceview.py %s" % (sys.path[0], f.name) )
+        text = open(f.name, 'r').read()
+        if st != en:
+            buf.delete(st, en)
+            buf.insert_interactive(st, text, self.content.get_editable() )
+        else: buf.set_text(text)
+        os.unlink(f.name)
+        
   def add_tag_to_table(self, tagname, tag_property, value = '', flag = 'on' , mark1=None, mark2=None, text = None):
     format_tab = self.format_tab
     if tagname not in format_tab:

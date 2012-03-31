@@ -196,18 +196,20 @@ def run_setup(dbpath=''):
   message_box('Information', msg)
   conn = sqlite3.connect(dbpath)
   conn.executescript("""
-  CREATE TABLE lsnote(note_id integer primary key, title varchar(254) unique, datelog date, content text, url varchar(254), reminder_ticks unsigned long long default 0, flags varchar(50), timestamp unsigned long long, readonly integer default 0, format_tag BLOB, econtent BLOB, alert_count integer default 0, pixbuf_dict BLOB, time_spent integer default 0);
+  CREATE TABLE lsnote(note_id integer primary key, title varchar(254) unique, datelog date, content text, url varchar(254), reminder_ticks unsigned long long default 0, flags varchar(50), timestamp unsigned long long, readonly integer default 0, format_tag BLOB, econtent BLOB, alert_count integer default 0, pixbuf_dict BLOB, time_spent integer default 0, user_id integer);
   create index reminder_ticks_idx on lsnote(reminder_ticks DESC);
   create index timestamp_idx on lsnote(timestamp DESC);
   CREATE TABLE deleted_notes(note_id int unique, timestamp integer, title varchar(254) );
-    CREATE TRIGGER deleted_note AFTER DELETE ON lsnote
+  CREATE TRIGGER deleted_note AFTER DELETE ON lsnote
     BEGIN
       INSERT INTO deleted_notes(note_id, timestamp, title ) values(OLD.note_id, strftime('%s','now'), OLD.title );
     END;
-    CREATE TRIGGER after_insert AFTER INSERT ON lsnote
+  CREATE TRIGGER after_insert AFTER INSERT ON lsnote
     BEGIN
       DELETE FROM deleted_notes where note_id = NEW.note_id;
     END;
+  CREATE TABLE config(config_key varchar(64) primary key, config_value varchar(256) );
+  CREATE TABLE user(user_id integer primary key, name varchar(256), email varchar(256), station_id varchar(17) unique, shared_key varchar(128) default '' )
     """)
   conn.commit()
   msg = "Completed. if you set a new database file you can attached it by editing the config file in your %s%s%s%spnote.cfg" % (os.path.expanduser("~"), os.path.sep, CONFIGDIR, os.path.sep )
@@ -215,6 +217,27 @@ def run_setup(dbpath=''):
   message_box('Information', msg)
   return dbpath
   
+def get_dbconfig(dbcon, key):
+    dbc = dbcon.cursor()
+    try:
+        dbc.execute("select * from config where config_key = '%s'" % key )
+        row = dbc.fetchone()
+        return row['config_value']
+    except:
+        return None
+    
+def set_dbconfig(dbcon, key, value):
+    dbc = dbcon.cursor()
+    try:
+        dbc.execute("insert into config(config_key, config_value) values((?), (?))", (key, value) )
+        return True
+    except:
+        try:
+            dbc.execute("update config set config_value = (?) where config_key = (?)", (value, key) )
+            return True
+        except:
+            return None
+
 def get_config_key(section='data',key='', default_val=''):
     if not os.path.exists("%s%s%s" % ( os.path.expanduser("~"), os.path.sep, CONFIGDIR) ): os.mkdir("%s%s%s" % (os.path.expanduser("~"), os.path.sep, CONFIGDIR) )
     config = ConfigParser.RawConfigParser()
