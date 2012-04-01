@@ -8,8 +8,10 @@ Features:
 - Encrypted fields to store sensitive information
 - Multiple sqlite3 database supported
 - Various text formatting including inserting Image
-- Filter note content using external command (perl -ne for example)
+- Filter note content or text selection using external command (perl -ne for example)
 - Run the note as a script or a selection as a script
+- Edit note or text selection as source code using gtksourceview with autoindent, syntax highlight feature etc..
+- Gtksourceview standalone for quickly editing code snippet
 - History tracking, time calculation for tasks, Navigation based on highlight text and update history
 - Undo / Redo
 - Save content to a text file - insert from text file
@@ -23,7 +25,7 @@ Features:
 
 REQUIREMENT
 
-- Python 
+- Python 2
 - PyGTK2 and its dependencies including support for libglade
 - PyCrypto
 
@@ -36,7 +38,7 @@ License: GPL
 
 INSTALLATION
 * Ubuntu Linux:
- - dependencies: apt-get install python-gtk2 python-glade2 python-crypto 
+ - dependencies: apt-get install python-gtk2 python-glade2 python-crypto
  - Download the package and extract it. It wil create a directory called pnote
  - cd pnote
  - Run it using command python pnote.py
@@ -59,11 +61,11 @@ So the step is below:
 
 . Get iconv.dll somwhere and copy into gtk dir
 
-. download libglade (tested version 2.6.4-1 from http://ftp.gnome.org/pub/gnome/binaries/win32/libglade/2.6/. This url has many other up-to-date win32 binaries! 
+. download libglade (tested version 2.6.4-1 from http://ftp.gnome.org/pub/gnome/binaries/win32/libglade/2.6/. This url has many other up-to-date win32 binaries!
 
 . Exact the libglade-2.0.0.dll and copy to gtk installation dir (c:\Program Files\gtk2-runtime or similar)
 
-. Download libxml2 from 
+. Download libxml2 from
  http://www.xmlsoft.org/sources/win32/libxml2-2.7.6.win32.zip  extract it , rename to libxml2-2.dll and copy it to gtk2 runtime dir like above.
 
 . Download three pygtk installation files, pycairo, pygtk, pygobject from  http://ftp.gnome.org/pub/gnome/binaries/win32/. Click in the directory and select latest version. pygtk select the glade version.
