@@ -533,6 +533,7 @@
         <property name="label" translatable="yes">Edit (note|selection) as source code</property>
         <property name="use_underline">True</property>
         <signal name="activate" handler="on_edit_sourcecode"/>
+        <signal name="activate" handler="on_view_sourcecode"/>
       </widget>
     </child>
   </widget>
