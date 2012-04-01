@@ -512,13 +512,13 @@ class PnoteNew:
             text = buf.get_text(st,en)
         except Exception as e: text = buf.get_text(buf.get_start_iter(), buf.get_end_iter())
         f.write(text); f.close()
-        os.chmod(f.name, stat.S_IEXEC+stat.S_IREAD+stat.S_IWRITE )
+        #os.chmod(f.name, stat.S_IEXEC+stat.S_IREAD+stat.S_IWRITE )
         self.tmpfile.append(f.name)
         os.system("%s/sourceview.py %s" % (sys.path[0], f.name) )
-        text = open(f.name, 'r').read()
+        text = open(f.name, 'r').read(); print(text)
         if st != en:
             buf.delete(st, en)
-            buf.insert_interactive(st, text, self.content.get_editable() )
+            buf.insert_interactive(st, text, True)
         else: buf.set_text(text)
         os.unlink(f.name)
 
