@@ -51,6 +51,20 @@ MARK_CATEGORY_1 = 'one'
 MARK_CATEGORY_2 = 'two'
 DATADIR = '/usr/share'
 
+LANG_TAB = {
+    'd.py': 100,
+    'd.php': 101,
+    'd.pl': 102,
+    'd.js': 103,
+    'd.c':104,
+    'd.cpp':105,
+    'd.rb': 106,
+    'd.lua':107,
+    'd.java':108,
+    'd.sh':109,
+    'd.tcl':110
+
+}
 
 ######################################################################
 ##### error dialog
@@ -154,6 +168,16 @@ def insert_spaces_toggled_cb(action, sourceview):
 def tabs_toggled_cb(action, action2, sourceview):
     sourceview.set_tab_width(action.get_current_value())
 
+def lang_toggled_cb(action, action2, sourceview):
+    buffer = sourceview.get_buffer()
+    manager = buffer.get_data('languages-manager')
+    INVERSE_LANG_TAB = dict([[v,k] for k,v in LANG_TAB.items()])
+    filename = INVERSE_LANG_TAB[action.get_current_value()]
+    language = manager.guess_language(filename)
+    if language:
+        buffer.set_highlight_syntax(True)
+        buffer.set_language(language)
+    else: print("Can not find language {0}".format(filename))
 
 def new_view_cb(action, sourceview):
     window = create_view_window(sourceview.get_buffer(), sourceview)
@@ -271,7 +295,6 @@ def button_press_cb(view, ev):
 
     return False
 
-
 ######################################################################
 ##### Actions & UI definition
 buffer_actions = [
@@ -285,7 +308,8 @@ view_actions = [
     ('ViewMenu', None, '_View'),
     ('Print', gtk.STOCK_PRINT, '_Print', '<control>P', 'Print the file', print_cb),
     ('NewView', gtk.STOCK_NEW, '_New View', None, 'Create a new view of the file', new_view_cb),
-    ('TabsWidth', None, '_Tabs Width')
+    ('TabsWidth', None, '_Tabs Width'),
+    ('ChangeLang', None, '_Language')
 ]
 
 toggle_actions = [
@@ -304,6 +328,20 @@ radio_actions = [
     ('TabsWidth12', None, '12', None, 'Set tabulation width to 12 spaces', 12)
 ]
 
+radio_lang_action = [
+    ('Python', None, 'Python', None, 'Set lang to python', LANG_TAB['d.py']),
+    ('PHP', None, 'PHP', None, 'Set lang to PHP', LANG_TAB['d.php']),
+    ('Perl', None, 'Perl', None, 'Set lang to Perl', LANG_TAB['d.pl']),
+    ('JavaScript', None, 'JavaScript', None, 'Set lang to JavaScript', LANG_TAB['d.js']),
+    ('C', None, 'C', None, 'Set lang to C', LANG_TAB['d.c']),
+    ('C++', None, 'C++', None, 'Set lang to C++', LANG_TAB['d.cpp']),
+    ('Ruby', None, 'Ruby', None, 'Set lang to Ruby', LANG_TAB['d.rb']),
+    ('Lua', None, 'Lua', None, 'Set lang to lua', LANG_TAB['d.lua']),
+    ('Java', None, 'Java', None, 'Set lang to Java', LANG_TAB['d.java']),
+    ('Bash', None, 'bash', None, 'Set lang to bash', LANG_TAB['d.sh']),
+    ('Tcl', None, 'tcl', None, 'Set lang to tcl', LANG_TAB['d.tcl'])
+    ]
+
 view_ui_description = """
 <ui>
   <menubar name='MainMenu'>
@@ -312,6 +350,19 @@ view_ui_description = """
       <placeholder name="FileMenuAdditions"/>
       <separator/>
       <menuitem action='Print'/>
+    </menu>
+    <menu action='ChangeLang'>
+      <menuitem action='Python'/>
+      <menuitem action='PHP'/>
+      <menuitem action='Perl'/>
+      <menuitem action='Lua'/>
+      <menuitem action='Bash'/>
+      <menuitem action='Ruby'/>
+      <menuitem action='JavaScript'/>
+      <menuitem action='C'/>
+      <menuitem action='C++'/>
+      <menuitem action='Java'/>
+      <menuitem action='Tcl'/>
     </menu>
     <menu action='ViewMenu'>
       <separator/>
@@ -375,6 +426,7 @@ def create_view_window(buffer, sourceview=None):
     action_group.add_actions(view_actions, view)
     action_group.add_toggle_actions(toggle_actions, view)
     action_group.add_radio_actions(radio_actions, -1, tabs_toggled_cb, view)
+    action_group.add_radio_actions(radio_lang_action, -1, lang_toggled_cb, view)
 
     ui_manager = gtk.UIManager()
     ui_manager.insert_action_group(action_group, 0)
