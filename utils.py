@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import with_statement 
+from __future__ import with_statement
 import pygtk,gtk,pango,gobject
 import os, ConfigParser, random, sqlite3, time, threading, base64, cPickle, subprocess, shlex
 from random import randrange
@@ -12,8 +12,8 @@ LDAP_ENABLED=None
 try:
     import ldap
     LDAP_ENABLED = True
-except: pass    
-    
+except: pass
+
 CONFIGDIR = '.pnote'
 
 def get_text_from_user(title='Input text', msg = 'Enter text:', default_txt = '', size = -1, show_char = True, completion = True, search_dlg = None):
@@ -59,7 +59,7 @@ def get_text_from_user(title='Input text', msg = 'Enter text:', default_txt = ''
     else: retval = None
     d.destroy()
     return retval
-        
+
 def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
     #forked_to_sendmail = get_config_key('data', 'forked_to_sendmail', 'yes')
     if note == None: print "Need to pass me a note"; return
@@ -98,21 +98,21 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
         _subject = get_text_from_user('Enter subject', 'Enter subject of the msg: ', "Re: %s" % _subject, size = 300, completion = False)
     except:
       _msgcontent = buf.get_text(buf.get_start_iter(), buf.get_end_iter())
-            
+
     if mail_from == '':
           me = get_config_key('data', 'mail_from', 'none')
           if me == 'none': me = get_text_from_user('From', 'From: '); save_config_key('data', 'mail_from', me)
     else: me = mail_from
-    
+
     if to == '':
         _ldap_search = None
         if LDAP_ENABLED:
             from forms.ldap_search import ldap_search
             _ldap_search = ldap_search()
-      
+
         to = get_text_from_user('To: ', 'Recipient address separated by %s ' % (COMMASPACE), size = 300, search_dlg = _ldap_search)
         if to == None or to == '': message_box('error', 'Recipients required'); return
-      
+
     pathstr = note.url.get_text()
     if pathstr != '':
         paths = pathstr.split('<|>')
@@ -155,7 +155,7 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
       outer['Subject'] = (_subject if subject == '' else _subject)
       outer['From'] = me
       outer['To'] = to
-      
+
     def fork_send():
       try:
         if mail_use_ssl: mailer =  smtplib.SMTP_SSL(mail_server, port)
@@ -173,10 +173,10 @@ def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
             imapcon = app.imapconn[imap_srv]
             import imaplib
             imapcon.append(sent_folder, '\Seen', imaplib.Time2Internaldate(time.time()) ,outer.as_string() )
-        
+
       except Exception , ex: message_box('Sending mail error',  "send_note_as_mail Error: %s" % ex )
     threading.Thread(target = fork_send).start()
-    
+
 def run_setup(dbpath=''):
   global CONFIGDIR
   if dbpath == '':
@@ -196,7 +196,7 @@ def run_setup(dbpath=''):
   message_box('Information', msg)
   conn = sqlite3.connect(dbpath)
   conn.executescript("""
-  CREATE TABLE lsnote(note_id integer primary key, title varchar(254) unique, datelog date, content text, url varchar(254), reminder_ticks unsigned long long default 0, flags varchar(50), timestamp unsigned long long, readonly integer default 0, format_tag BLOB, econtent BLOB, alert_count integer default 0, pixbuf_dict BLOB, time_spent integer default 0, user_id integer);
+  CREATE TABLE lsnote(note_id integer primary key, title varchar(254) unique, datelog date, content text, url varchar(254), reminder_ticks unsigned long long default 0, flags varchar(50), timestamp unsigned long long, lastsyncfrom unsigned long long default 0, permision integer, readonly integer default 0, format_tag BLOB, econtent BLOB, alert_count integer default 0, pixbuf_dict BLOB, time_spent integer default 0, user_id integer);
   create index reminder_ticks_idx on lsnote(reminder_ticks DESC);
   create index timestamp_idx on lsnote(timestamp DESC);
   CREATE TABLE deleted_notes(note_id int unique, timestamp integer, title varchar(254) );
@@ -209,14 +209,15 @@ def run_setup(dbpath=''):
       DELETE FROM deleted_notes where note_id = NEW.note_id;
     END;
   CREATE TABLE config(config_key varchar(64) primary key, config_value varchar(256) );
-  CREATE TABLE user(user_id integer primary key, name varchar(256), email varchar(256), station_id varchar(17) unique, shared_key varchar(128) default '' )
+  CREATE TABLE user(user_id integer primary key, name varchar(256), email varchar(256), station_id varchar(17) unique, shared_key varchar(128) default '' );
+  CREATE TABLE lastsync(id integer primary key, server_id varchar(17), timestamp unsigned long long default 0)
     """)
   conn.commit()
   msg = "Completed. if you set a new database file you can attached it by editing the config file in your %s%s%s%spnote.cfg" % (os.path.expanduser("~"), os.path.sep, CONFIGDIR, os.path.sep )
   print msg
   message_box('Information', msg)
   return dbpath
-  
+
 def get_dbconfig(dbcon, key):
     dbc = dbcon.cursor()
     try:
@@ -225,7 +226,7 @@ def get_dbconfig(dbcon, key):
         return row['config_value']
     except:
         return None
-    
+
 def set_dbconfig(dbcon, key, value):
     dbc = dbcon.cursor()
     try:
@@ -253,7 +254,7 @@ def get_config_key(section='data',key='', default_val=''):
     except: retval = tmpfunc()
     if retval == '' or retval == None or retval == 'None': tmpfunc()
     return retval
-      
+
 def save_config_key(section='data', key='', value=''):
     config = ConfigParser.RawConfigParser()
     config.read("%s%s%s%spnote.cfg" % (os.path.expanduser("~"), os.path.sep, CONFIGDIR,os.path.sep  ))
@@ -264,7 +265,7 @@ def save_config_key(section='data', key='', value=''):
         config.set(section, key, value)
       except: return False
     with open("%s%s%s%spnote.cfg" % (os.path.expanduser("~"), os.path.sep, CONFIGDIR,os.path.sep  ), 'wb') as configfile: config.write(configfile)
-    return True      
+    return True
 
 def message_box(title = 'Message', msg = ''):
     d = gtk.MessageDialog(None, 0, gtk.MESSAGE_INFO, gtk.BUTTONS_CLOSE, msg)
@@ -287,7 +288,7 @@ class BFCipher:
         return cleartext
     # Blowfish cipher needs 8 byte blocks to work with
     def __pad_file(self, file_buffer):
-        pad_bytes = 8 - (len(file_buffer) % 8)                                 
+        pad_bytes = 8 - (len(file_buffer) % 8)
         for i in xrange(pad_bytes - 1): file_buffer += chr(randrange(0, 256))
         # final padding byte; % by 8 to get the number of padding bytes
         bflag = randrange(6, 248); bflag -= bflag % 8 - pad_bytes
@@ -297,9 +298,9 @@ class BFCipher:
         pad_bytes = ord(file_buffer[-1]) % 8
         if not pad_bytes: pad_bytes = 8
         return file_buffer[:-pad_bytes]
-          
+
 class PnCompletion():
-  
+
   def __init__(self, initial_list_str=None, separator = '<|>', max_entry_count='10'):
     self.completion = gtk.EntryCompletion()
     model = gtk.ListStore(str)
@@ -310,7 +311,7 @@ class PnCompletion():
     self.max_entry_count = int(max_entry_count)
     self.separator = separator
     self.populate(initial_list_str)
-    
+
   def populate(self, keywords):
     if keywords == '' or keywords == None: return
     kwlist = keywords.split(self.separator)
@@ -344,7 +345,7 @@ class PnCompletion():
         keyword_list.remove(keyword_list.get_iter_first())
 
 class FormatNote:
-  
+
   def add_tag_to_table(self, tagname, tag_property, value = '',flag = 'on', mark1=None, mark2=None, text = None):
     format_tab = self.PnoteNew.format_tab
     if tagname not in format_tab:
@@ -352,12 +353,12 @@ class FormatNote:
     else:
       format_tab[tagname][0][tag_property]=value
       format_tab[tagname][1].append( (flag, mark1, mark2, text) )
-  
+
   def create_unique_tagname(self):
     tagn = 'tag' + str(random.randint(0,100000) )
     while tagn in self.PnoteNew.format_tab: tagn = 'tag' + str(random.randint(0,100000) )
     return tagn
-    
+
   def do_format(self, o=None):
     m1, m2 =  self.buf.create_mark(None, self.s , False), self.buf.create_mark(None, self.e, False )
     if self.cb_underline.get_active():
@@ -401,10 +402,10 @@ class FormatNote:
       self.buf.apply_tag(tag, self.s,self.e)
       self.add_tag_to_table(tagn,'font', font_desc, 'on' ,m1, m2 )
       self.PnoteNew.app.last_font_desc = font_desc
-      
+
     self.buf.set_modified(True)
     self.w.destroy()
-      
+
   def do_cancel(self, o=None): self.w.destroy()
   def on_bt_fontcolor_color_set(self, o=None): self.fontcolorset = True
   def on_bt_bgcolor_color_set(self, o=None): self.bgcolorset = True
@@ -413,16 +414,16 @@ class FormatNote:
     if d == None:
       self.buf.remove_all_tags(self.s, self.e)
     elif d == 'CLEAR_ALL':
-      s,e  =  self.buf.get_start_iter(), self.buf.get_end_iter() 
+      s,e  =  self.buf.get_start_iter(), self.buf.get_end_iter()
       self.PnoteNew.format_tab = dict()
       self.buf.remove_all_tags(s,e)
-      
+
     self.buf.set_modified(True)
     self.w.destroy()
   def on_bt_clear_all_clicked(self,o=None): self.on_bt_clear_clicked(None, 'CLEAR_ALL')
 
   def destroy(self): self.w.destroy(); return True
-  
+
   def __init__(self, PnoteNew = None):
     self.PnoteNew = PnoteNew
     self.wTree = gtk.glade.XML('glade/format_w.glade')
@@ -442,7 +443,7 @@ class FormatNote:
     if self.PnoteNew.app.last_font_desc != '':
       self.bt_font.set_font_name(self.PnoteNew.app.last_font_desc)
       self.fontset = True
-    
+
     evtmap = { 'on_bt_cancel_activate': lambda o: self.destroy() ,\
       'destroy': lambda o: self.destroy,\
       'on_bt_apply_activate': self.do_format , \
@@ -460,7 +461,7 @@ class FormatNote:
 class NoteInfo:
 
   def destroy(self): self.w.destroy(); return True
-  
+
   def __init__(self, note, label = ''):
     self.note = note
     buf = self.note.content.get_buffer()
@@ -483,15 +484,15 @@ class NoteInfo:
     #self.combo_list_highlight.set_active(0); self.combo_list_update.set_active(0)
     self.combo_list_highlight.connect('changed',self.on_combo_list_highlight_changed )
     self.combo_list_update.connect('changed',self.on_combo_list_update_changed)
-    
+
   def on_combo_list_highlight_changed(self, o=None):
     m1 = self.highlight_dict[o.get_active_text()]
     self.note.content.scroll_mark_onscreen(m1)
-    
+
   def on_combo_list_update_changed(self, o=None):
     m1 = self.update_dict[o.get_active_text()]
     self.note.content.scroll_mark_onscreen(m1)
-  
+
   def populate_combo(self):
     format_tab = self.note.format_tab
     for item in format_tab:
@@ -501,7 +502,7 @@ class NoteInfo:
             text = row[3]
             self.highlight_dict[text] = row[2]
             self.combo_list_highlight.append_text(text)
-          except: pass  
+          except: pass
       elif item == 'start_update':
         for row in  format_tab[item][1]:
           try:
@@ -509,7 +510,7 @@ class NoteInfo:
             self.update_dict[text] = row[2]
             self.combo_list_update.append_text(text)
           except: pass
-         
+
 class NoteReminder:
   def destroy(self): self.w.destroy(); return True
   def __init__(self, note):
@@ -530,7 +531,7 @@ class NoteReminder:
     y,m,d,H,M,S,wd,yd,isdst = time.localtime()
     self.calendar.select_month(m-1, y); self.calendar.select_day(d); self.hour.set_active(H); self.minute.set_active(0)
     self.wTree.signal_autoconnect(evtmap)
-    
+
   def on_bt_ok_clicked(self,o=None):
     y,m,d = self.calendar.get_date()
     timestr = "%s/%s/%s %s:%s" % (d, m+1, y, self.hour.get_active_text(), self.minute.get_active_text())
@@ -539,7 +540,7 @@ class NoteReminder:
     self.w.destroy()
 
   def on_bt_cancel_clicked(self, o=None): self.w.destroy()
-    
+
 class Preference:
   def destroy(self): self.w.destroy(); return True
   def __init__(self, app=None):
@@ -576,7 +577,7 @@ def set_password(app, change = False):
         if not change: app.cipherkey = None
         message_box('error', 'Aborted')
         retval = False
-    return retval  
+    return retval
 
 class MailPref:
   def destroy(self): self.w.destroy(); return self.response
@@ -609,7 +610,7 @@ class MailPref:
     self.combo_handler_id = None
     self.combo_handler_id1 = None
     self.wTree.signal_autoconnect(evtmap)
-    
+
   def on_bt_set_port_default_clicked(self, o=None):
         if self.cbox_use_ssl.get_active():
             if self.cbox_is_imap_server.get_active(): self.e_port.set_text('993')
@@ -617,7 +618,7 @@ class MailPref:
         else:
             if self.cbox_is_imap_server.get_active(): self.e_port.set_text('143')
             else: self.e_port.set_text('25')
-  
+
   def on_cbox_is_imap_server_toggled(self,o=None):
     flag = self.cbox_is_imap_server.get_active()
     if flag:
@@ -630,12 +631,12 @@ class MailPref:
       self.e_smpt_server.child.disconnect(self.combo_handler_id1)
       self.cbox_use_auth.set_sensitive(True)
       self.load_smtp_config()
-    
+
   def load_server_list(self):
     self.e_smpt_server.get_model().clear()
     for account_name in dict.keys(self.app.list_imap_account_dict): self.e_smpt_server.append_text(account_name)
     self.e_smpt_server.set_active(0)
-    
+
   def on_bt_del_imap_clicked(self,o=None):
     if (self.cbox_is_imap_server.get_active()):
       imap_server = self.e_smpt_server.get_active_text().strip()
@@ -646,7 +647,7 @@ class MailPref:
         self.e_smpt_server.remove_text(self.e_smpt_server.get_active())
         self.e_smpt_server.child.set_text('')
       except: pass
-    
+
   def list_server_changed(self,control=None):
     if (self.cbox_is_imap_server.get_active()):
       imap_server = self.e_smpt_server.get_active_text().strip()
@@ -660,12 +661,12 @@ class MailPref:
         self.cbox_use_auth.set_sensitive(False)
         self.bt_cancel.set_label('Cancel')
       else: self.e_port.set_text( '143' )
-            
+
     else: self.load_smtp_config()
     self.bt_cancel.set_label('Cancel')
-    
+
   def run(self): self.w.show_all(); return self.response
-  
+
   def load_smtp_config(self):
     self.e_smpt_server.get_model().clear()
     self.e_smpt_server.append_text(get_config_key('data', 'mail_server', '') )
@@ -677,7 +678,7 @@ class MailPref:
     self.cbox_use_ssl.set_active( (False if (get_config_key('data', 'mail_use_ssl', 'no') == 'no' ) else True )  )
     self.cbox_use_auth.set_active( (False if (get_config_key('data', 'mail_use_auth', 'no') == 'no' ) else True )  )
     self.cbox_forked_mail.set_active( (False if (get_config_key('data', 'mail_forked_send', 'no') == 'no' ) else True )  )
-    
+
   def on_button1_clicked(self,o=None): self.response = 1; self.destroy()
   def on_bt_save_clicked(self,o=None):
     newpass = self.e_passwd.get_text(); encpass64 = None
@@ -708,13 +709,13 @@ class MailPref:
     self.app.load_list_imap_acct()
     self.response = 0
     self.bt_cancel.set_label('Close')
-    
+
 class EContent:
-  
+
   def destroy(self):
     self.w.destroy()
     self.note.e_content = None
-    
+
   def __init__(self, note):
     self.note = note; self.app = note.app
     self.wTree = gtk.glade.XML('glade/e_content.glade')
@@ -745,7 +746,7 @@ class EContent:
         else: self.note.bt_url.set_image(gtk.image_new_from_file('icons/decrypted.png'))
         buf.insert_at_cursor(tex)
       except Exception, ex : print ex[0]
-    
+
   def on_bt_save_clicked(self,o=None):
     buf = self.econtent.get_buffer()
     bf = BFCipher(self.app.cipherkey)
@@ -753,15 +754,15 @@ class EContent:
     self.note.econtent = bf.encrypt( tex )
     self.note.content.get_buffer().set_modified(buf.get_modified() )
     self.destroy()
-    
+
 class NoteSearch:
-  
+
   def destroy(self):
     self.w.destroy()
     save_config_key('data', 'note_search_history', self.pn_completion.get_list_str())
     self.note.note_search = None
     return True
-    
+
   def __init__(self, note):
     self.note = note
     self.wTree = gtk.glade.XML('glade/note_search.glade')
@@ -782,7 +783,7 @@ class NoteSearch:
     buf = self.note.content.get_buffer()
     self.cur_iter = buf.get_iter_at_mark(buf.get_insert())
     self.wTree.signal_autoconnect(evtmap)
-    
+
   def do_search(self):
     buf = self.note.content.get_buffer()
     self.note.last_kword = kword = self.e_kword.get_text().strip()
@@ -840,20 +841,20 @@ class PnImap:
     for item in self.response:
       self.mailboxes.append(item.split()[-1])
     return rc
-    
+
   def search_mail(self, text=None, **b):
     retval = []
     if text == None and len(b) == 0: return retval
     search_filter_str = ''
-    
+
     if b.get('search_new_mail', 0) == 1:
       search_filter_str = '(UNSEEN UNDELETED)'
-      
-    targets = ['INBOX']  
+
+    targets = ['INBOX']
     if self.app.current_mailbox == None:
         if self.get_mailboxes() == 'OK': targets = self.mailboxes
     else: targets = [self.app.current_mailbox]
-    
+
     if text != None:
       if text.startswith('^'): search_filter_str = text[1:] #pass through search filter as is
       else: search_filter_str = '(BODY "%s")' % (text)
@@ -877,28 +878,28 @@ class PnImap:
                 except Exception, e: print "DEBUG, search_mail", e
 
     return retval
-                 
+
 class TextFormatter:
     def __init__(self,lynx='/usr/bin/lynx', html2text = '/usr/bin/html2text'):
         self.lynx = lynx
         self.html2text = html2text
-        
+
     def run_lynx(self, unicode_html_source):
         "Expects unicode; returns unicode"
-        return subprocess.Popen([self.lynx, 
-                      '-assume-charset=UTF-8', 
-                      '-display-charset=UTF-8', 
-                      '-dump', 
-                      '-stdin'], 
-                      stdin=subprocess.PIPE, 
+        return subprocess.Popen([self.lynx,
+                      '-assume-charset=UTF-8',
+                      '-display-charset=UTF-8',
+                      '-dump',
+                      '-stdin'],
+                      stdin=subprocess.PIPE,
                       stdout=subprocess.PIPE).communicate(input=unicode_html_source.encode('utf-8'))[0].decode('utf-8')
     def run_html2text(self, unicode_html_source):
         return subprocess.Popen(shlex.split(self.html2text),
                       stdin=subprocess.PIPE,
-                      stdout=subprocess.PIPE).communicate(input=unicode_html_source.encode('utf-8'))[0].decode('utf-8')                    
-                         
+                      stdout=subprocess.PIPE).communicate(input=unicode_html_source.encode('utf-8'))[0].decode('utf-8')
+
 class PnTips(TreeViewTooltips):
-        
+
         def __init__(self, column, data, key_col = 0):
             'column: where the mouse point and moves; data = {key_col_string: tip_string}; key_col: column number that I can get the string from model and pass it to data dict'
             self.column = column
@@ -906,7 +907,7 @@ class PnTips(TreeViewTooltips):
             self.data = data
             # call base class init
             TreeViewTooltips.__init__(self, use_markup = False)
-            
+
         def get_tooltip(self, view, column, path):
             if column is self.column:
                 model = view.get_model()
@@ -921,13 +922,13 @@ class PnTips(TreeViewTooltips):
 
             # this will place the tooltip above and to the right
             return x + 10, y - (h + 10)
-        
+
 def get_a_note(app = None, note_id = None, dbname = None):
   if app == None or note_id == None or dbname == None: return None
   csor = app.dbcon.cursor()
   sql = "select * from %s.lsnote WHERE note_id = %s" % (dbname, note_id)
   csor.execute(sql)
   return csor.fetchone()
-  
-  
-  
+
+
+

@@ -95,6 +95,27 @@ imapobj = imaplib.IPMAP4_SSL('your_imap_server_name_or_IP') # remove _SSL if not
 imapobj.login('your email', 'password')
 imapobj.list()
 
+TODO
+
+The work team feature - sync note across several work station
+
+Sync algorithm:
+
+* Each note has permision attr to allow: read/write for each user
+* Note title can be used across - it must be unique
+
+A sync B
+- A read the last time stamp sync from B from lastsync table. Tell B. Initially it is 0 so all notes from B will be pushed.
+- B select all notes with lastupdate > from A and gives B list of titles and lastupdate, lastsyncfrom information. Also the deletednotes title as well
+- A check all notes with that
+  * title and lastupdate newer and my lastupdate < my lastsyncfrom - then pull it.
+  *                            if my lastupdate > my lastsyncfrom - conflict might happen - merge question
+  * deletednotes then delete it
+
+- A update these notes.
+- lastsyncfrom is used to detect conflict and popup the merge dialog. (both update the note with diffrent time)
+
+
 
 
 

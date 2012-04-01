@@ -36,5 +36,4 @@ def m_server(dbcon):
     while 1:
             time.sleep(int(get_config_key('global','mcast_interval','30')) )
             sock.sendto(MSG,(MCAST_ADDR,MCAST_PORT) )
-            
-            
+
