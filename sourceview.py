@@ -62,7 +62,16 @@ LANG_TAB = {
     'd.lua':107,
     'd.java':108,
     'd.sh':109,
-    'd.tcl':110
+    'd.tcl':110,
+    'd.sql': 111,
+    'd.xml': 112,
+    'd.html': 113,
+    'd.css': 114,
+    'd.json': 115,
+    'd.sgml': 116,
+    'd.xslt': 117,
+    'd.dtd': 118,
+    'd.jsp': 119
 
 }
 
@@ -339,7 +348,16 @@ radio_lang_action = [
     ('Lua', None, 'Lua', None, 'Set lang to lua', LANG_TAB['d.lua']),
     ('Java', None, 'Java', None, 'Set lang to Java', LANG_TAB['d.java']),
     ('Bash', None, 'bash', None, 'Set lang to bash', LANG_TAB['d.sh']),
-    ('Tcl', None, 'tcl', None, 'Set lang to tcl', LANG_TAB['d.tcl'])
+    ('SQL', None, 'sql', None, 'Set lang to sql', LANG_TAB['d.sql']),
+    ('Tcl', None, 'tcl', None, 'Set lang to tcl', LANG_TAB['d.tcl']),
+    ('XML', None, 'xml', None, 'Set lang to xml', LANG_TAB['d.xml']),
+    ('HTML', None, 'html', None, 'Set lang to html', LANG_TAB['d.html']),
+    ('CSS', None, 'css', None, 'Set lang to css', LANG_TAB['d.css']),
+    #('json', None, 'json', None, 'Set lang to json', LANG_TAB['d.json']),
+    #('SGML', None, 'sgml', None, 'Set lang to sgml', LANG_TAB['d.sgml']),
+    ('XSLT', None, 'xslt', None, 'Set lang to xslt', LANG_TAB['d.xslt']),
+    ('DTD', None, 'dtd', None, 'Set lang to dtd', LANG_TAB['d.dtd']),
+    #('JSP', None, 'jsp', None, 'Set lang to jsp', LANG_TAB['d.jsp'])
     ]
 
 view_ui_description = """
@@ -363,6 +381,12 @@ view_ui_description = """
       <menuitem action='C++'/>
       <menuitem action='Java'/>
       <menuitem action='Tcl'/>
+      <menuitem action='SQL'/>
+      <menuitem action='XML'/>
+      <menuitem action='HTML'/>
+      <menuitem action='CSS'/>
+      <menuitem action='XSLT'/>
+      <menuitem action='DTD'/>
     </menu>
     <menu action='ViewMenu'>
       <separator/>
