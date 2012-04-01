@@ -8,3 +8,7 @@ test*
 dll
 *.dll
 *~
+*backup
+*.bak
+*.old
+

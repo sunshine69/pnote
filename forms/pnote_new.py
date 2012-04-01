@@ -2,31 +2,31 @@
 # -*- coding: utf-8 -*-
 
 # A new note window - data object
-from __future__ import with_statement 
+from __future__ import with_statement
 
 import os, sqlite3, time, shlex, subprocess, cPickle, random, StringIO, stat, threading, sys
 # from datetime import datetime # tzinfo, timedelta
 from tempfile import *
 
 try:
- import pygtk 
+ import pygtk
  pygtk.require('2.0')
 except:
  pass
- 
+
 try:
  import gtk, pango #, gobject
  import gtk.glade
 except:
  pass
-  
+
 from utils import *
 import undostack
-  
+
 class PnoteNew:
- 
+
   def __init__(self,pnote_app, note_id = None, dbname = 'main'):
-  
+
     self.app = pnote_app
     self.unique_num = 0
     self.note_id = note_id
@@ -81,6 +81,7 @@ class PnoteNew:
     'on_run_as_script': lambda o: self.on_run_as_script(isselection=  'no'),\
     'on_run_selection_as_script': lambda o: self.on_run_as_script(isselection= 'yes'),\
     'on_edit_sourcecode': lambda o: self.on_edit_sourcecode(), \
+    'on_run_sourcecode': lambda o: self.app.run_sourceview(), \
     'on_bt_undo_clicked': self.on_bt_undo_clicked ,\
     'on_bt_redo_clicked': self.on_bt_redo_clicked ,\
     'on_label_url_bt_released': self.on_label_url_button_press_event,\
@@ -123,7 +124,7 @@ class PnoteNew:
     if _config_font != 'None':
       for widget in [self.content, self.datelog, self.title, self.flags, self.url]:
         widget.modify_font(pango.FontDescription(_config_font) )
-    
+
     # Load note_content if note_id
     for tg in [tag_highlight, tag_start_update, tag_end_update]:
       tag_tab.add(tg)
@@ -159,7 +160,7 @@ class PnoteNew:
       try:
         self.pixbuf_dict_fromdb = cPickle.loads(str(row['pixbuf_dict']))
         self.load_pixbuf()# before format
-      except: pass  
+      except: pass
       try: self.load_format_tag(str(row['format_tag']))
       except: pass
       self.wTree.get_widget('bt_cancel').set_label('_Close')
@@ -172,19 +173,19 @@ class PnoteNew:
       self.datelog.set_text(_timenow)
       self.w.set_title('New note '+_timenow )
       self.time_spent = 0
-      
+
     self.content.get_buffer().undo_reset()
     self.wTree.signal_autoconnect(evtmap)
     #self.content.get_buffer().connect('apply-tag', self.on_apply_tag)
     self.content.get_buffer().connect('remove-tag', self.on_remove_tag)
     content.grab_focus()
-    
+
   def on_label_url_button_press_event(self, obj, evt, data=None):
     if evt.button == 1:
       self.app.clipboards.add_info(self.url.get_text() )
       self.url.set_text('')
     else: self.url.set_text(self.app.clipboards.clipboard_history[-1].text )
-        
+
   def on_bt_undo_clicked(self, obj, evt):
     if evt.button == 1: self.content.get_buffer().undo()
     elif evt.button == 3:
@@ -206,7 +207,7 @@ class PnoteNew:
               menuitem.show()
             except Exception , e: print e
       menu_flags.popup(None, None, None, evt.button, evt.time, data=None)
-      
+
   def on_bt_redo_clicked(self, obj, evt):
     if evt.button == 1: self.content.get_buffer().undo()
     elif evt.button == 3:
@@ -239,14 +240,14 @@ class PnoteNew:
 
     switch_cmd = { 'font': _select_font, \
     }
-    
+
     switch_cmd[what]()
-    
+
   def on_remove_tag(self, buf, tag, start, end):
     tagn = tag.get_property('name')
     m1, m2 = buf.create_mark(None, start, True) , buf.create_mark(None, end, True)
     self.add_tag_to_table(tagn, '', '', 'off', m1, m2)
-      
+
   def on_bt_send_clicked(self, o=None): send_note_as_mail(self)
   def on_run_as_script(self, isselection = 'yes'):
     f = NamedTemporaryFile(delete=False)
@@ -266,7 +267,7 @@ class PnoteNew:
   def do_save_html(self, o=None):
     htmltext = "<html><head><title>%s</title></head><body>%s</body></html>" % (self.title.get_text(),  self.dump_to_html() )
     self.do_save_insert_txt(do='save', text = htmltext )
-    
+
   def dump_to_html(self): # TODO For now Just like this
     draft_note = PnoteNew(self.app,note_id = self.note_id, dbname = self.dbname)
     format_tab = draft_note.format_tab
@@ -282,8 +283,8 @@ class PnoteNew:
       #for mark in marks:
         #for format_sec in self.format_tab:
           #if mark in format_sec:
-            
-  
+
+
   def do_save_insert_txt(self, do='save', text = None, urlpath = None):
     if urlpath == None:
       chooser = gtk.FileChooserDialog(title='Type new file name or select file',action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
@@ -316,7 +317,7 @@ class PnoteNew:
           self.pixbuf_dict[mykey].remove(mark)
           if len(self.pixbuf_dict[mykey]) == 0: del self.pixbuf_dict[mykey]
     return False
-              
+
   def load_pixbuf(self):
     if self.pixbuf_dict_fromdb == {} or self.pixbuf_dict_fromdb == None: return
     buf = self.content.get_buffer()
@@ -331,7 +332,7 @@ class PnoteNew:
           except: self.pixbuf_dict[urlpath] = [m1]
           buf.insert_pixbuf(itr, pixbuff )
     self.pixbuf_dict_fromdb = None
-            
+
   def insert_pixbuf_at_cursor(self, urlpath=None):
     if urlpath == None:
       chooser = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_OPEN, buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
@@ -362,7 +363,7 @@ class PnoteNew:
         try: output[urlpath].append(pos)
         except: output[urlpath] = [pos]
     return cPickle.dumps(output, cPickle.HIGHEST_PROTOCOL)
-        
+
   def on_pnote_new_key_press_event(self,o=None, e=None ):
     if e.state & gtk.gdk.CONTROL_MASK:
       if gtk.gdk.keyval_name(e.keyval) == 'f':
@@ -379,7 +380,7 @@ class PnoteNew:
       except:
         self.note_search =  NoteSearch(self)
         self.note_search.do_search()
-    
+
   def build_flags_menu(self):
     list_flags = get_config_key('data', 'list_flags', 'TODO<|>IMPORTANT<|>URGENT').split('<|>')
     menu_flags  = gtk.Menu()
@@ -416,11 +417,11 @@ class PnoteNew:
       list_flags.remove(fname)
       save_config_key('data', 'list_flags', "<|>".join(list_flags) )
     except: message_box("Information", "Error. Flasg does not exist" )
-    
+
   def add_flag(self, o=None):
     fname = get_text_from_user('Flag name', 'Enter new flag name: ')
     save_config_key('data', 'list_flags', get_config_key('data', 'list_flags') + '<|>' + fname )
-  
+
   def on_show_noteinfo(self, o=None):
     msg = "note_id: %s\nLast update: %s\nDatabase name: %s\nDatabase file path: %s\nTotal time (mins) spent: %s\n" % (self.note_id, time.ctime(self.timestamp), self.dbname, self.app.dbpaths[self.dbname], "%02d:%02d" % divmod(self.time_spent, 60) )
     NoteInfo(self, msg).w.show_all()
@@ -439,9 +440,9 @@ class PnoteNew:
       except Exception , e:  print e
       self.content.get_buffer().set_modified(False)
       self.destroy()
-      
+
     d.destroy()
-        
+
   def on_bt_ro_toggled(self, o, d=None):
     self.content.get_buffer().set_modified(True) # save
     if o.get_active():
@@ -454,9 +455,9 @@ class PnoteNew:
       self.bt_ro.set_label('rw')
       self.readonly = 0
       self.content.set_cursor_visible(True)
-      
+
   def on_edit_changed(self, o=None, d=None): self.content.get_buffer().set_modified(True)
-  
+
   def on_bt_format_button_press(self, obj, evt, data=None):
     if evt.button == 1:
       buf = self.content.get_buffer()
@@ -472,7 +473,7 @@ class PnoteNew:
       #TODO modified the format dict marks name -> tag list name
     elif evt.button == 3:
       FormatNote(self).w.show_all()
-    
+
   def on_bt_search_button_press(self, obj, evt, data=None):
     if evt.button == 1:
       try:
@@ -500,8 +501,8 @@ class PnoteNew:
           else:
             buf.delete(start, end)
             buf.insert_interactive(start, result, self.content.get_editable())
-    except: pass    
-    
+    except: pass
+
   def on_edit_sourcecode(self):
         f = NamedTemporaryFile(delete=False)
         buf = self.content.get_buffer()
@@ -520,7 +521,7 @@ class PnoteNew:
             buf.insert_interactive(st, text, self.content.get_editable() )
         else: buf.set_text(text)
         os.unlink(f.name)
-        
+
   def add_tag_to_table(self, tagname, tag_property, value = '', flag = 'on' , mark1=None, mark2=None, text = None):
     format_tab = self.format_tab
     if tagname not in format_tab:
@@ -547,7 +548,7 @@ class PnoteNew:
     elif evt.button == 3:
       pmenu = self.wTree.get_widget('menu_update')
       pmenu.popup(None, None, None, evt.button, evt.time, data=None)
-        
+
   def on_end_update(self, o=None):
     if not self.start_time == 0:
       _length_in_sec = int(time.time()) - self.start_time
@@ -568,11 +569,11 @@ class PnoteNew:
       self.content.scroll_to_mark(buf.get_insert() ,0 )
       self.content.grab_focus()
     else: message_box('Information', "You need to start Update mark first")
-        
+
   def on_bt_show_main_button_press(self, obj, evt, data=None):
     if evt.button == 1: self.app.show_main()
     elif evt.button == 3: pass #TODO show note info (last update time, list of book marks and can jump to it, etc)
-  
+
   def on_bt_url_button_press(self, obj, evt, data=None):
     if evt.button == 1:
       try: self.e_content.w.present()
@@ -589,7 +590,7 @@ class PnoteNew:
           self.url.set_text( (fname if oldname == '' else oldname + '<|>' + fname )  )
         self.app.filechooser_dir = chooser.get_current_folder()
       chooser.destroy()
-      
+
   def on_bt_cancel_activate(self,  evt, data=None):
     if self.note_id == None: self.app.new_note_list.remove(self)
     self.content.get_buffer().set_modified(False) # Tell do_save not to save
@@ -598,9 +599,9 @@ class PnoteNew:
   def on_bt_reminder_toggled(self, o, data=None):
     if o.get_active(): NoteReminder(self).w.show_all()
     else: self.reminder_ticks = 0; self.alert_count = 0; self.content.get_buffer().set_modified(True)
-    
+
   def content_changed_cb(self, texbuf): self.wTree.get_widget('bt_cancel').set_label('_Cancel')
-  
+
   def load_format_tag(self, data):
     if data == None or data == '': return
     buf = self.content.get_buffer()
@@ -623,7 +624,7 @@ class PnoteNew:
         self.format_tab[tagn][1].append( (_flag, buf.create_mark(None, its, True), buf.create_mark(None, ite, True), _text )  )
 
     ##print "DEBUG after loading format",   self.format_tab
-    
+
   def dump_format_tag(self):
     buf = self.content.get_buffer()
     tags = buf.get_tag_table()
@@ -634,12 +635,12 @@ class PnoteNew:
         _temp_tab[tagn] = [self.format_tab[tagn][0], [] ]
         for (_flag, m1, m2, _text) in self.format_tab[tagn][1]:
           _temp_tab[tagn][1].append( (_flag, buf.get_iter_at_mark(m1).get_offset(),  buf.get_iter_at_mark(m2).get_offset(), _text ) )
-      
+
     tags.foreach(_tmp_func)
-    
+
     #print "DEBUG: going to pickle this", _temp_tab
     return cPickle.dumps(_temp_tab, cPickle.HIGHEST_PROTOCOL)
-      
+
   def do_save(self, flag=None):
     if self.content.get_buffer().get_modified():
       sql = ''
@@ -656,7 +657,7 @@ class PnoteNew:
           self.note_id = dbc.lastrowid
           self.app.note_list[self.note_id] = self
           self.app.new_note_list.remove(self)
-          
+
         self.dbcon.commit()
         self.content.get_buffer().set_modified(False)
         self.wTree.get_widget('bt_cancel').set_label('_Close')
@@ -665,18 +666,18 @@ class PnoteNew:
     else: print "Not modified. No save"
     if flag != 'NO_SAVE_SIZE': self.save_window_size()
     self.w.set_title(self.title.get_text()[0:30])
-    
+
   def on_bt_flag_button_press(self, obj, evt, data=None):
     if evt.button == 3: # Right click 3; Midle : 2; Left : 1
       self.build_flags_menu().popup(None, None, None, evt.button, evt.time, data=None)
     elif evt.button == 1: self.flags.set_text(self.flags.get_text()+":TODO")
     return True # Stop passing this event here
-    
+
   def save_window_size(self):
     w,h = self.w.get_size()
     self.window_size = str(w)+'x'+str(h)
     save_config_key('pnote_new', 'window_size', self.window_size)
-    
+
   def destroy(self, obj=None, flag=None):
     for tmpf in self.tmpfile:
       if os.path.isfile(tmpf): os.unlink(tmpf)
@@ -688,14 +689,14 @@ class PnoteNew:
     self.w.destroy()
     self.wTree = None
     return True
-    
+
   def do_export(self,obj=None, data=None):    pass
   def do_import(self,obj=None, data=None):    pass
   def do_print_preview(self, obj=None, data=None):  pass
   def do_send_mail(self,obj=None, data=None):   pass
   def do_print(self, obj=None, data=None):  pass
   def do_search(self, obj=None, data=None):   pass
-    
+
 if __name__ == '__main__':
  PnoteNew().w.show()
  gtk.main()

@@ -3,13 +3,13 @@
 
 # Main application. Read, Load config
 
-#from __future__ import with_statement 
+#from __future__ import with_statement
 
-import os,sys
+import os,sys,threading
 if sys.platform=="win32":
   [ GTKDIR ] = [ x  for x in os.getenv('PATH').split(';') if x.find('GTK') != -1 ]
   os.environ['PATH'] = "%s%s..%slib;%s" % (GTKDIR, os.path.sep, os.path.sep, GTKDIR)
-  
+
 sys.path.append(sys.path[0])
 os.chdir(sys.path[0])
 
@@ -19,7 +19,7 @@ import imaplib, email, subprocess
 
 gobject.threads_init()
 gtk.gdk.threads_init()
- 
+
 SETTINGS = gtk.settings_get_default()
 
 if sys.platform=="win32": SETTINGS.set_long_property("gtk-button-images", True, "main")
@@ -36,7 +36,7 @@ from clipboard import PnClipboard
 version = 0,4
 
 class pnote:
-   
+
   def __init__(self, dbpath=None):
 
     import signal
@@ -44,10 +44,10 @@ class pnote:
         print 'Signal handler called with signal', signum
         print 'Finalizing main loop'
         self.do_exit()
-        
+
     signal.signal(signal.SIGINT, handler)
     signal.signal(signal.SIGTERM, handler)
-    
+
     self.cipherkey = None
     self.filechooser_dir = os.getcwd()
     self.working_mode = get_config_key('global', 'working_mode', 'note')
@@ -65,14 +65,14 @@ class pnote:
     self.list_popen = [] # List forked process in Run Script
     self.imapconn = dict()
     self.is_checking_mail = None
-    
+
     dbpathstr = get_config_key('data', 'db_paths', 'None')
     if not dbpathstr == 'None':
       i = 0
       for p in dbpathstr.split('<|>'):
         if (not p == '') and (not p == 'None') and (not p == None): self.dbpaths['sub' + str(i)] = p
         i += 1
-    
+
     ic= self.icon = gtk.status_icon_new_from_file('icons/cookie.png')
     ic.connect("popup-menu", self.icon_popup_menu)
     ic.connect("activate", lambda o: pnote_new.PnoteNew(self).w.show_all() )
@@ -84,18 +84,18 @@ class pnote:
     self.last_font_desc = get_config_key('data', 'last_font_desc', '')
     self.last_font_color = get_config_key('data', 'last_font_color','' )
     self.last_bgcolor = get_config_key('data', 'last_bgcolor','' )
-    
+
   def cleanup_process(self):
     for subp in self.list_popen:
       retcode = subp.poll()
       if retcode != None: self.list_popen.remove(subp)
 
-    return True  
-          
-          
+    return True
+
+
   def reload_config(self): # this to reload anything that has config changes. Usually in __init__
     self.load_run_time_out_tasks()
-    
+
   def load_run_time_out_tasks(self):
     gobject.timeout_add_seconds(int(get_config_key('global', 'reminder_timer_interval', '60') ), self.query_note_reminder )
     gobject.timeout_add_seconds(120, self.save_pnmain_pos )
@@ -112,7 +112,7 @@ class pnote:
     except: return True
 
   def fork_checkmail(self): threading.Thread(target=self.checkmail,  kwargs = {'locking': True} ).start(); return True
-          
+
   def checkmail(self, locking = True, server = None ):
     # INFO - must be called from non gtk.main() thread (use threading.Thread). If called from main thread, pass locking=False
     try:
@@ -134,7 +134,7 @@ class pnote:
               self.new_mail_list = pn_imap.is_new_mail()
               if len(self.new_mail_list) > 0:
                 _data[server][1] = self.new_mail_list
-                
+
                 for _item in self.new_mail_list:
                    _mail_msg_header = email.message_from_string(_item[2])
                    _msg = "%s\nFrom: %s\nSubject: %s\n" % (_msg, _mail_msg_header.get('FROM'),_mail_msg_header.get('SUBJECT') )
@@ -146,10 +146,10 @@ class pnote:
         if _msg != 'No new mail':
           PopUpNotification(_msg, callback = lambda: self.show_main().display_new_mail(_data)  )
         if locking: gtk.gdk.threads_leave()
-        
+
     except Exception, e: print "DEBUG pnmain.checkmail",e
     return True
-              
+
   def load_list_imap_acct(self, connect=False, server = None, locking = True):
     # INFO - must be called from non gtk.main() thread (use threading.Thread). If called from main thread, pass locking=False
     list_imap_account_str = get_config_key('global', 'list_imap_account','')
@@ -186,7 +186,7 @@ class pnote:
     newpass = get_text_from_user('New pass:', 'Enter new password:',show_char=False, completion = False, default_txt = 'none')
     if newpass != 'none': self.cipherkey = newpass
     else: message_box('Warning!','Password not changed')
-    
+
   def query_note_reminder(self):
     for dbname in dict.keys(self.dbpaths):
       dbcon = self.db_setup()
@@ -209,7 +209,7 @@ class pnote:
             dbcon.commit()
       cur.close()
     return True
-          
+
   def show_main(self, obj=None, data=None):
     try: self.pnmain.w.present() # use w.window.show() in the FAQ not working
     except:
@@ -237,7 +237,7 @@ class pnote:
       self.dbcon = dbcon
       return dbcon
     except Exception , e: print e; return False
-        
+
   def icon_popup_menu(self, status_icon, button, activate_time, data=None):
     # popup menu
     ic_menu_tree = gtk.glade.XML('glade/icon_menu.glade')
@@ -262,14 +262,19 @@ class pnote:
       menuitem.connect('activate', _tmp_func)
       ic_menu.prepend(menuitem)
       menuitem.show()
-    
+
     ic_menu.popup(None, None, None, button, activate_time, data=None)
     evtmap = { 'icon_menu_show_main': self.show_main, \
       'do_app_exit': self.do_exit, \
       'show_recent_notes': self.show_recent_notes, \
+      'run_sourceview': self.run_sourceview
     }
     ic_menu_tree.signal_autoconnect(evtmap)
     return True
+
+  def run_sourceview(self, obj=None, data=None):
+        def _temp(): os.system("%s/sourceview.py empty" % (sys.path[0]) )
+        threading.Thread(target= _temp).start()
 
   def show_recent_notes(self, obj, data=None):
     ncount = get_config_key('data', 'RECENT_NOTES_COUNT', '3')

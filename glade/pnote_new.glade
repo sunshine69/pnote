@@ -536,5 +536,14 @@
         <signal name="activate" handler="on_view_sourcecode"/>
       </widget>
     </child>
+   <child>
+      <widget class="GtkMenuItem" id="menuitem9">
+        <property name="visible">True</property>
+        <property name="tooltip" translatable="yes">Rune source code viewer</property>
+        <property name="label" translatable="yes">Run source code editor</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_run_sourcecode"/>
+      </widget>
+    </child>
   </widget>
 </glade-interface>

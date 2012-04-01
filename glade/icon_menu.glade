@@ -21,6 +21,14 @@
       </widget>
     </child>
     <child>
+      <widget class="GtkMenuItem" id="run_sourceview">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">run sourceview</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="run_sourceview"/>
+      </widget>
+    </child>
+    <child>
       <widget class="GtkMenuItem" id="exit_app">
         <property name="visible">True</property>
         <property name="label" translatable="yes">Exit</property>
