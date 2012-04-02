@@ -127,11 +127,11 @@ class PnoteNew:
         view.connect('button-press-event', self.button_press_cb)
         view.set_buffer(buff)
         scroll.add(view)
-        content = self.content = view
+        content = view
         buff.begin_not_undoable_action()
     else:
         content.set_buffer(undostack.TextBuffer())
-    
+    self.content = content
     content.get_buffer().connect('modified-changed', self.content_changed_cb)
     url = self.url = self.wTree.get_widget('url')
     self.dbcon = self.app.db_setup()
