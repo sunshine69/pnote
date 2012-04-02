@@ -438,8 +438,11 @@ def create_view_window(buffer, sourceview=None):
 
     # view
     view = gtksourceview2.View(buffer)
+    # stevek set initial state
     view.set_tab_width(4)
     view.set_insert_spaces_instead_of_tabs(True)
+    view.set_wrap_mode(gtk.WRAP_WORD)
+    # end stevek
     buffer.connect('mark_set', move_cursor_cb, view)
     buffer.connect('changed', update_cursor_position, view)
     view.connect('button-press-event', button_press_cb)
@@ -568,7 +571,7 @@ def main(args):
     window.show()
 
     # main loop
-    gtk.main()
+    if __name__ == '__main__': gtk.main()
 
 
 if __name__ == '__main__':

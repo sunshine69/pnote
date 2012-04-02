@@ -20,8 +20,12 @@ try:
 except:
  pass
 
+gtksourceview2 = None
+try: import gtksourceview2
+except:
+    import undostack
+
 from utils import *
-import undostack
 
 class PnoteNew:
 
@@ -85,6 +89,7 @@ class PnoteNew:
     'on_bt_undo_clicked': self.on_bt_undo_clicked ,\
     'on_bt_redo_clicked': self.on_bt_redo_clicked ,\
     'on_label_url_bt_released': self.on_label_url_button_press_event,\
+    'on_menu_lang_changed': self.on_menu_lang_changed
     }
     #statusbar = self.statusbar = self.wTree.get_widget("statusbar")
     self.bt_ro = self.wTree.get_widget('bt_ro')
@@ -106,9 +111,27 @@ class PnoteNew:
     title = self.title = self.wTree.get_widget('title')
     datelog = self.datelog = self.wTree.get_widget('datelog')
     flags = self.flags = self.wTree.get_widget('flags')
-    self.content = self.wTree.get_widget('content')
-    content = self.content
-    content.set_buffer(undostack.TextBuffer())
+    content = self.wTree.get_widget('content')
+    if gtksourceview2:
+        scroll = self.wTree.get_widget('scrolledwindow1')
+        scroll.remove(content)
+        view = gtksourceview2.View()
+        view.set_tab_width(4)
+        view.set_insert_spaces_instead_of_tabs(True)
+        view.set_wrap_mode(gtk.WRAP_WORD)
+        lm = gtksourceview2.LanguageManager()
+        buff = gtksourceview2.Buffer()
+        buff.set_data('languages-manager', lm)
+        #buff.connect('mark_set', self.move_cursor_cb, view)
+        #buff.connect('changed', self.update_cursor_position, view)
+        view.connect('button-press-event', self.button_press_cb)
+        view.set_buffer(buff)
+        scroll.add(view)
+        content = self.content = view
+        buff.begin_not_undoable_action()
+    else:
+        content.set_buffer(undostack.TextBuffer())
+    
     content.get_buffer().connect('modified-changed', self.content_changed_cb)
     url = self.url = self.wTree.get_widget('url')
     self.dbcon = self.app.db_setup()
@@ -174,12 +197,62 @@ class PnoteNew:
       self.w.set_title('New note '+_timenow )
       self.time_spent = 0
 
-    self.content.get_buffer().undo_reset()
+    if not gtksourceview2: self.content.get_buffer().undo_reset()
+    else: content.get_buffer().end_not_undoable_action()
     self.wTree.signal_autoconnect(evtmap)
-    #self.content.get_buffer().connect('apply-tag', self.on_apply_tag)
     self.content.get_buffer().connect('remove-tag', self.on_remove_tag)
     content.grab_focus()
 
+  #def update_cursor_position(self,buffer, view):
+    #tabwidth = view.get_tab_width()
+    #pos_label = view.get_data('pos_label')
+    #iter = buffer.get_iter_at_mark(buffer.get_insert())
+    #nchars = iter.get_offset()
+    #row = iter.get_line() + 1
+    #start = iter.copy()
+    #start.set_line_offset(0)
+    #col = 0
+    #while start.compare(iter) < 0:
+        #if start.get_char() == '\t':
+            #col += tabwidth - col % tabwidth
+        #else:
+            #col += 1
+        #start.forward_char()
+    #pos_label.set_text('char: %d, line: %d, column: %d' % (nchars, row, col+1))
+
+
+  #def move_cursor_cb (self, buffer, cursoriter, mark, view):
+    #self.update_cursor_position(buffer, view)
+
+  def button_press_cb(self, view, ev):
+    buffer = view.get_buffer()
+    if not view.get_show_line_marks():
+        return False
+    # check that the click was on the left gutter
+    if ev.window == view.get_window(gtk.TEXT_WINDOW_LEFT):
+        if ev.button == 1:
+            mark_category = MARK_CATEGORY_1
+        else:
+            mark_category = MARK_CATEGORY_2
+        x_buf, y_buf = view.window_to_buffer_coords(gtk.TEXT_WINDOW_LEFT,
+                                                    int(ev.x), int(ev.y))
+        # get line bounds
+        line_start = view.get_line_at_y(y_buf)[0]
+
+        # get the markers already in the line
+        mark_list = buffer.get_source_marks_at_line(line_start.get_line(), mark_category)
+        # search for the marker corresponding to the button pressed
+        for m in mark_list:
+            if m.get_category() == mark_category:
+                # a marker was found, so delete it
+                buffer.delete_mark(m)
+                break
+        else:
+            # no marker found, create one
+            buffer.create_source_mark(None, mark_category, line_start)
+
+    return False
+        
   def on_label_url_button_press_event(self, obj, evt, data=None):
     if evt.button == 1:
       self.app.clipboards.add_info(self.url.get_text() )
@@ -187,7 +260,8 @@ class PnoteNew:
     else: self.url.set_text(self.app.clipboards.clipboard_history[-1].text )
 
   def on_bt_undo_clicked(self, obj, evt):
-    if evt.button == 1: self.content.get_buffer().undo()
+    if evt.button == 1:
+        if self.content.get_buffer().can_undo(): self.content.get_buffer().undo()
     elif evt.button == 3:
       menu_flags  = gtk.Menu()
       sep = gtk.SeparatorMenuItem()
@@ -209,7 +283,8 @@ class PnoteNew:
       menu_flags.popup(None, None, None, evt.button, evt.time, data=None)
 
   def on_bt_redo_clicked(self, obj, evt):
-    if evt.button == 1: self.content.get_buffer().undo()
+    if evt.button == 1:
+        if self.content.get_buffer().can_redo(): self.content.get_buffer().redo()
     elif evt.button == 3:
       buf = self.content.get_buffer()
       menu_flags  = gtk.Menu()
@@ -381,6 +456,41 @@ class PnoteNew:
         self.note_search =  NoteSearch(self)
         self.note_search.do_search()
 
+  def on_menu_lang_changed(self, o):
+        LANG_TAB = {
+            'd.py': 'Python',
+            'd.php': 'PHP',
+            'd.pl': 'Perl',
+            'd.js': 'JavaScript',
+            'd.c': 'C',
+            'd.cpp': 'C++',
+            'd.rb': 'Ruby',
+            'd.lua':'Lua',
+            'd.java':'Java',
+            'd.sh':'shell/sh',
+            'd.tcl':'tcl/tk',
+            'd.sql': 'SQL',
+            'd.xml': 'XML',
+            'd.html': 'HTML',
+            'd.css': 'CSS',
+            'd.json': 'JSON',
+            'd.sgml': 'sgml',
+            'd.xslt': 'XSLT',
+            'd.dtd': 'DTD',
+            'd.jsp': 'jsp'
+
+        }
+        buffer = self.content.get_buffer()
+        manager = buffer.get_data('languages-manager')
+        INVERSE_LANG_TAB = dict([[v,k] for k,v in LANG_TAB.items()])
+        filename = INVERSE_LANG_TAB[o.get_label()]
+        language = manager.guess_language(filename)
+        if language:
+            buffer.set_highlight_syntax(True)
+            buffer.set_language(language)
+        else: print("Can not find language {0}".format(filename))
+    
+      
   def build_flags_menu(self):
     list_flags = get_config_key('data', 'list_flags', 'TODO<|>IMPORTANT<|>URGENT').split('<|>')
     menu_flags  = gtk.Menu()
@@ -547,8 +657,17 @@ class PnoteNew:
       self.content.grab_focus()
     elif evt.button == 3:
       pmenu = self.wTree.get_widget('menu_update')
+      if gtksourceview2:
+            menuitem = gtk.MenuItem('Print note')
+            menuitem.connect('activate', self.print_note)
+            pmenu.append(menuitem)
+            menuitem.show()
       pmenu.popup(None, None, None, evt.button, evt.time, data=None)
 
+  def print_note(self, o):
+      import sourceview
+      sourceview.print_cb(None, self.content)
+  
   def on_end_update(self, o=None):
     if not self.start_time == 0:
       _length_in_sec = int(time.time()) - self.start_time
@@ -572,7 +691,8 @@ class PnoteNew:
 
   def on_bt_show_main_button_press(self, obj, evt, data=None):
     if evt.button == 1: self.app.show_main()
-    elif evt.button == 3: pass #TODO show note info (last update time, list of book marks and can jump to it, etc)
+    elif evt.button == 3: # Switch Language syntax hightlight if gtksourceview2 available
+        if gtksourceview2: self.wTree.get_widget('menu_lang').popup(None, None, None, evt.button, evt.time, data=None)
 
   def on_bt_url_button_press(self, obj, evt, data=None):
     if evt.button == 1:

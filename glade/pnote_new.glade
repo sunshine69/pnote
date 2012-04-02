@@ -536,13 +536,187 @@
         <signal name="activate" handler="on_view_sourcecode"/>
       </widget>
     </child>
-   <child>
-      <widget class="GtkMenuItem" id="menuitem9">
+    <child>
+      <widget class="GtkMenuItem" id="menuitem13">
         <property name="visible">True</property>
         <property name="tooltip" translatable="yes">Rune source code viewer</property>
         <property name="label" translatable="yes">Run source code editor</property>
         <property name="use_underline">True</property>
         <signal name="activate" handler="on_run_sourcecode"/>
+      </widget>
+    </child>
+  </widget>
+  <widget class="GtkMenu" id="menu_lang">
+    <property name="visible">True</property>
+    <property name="ubuntu_local">True</property>
+    <child>
+      <widget class="GtkRadioMenuItem" id="menuitem14">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Python</property>
+        <property name="use_underline">True</property>
+        <property name="draw_as_radio">True</property>
+        <signal name="toggled" handler="on_menu_lang_changed" object="100"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkRadioMenuItem" id="menuitem15">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">PHP</property>
+        <property name="use_underline">True</property>
+        <property name="draw_as_radio">True</property>
+        <property name="group">menuitem14</property>
+        <signal name="toggled" handler="on_menu_lang_changed" object="101"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkRadioMenuItem" id="menuitem16">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Perl</property>
+        <property name="use_underline">True</property>
+        <property name="draw_as_radio">True</property>
+        <property name="group">menuitem14</property>
+        <signal name="toggled" handler="on_menu_lang_changed" object="102"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkRadioMenuItem" id="menuitem17">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">JavaScript</property>
+        <property name="use_underline">True</property>
+        <property name="draw_as_radio">True</property>
+        <property name="group">menuitem14</property>
+        <signal name="toggled" handler="on_menu_lang_changed" object="103"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkRadioMenuItem" id="menuitem18">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">C</property>
+        <property name="use_underline">True</property>
+        <property name="draw_as_radio">True</property>
+        <property name="group">menuitem14</property>
+        <signal name="toggled" handler="on_menu_lang_changed" object="104"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkRadioMenuItem" id="menuitem19">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">C++</property>
+        <property name="use_underline">True</property>
+        <property name="draw_as_radio">True</property>
+        <property name="group">menuitem14</property>
+        <signal name="toggled" handler="on_menu_lang_changed" object="105"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkRadioMenuItem" id="menuitem20">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Ruby</property>
+        <property name="use_underline">True</property>
+        <property name="draw_as_radio">True</property>
+        <property name="group">menuitem14</property>
+        <signal name="toggled" handler="on_menu_lang_changed" object="106"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkRadioMenuItem" id="menuitem21">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Lua</property>
+        <property name="use_underline">True</property>
+        <property name="draw_as_radio">True</property>
+        <property name="group">menuitem14</property>
+        <signal name="toggled" handler="on_menu_lang_changed" object="107"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkRadioMenuItem" id="menuitem22">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Java</property>
+        <property name="use_underline">True</property>
+        <property name="draw_as_radio">True</property>
+        <property name="group">menuitem14</property>
+        <signal name="toggled" handler="on_menu_lang_changed" object="108"/>
+        <signal name="group_changed" handler="on_menu_lang_changed" object="108"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkRadioMenuItem" id="menuitem23">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">shell/sh</property>
+        <property name="use_underline">True</property>
+        <property name="draw_as_radio">True</property>
+        <property name="group">menuitem14</property>
+        <signal name="toggled" handler="on_menu_lang_changed" object="109"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkRadioMenuItem" id="menuitem24">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">tcl/tk</property>
+        <property name="use_underline">True</property>
+        <property name="draw_as_radio">True</property>
+        <property name="group">menuitem14</property>
+        <signal name="toggled" handler="on_menu_lang_changed" object="110"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkRadioMenuItem" id="menuitem25">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">SQL</property>
+        <property name="use_underline">True</property>
+        <property name="draw_as_radio">True</property>
+        <property name="group">menuitem14</property>
+        <signal name="toggled" handler="on_menu_lang_changed" object="111"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkRadioMenuItem" id="menuitem26">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">XML</property>
+        <property name="use_underline">True</property>
+        <property name="draw_as_radio">True</property>
+        <property name="group">menuitem14</property>
+        <signal name="toggled" handler="on_menu_lang_changed" object="112"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkRadioMenuItem" id="menuitem27">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">HTML</property>
+        <property name="use_underline">True</property>
+        <property name="draw_as_radio">True</property>
+        <property name="group">menuitem14</property>
+        <signal name="toggled" handler="on_menu_lang_changed" object="113"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkRadioMenuItem" id="menuitem28">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">CSS</property>
+        <property name="use_underline">True</property>
+        <property name="draw_as_radio">True</property>
+        <property name="group">menuitem14</property>
+        <signal name="toggled" handler="on_menu_lang_changed" object="114"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkRadioMenuItem" id="menuitem29">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">XSLT</property>
+        <property name="use_underline">True</property>
+        <property name="draw_as_radio">True</property>
+        <property name="group">menuitem14</property>
+        <signal name="toggled" handler="on_menu_lang_changed" object="117"/>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkRadioMenuItem" id="menuitem30">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">DTD</property>
+        <property name="use_underline">True</property>
+        <property name="draw_as_radio">True</property>
+        <property name="group">menuitem14</property>
+        <signal name="toggled" handler="on_menu_lang_changed" object="118"/>
       </widget>
     </child>
   </widget>
