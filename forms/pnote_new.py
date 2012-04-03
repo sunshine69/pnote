@@ -119,6 +119,7 @@ class PnoteNew:
         view.set_tab_width(4)
         view.set_insert_spaces_instead_of_tabs(True)
         view.set_wrap_mode(gtk.WRAP_WORD)
+        view.set_auto_indent(True)
         lm = gtksourceview2.LanguageManager()
         buff = gtksourceview2.Buffer()
         buff.set_data('languages-manager', lm)
