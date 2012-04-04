@@ -5,7 +5,7 @@
 from __future__ import with_statement
 
 import os, sqlite3, time, shlex, subprocess, cPickle, random, StringIO, stat, threading, sys
-# from datetime import datetime # tzinfo, timedelta
+#from datetime import datetime # tzinfo, timedelta
 from tempfile import *
 
 try:
@@ -82,8 +82,7 @@ class PnoteNew:
     'do_insert_from': lambda o: self.do_save_insert_txt(do='insert') ,\
     'on_content_delete_from_cursor': self.on_content_delete_from_cursor,\
     'do_save_html': self.do_save_html ,\
-    'on_run_as_script': lambda o: self.on_run_as_script(isselection=  'no'),\
-    'on_run_selection_as_script': lambda o: self.on_run_as_script(isselection= 'yes'),\
+    'on_run_as_script': lambda o: self.on_run_as_script(),\
     'on_edit_sourcecode': lambda o: self.on_edit_sourcecode(), \
     'on_run_sourcecode': lambda o: self.app.run_sourceview(), \
     'on_bt_undo_clicked': self.on_bt_undo_clicked ,\
@@ -325,15 +324,15 @@ class PnoteNew:
     self.add_tag_to_table(tagn, '', '', 'off', m1, m2)
 
   def on_bt_send_clicked(self, o=None): send_note_as_mail(self)
-  def on_run_as_script(self, isselection = 'yes'):
+  
+  def on_run_as_script(self):
     f = NamedTemporaryFile(delete=False)
     buf = self.content.get_buffer()
-    if isselection == 'yes':
-      try:
+    try:
         st, en = buf.get_selection_bounds()
         text = buf.get_text(st,en)
-      except: pass
-    else: text = buf.get_text(buf.get_start_iter(), buf.get_end_iter())
+    except:
+        text = buf.get_text(buf.get_start_iter() ,buf.get_end_iter())
     f.write(text); f.close()
     os.chmod(f.name, stat.S_IEXEC+stat.S_IREAD+stat.S_IWRITE )
     self.tmpfile.append(f.name)
@@ -596,23 +595,24 @@ class PnoteNew:
     elif evt.button == 3: self.wTree.get_widget('menu_search').popup(None, None, None, evt.button, evt.time, data=None)
 
   def on_filter_selection(self, o, d = None):
+    buf = self.content.get_buffer()
     try:
-      buf = self.content.get_buffer()
-      start, end = buf.get_selection_bounds()
-      inputstr = buf.get_text(start, end)
-      if not inputstr == '':
+        start, end = buf.get_selection_bounds()
+        inputstr = buf.get_text(start, end)
+    except: start, end = buf.get_start_iter(), buf.get_end_iter()
+    inputstr = buf.get_text(start, end)
+    if not inputstr == '':
         cmd = get_text_from_user("Command", "Enter command to process: ", "perl -ne ", int(get_config_key('data', 'dialog_entercommand_size', '350') ) )
         if not cmd == None:
-          p1 = subprocess.Popen(shlex.split(cmd), stdin = subprocess.PIPE, stdout = subprocess.PIPE )
-          result = p1.communicate(inputstr)[0]
-          if d == 'NEW_NOTE':
-            new_note = PnoteNew(self.app, None, self.dbname)
-            new_note.content.get_buffer().set_text(result)
-            new_note.w.show_all()
-          else:
-            buf.delete(start, end)
-            buf.insert_interactive(start, result, self.content.get_editable())
-    except: pass
+            p1 = subprocess.Popen(shlex.split(cmd), stdin = subprocess.PIPE, stdout = subprocess.PIPE )
+            result = p1.communicate(inputstr)[0]
+            if d == 'NEW_NOTE':
+                new_note = PnoteNew(self.app, None, self.dbname)
+                new_note.content.get_buffer().set_text(result)
+                new_note.w.show_all()
+            else:
+                buf.delete(start, end)
+                buf.insert_interactive(start, result, self.content.get_editable())
 
   def on_edit_sourcecode(self):
         f = NamedTemporaryFile(delete=False)
@@ -810,13 +810,6 @@ class PnoteNew:
     self.w.destroy()
     self.wTree = None
     return True
-
-  def do_export(self,obj=None, data=None):    pass
-  def do_import(self,obj=None, data=None):    pass
-  def do_print_preview(self, obj=None, data=None):  pass
-  def do_send_mail(self,obj=None, data=None):   pass
-  def do_print(self, obj=None, data=None):  pass
-  def do_search(self, obj=None, data=None):   pass
 
 if __name__ == '__main__':
  PnoteNew().w.show()

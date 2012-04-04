@@ -497,23 +497,15 @@
     <child>
       <widget class="GtkMenuItem" id="menuitem6">
         <property name="visible">True</property>
-        <property name="label" translatable="yes">Run this note as a script</property>
+        <property name="label" translatable="yes">Run this note|selection as a script</property>
         <property name="use_underline">True</property>
         <signal name="activate" handler="on_run_as_script"/>
       </widget>
     </child>
     <child>
-      <widget class="GtkMenuItem" id="menuitem7">
-        <property name="visible">True</property>
-        <property name="label" translatable="yes">Run selection as script</property>
-        <property name="use_underline">True</property>
-        <signal name="activate" handler="on_run_selection_as_script"/>
-      </widget>
-    </child>
-    <child>
       <widget class="GtkMenuItem" id="menuitem12">
         <property name="visible">True</property>
-        <property name="label" translatable="yes">Filter selection using custom command to a New note</property>
+        <property name="label" translatable="yes">Filter note|selection using custom command to a New note</property>
         <property name="use_underline">True</property>
         <signal name="activate" handler="on_filter_selection_newnote"/>
       </widget>
@@ -521,7 +513,7 @@
     <child>
       <widget class="GtkMenuItem" id="menuitem11">
         <property name="visible">True</property>
-        <property name="label" translatable="yes">Filter selection using custom command</property>
+        <property name="label" translatable="yes">Filter note|selection using custom command</property>
         <property name="use_underline">True</property>
         <signal name="activate" handler="on_filter_selection"/>
       </widget>
@@ -530,7 +522,7 @@
       <widget class="GtkMenuItem" id="menuitem8">
         <property name="visible">True</property>
         <property name="tooltip" translatable="yes">Use source code viewer</property>
-        <property name="label" translatable="yes">Edit (note|selection) as source code</property>
+        <property name="label" translatable="yes">Edit note|selection as source code</property>
         <property name="use_underline">True</property>
         <signal name="activate" handler="on_edit_sourcecode"/>
         <signal name="activate" handler="on_view_sourcecode"/>
