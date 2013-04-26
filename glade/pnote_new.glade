@@ -436,13 +436,14 @@
   <widget class="GtkMenu" id="menu_update">
     <property name="visible">True</property>
     <child>
-      <widget class="GtkMenuItem" id="menuitem3">
+      <widget class="GtkMenuItem" id="menuitem4">
         <property name="visible">True</property>
-        <property name="label" translatable="yes">Insert End Update mark</property>
+        <property name="label" translatable="yes">Insert from text file</property>
         <property name="use_underline">True</property>
-        <signal name="activate" handler="on_end_update"/>
+        <signal name="activate" handler="do_insert_from"/>
       </widget>
     </child>
+
     <child>
       <widget class="GtkMenuItem" id="menuitem2">
         <property name="visible">True</property>
@@ -457,14 +458,6 @@
         <property name="label" translatable="yes">Save to HTML</property>
         <property name="use_underline">True</property>
         <signal name="activate" handler="do_save_html"/>
-      </widget>
-    </child>
-    <child>
-      <widget class="GtkMenuItem" id="menuitem4">
-        <property name="visible">True</property>
-        <property name="label" translatable="yes">Insert from text file</property>
-        <property name="use_underline">True</property>
-        <signal name="activate" handler="do_insert_from"/>
       </widget>
     </child>
     <child>
@@ -491,6 +484,15 @@
         <signal name="activate" handler="on_delete_note"/>
       </widget>
     </child>
+    <child>
+      <widget class="GtkMenuItem" id="menuitem3">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Insert End Update mark</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_end_update"/>
+      </widget>
+    </child>
+
   </widget>
   <widget class="GtkMenu" id="menu_search">
     <property name="visible">True</property>

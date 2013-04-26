@@ -658,6 +658,7 @@ class PnoteNew:
       self.content.grab_focus()
     elif evt.button == 3:
       pmenu = self.wTree.get_widget('menu_update')
+      # buggy. The second right click pmenu is not cleanly destroyed so it contains the below menuitem and it add it again! no way to work around so far but harmless anyway (user will see several 'Print note' in the note session :-)
       if gtksourceview2:
             menuitem = gtk.MenuItem('Print note')
             menuitem.connect('activate', self.print_note)
