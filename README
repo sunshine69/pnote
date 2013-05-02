@@ -114,3 +114,9 @@ A sync B
 
 - A update these notes.
 - lastsyncfrom is used to detect conflict and popup the merge dialog. (both update the note with diffrent time)
+
+
+
+
+
+

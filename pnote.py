@@ -33,12 +33,6 @@ from forms import pnmain, pnote_new
 from utils import *
 from clipboard import PnClipboard
 
-USE_APP_INDICATOR=None
-try:
-        import appindicator
-        USE_APP_INDICATOR=True
-except: pass
-
 version = 0,4
 
 class pnote:
@@ -53,7 +47,7 @@ class pnote:
 
     signal.signal(signal.SIGINT, handler)
     signal.signal(signal.SIGTERM, handler)
-
+    self.wsession = None
     self.cipherkey = None
     self.filechooser_dir = os.getcwd()
     self.working_mode = get_config_key('global', 'working_mode', 'note')
@@ -71,18 +65,21 @@ class pnote:
     self.list_popen = [] # List forked process in Run Script
     self.imapconn = dict()
     self.is_checking_mail = None
-    self.wsession = None
+
     dbpathstr = get_config_key('data', 'db_paths', 'None')
     if not dbpathstr == 'None':
       i = 0
       for p in dbpathstr.split('<|>'):
         if (not p == '') and (not p == 'None') and (not p == None): self.dbpaths['sub' + str(i)] = p
         i += 1
-        
-    self.clipboards = PnClipboard()
+
+    ic= self.icon = gtk.status_icon_new_from_file('icons/cookie.png')
+    ic.connect("popup-menu", self.icon_popup_menu)
+    ic.connect("activate", lambda o: pnote_new.PnoteNew(self).w.show_all() )
     self.load_list_imap_acct()
     self.load_run_time_out_tasks()
     self.new_mail_list = []
+    self.clipboards = PnClipboard()
     self.current_mailbox = 'INBOX'
     self.last_font_desc = get_config_key('data', 'last_font_desc', '')
     self.last_font_color = get_config_key('data', 'last_font_color','' )
@@ -308,38 +305,6 @@ class pnote:
     save_config_key('data', 'last_font_color',self.last_font_color)
     save_config_key('data', 'last_bgcolor',self.last_bgcolor)
     gtk.main_quit()
-    
-  def generate_icon_menu(self):
-        ic_menu_tree = gtk.glade.XML('glade/icon_menu.glade')
-        ic_menu = ic_menu_tree.get_widget('icon_menu')
-        list_flags = get_config_key('data', 'list_flags', 'TODO<|>IMPORTANT<|>URGENT').split('<|>')
-        for fl in list_flags:
-          if not fl == '':
-            menuitem = gtk.MenuItem('List ' + fl)
-            _tmp_func = eval( "lambda m,o=self,kword=fl: o.show_main().do_search( 'FLAGS:' + kword ) " )
-            menuitem.connect('activate', _tmp_func )
-            ic_menu.prepend(menuitem)
-            menuitem.show()
-        _menu_sep = gtk.SeparatorMenuItem()
-        ic_menu.prepend(_menu_sep)
-        _menu_sep.show()
-        clipboards = self.clipboards
-        for clipinfo in clipboards.clipboard_history:
-          if len(clipinfo.text) > 50: _label = clipinfo.text[0:47].split(os.linesep)[0] + ' ...'
-          else: _label = clipinfo.text
-          menuitem = gtk.MenuItem(_label)
-          _tmp_func = eval("lambda m,cb=clipboards, cbi = clipinfo: cb.set_clipboard(cbi.text) " )
-          menuitem.connect('activate', _tmp_func)
-          ic_menu.prepend(menuitem)
-          menuitem.show()
-
-        evtmap = { 'icon_menu_show_main': self.show_main, \
-          'do_app_exit': self.do_exit, \
-          'show_recent_notes': self.show_recent_notes, \
-          'run_sourceview': self.run_sourceview
-        }
-        ic_menu_tree.signal_autoconnect(evtmap)
-        return ic_menu
 
   def selectdb(self):
     chooser = gtk.FileChooserDialog(title="Select database file or enter new filename",action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
@@ -359,17 +324,7 @@ if __name__ == "__main__":
   except Exception , e:
     print e
     app = pnote()
-    
-  if USE_APP_INDICATOR:
-        print("USE_APP_INDICATOR: YES")
-        ind = appindicator.Indicator ("example-simple-client", "gtk-execute",  appindicator.CATEGORY_APPLICATION_STATUS)
-        ind.set_status (appindicator.STATUS_ACTIVE)
-        ind.set_menu(app.generate_icon_menu())
-  else:
-        ic= app.icon = gtk.status_icon_new_from_file('icons/cookie.png')
-        ic.connect("popup-menu", app.icon_popup_menu)
-        ic.connect("activate", lambda o: pnote_new.PnoteNew(app).w.show_all() )
-        
+
   app.show_main()
   gtk.gdk.threads_enter()
   gtk.main()

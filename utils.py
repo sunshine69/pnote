@@ -68,7 +68,8 @@ def save_to_webnote(note=None):
     webnote_url = "https://note.inxuanthuy.com/"
     session = None
     if not note.app.wsession:
-        session = requests.Session()
+        note.app.wsession = requests.Session()
+	session = note.app.wsession
         webnote_username = get_config_key('data','webnote_username','')
         if webnote_username == '': webnote_username = get_text_from_user('Username required','Enter webnote username: ')
         webnote_password = get_config_key('data','webnote_password','')
@@ -76,8 +77,9 @@ def save_to_webnote(note=None):
         res = session.post(webnote_url, params={'username': webnote_username,'action':'do_login', 'login': 'Login','password':webnote_password} )
         if not res.status_code == 200:
             message_box("Error", "Error login to webnote. Check password/username")
+	    note.app.wsession = None
             return
-    else: session = note.app.session
+    else: session = note.app.wsession
 
     texbuf = note.content.get_buffer()
     tex = texbuf.get_text(texbuf.get_start_iter(), texbuf.get_end_iter() )
