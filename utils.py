@@ -91,7 +91,7 @@ def save_to_webnote(note=None):
             'content': tex.replace("\n", "<br/>"),
             'url': note.url.get_text(),
             'ngroup': 'default',
-            'permision': 3,
+            'permission': 0, 
             'savenote': 'Save'
 
     }
