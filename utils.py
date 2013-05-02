@@ -60,6 +60,45 @@ def get_text_from_user(title='Input text', msg = 'Enter text:', default_txt = ''
     d.destroy()
     return retval
 
+def save_to_webnote(note=None):
+    try: import requests
+    except:
+        message_box("Error", "This feature need python module 'requests'. Install it first")
+        return
+    webnote_url = "https://note.inxuanthuy.com/"
+    session = None
+    if not note.app.wsession:
+        session = requests.Session()
+        webnote_username = get_config_key('data','webnote_username','')
+        if webnote_username == '': webnote_username = get_text_from_user('Username required','Enter webnote username: ')
+        webnote_password = get_config_key('data','webnote_password','')
+        if webnote_password == '': webnote_password = get_text_from_user('Password required','Enter webnote password', show_char=False, completion = False, default_txt = 'none')
+        res = session.post(webnote_url, params={'username': webnote_username,'action':'do_login', 'login': 'Login','password':webnote_password} )
+        if not res.status_code == 200:
+            message_box("Error", "Error login to webnote. Check password/username")
+            return
+    else: session = note.app.session
+
+    texbuf = note.content.get_buffer()
+    tex = texbuf.get_text(texbuf.get_start_iter(), texbuf.get_end_iter() )
+    if note.title.get_text() == '': title = tex[0:50].split(os.linesep)[0].replace("\r",' ')
+    data = { 'action': 'save_newnote',
+            'id': 0,
+            'datelog': note.datelog.get_text(),
+            'flags': note.flags.get_text(),
+            'content': tex.replace("\n", "<br/>"),
+            'url': note.url.get_text(),
+            'ngroup': 'default',
+            'permision': 3,
+            'savenote': 'Save'
+
+    }
+    res = session.post(webnote_url, data)
+    print res.status_code
+    print res.content
+
+
+
 def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
     #forked_to_sendmail = get_config_key('data', 'forked_to_sendmail', 'yes')
     if note == None: print "Need to pass me a note"; return

@@ -372,11 +372,13 @@
                     <child>
                       <widget class="GtkButton" id="bt_send">
                         <property name="label" translatable="yes">Send</property>
+                        <property name="tooltip" translatable="yes">Click to send as email, right click to send to webnote</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="receives_default">True</property>
                         <property name="focus_on_click">False</property>
                         <signal name="clicked" handler="on_bt_send_clicked"/>
+                        <signal name="button_press_event" handler="on_bt_send_button_press"/>
                       </widget>
                       <packing>
                         <property name="position">3</property>

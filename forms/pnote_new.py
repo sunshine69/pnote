@@ -71,6 +71,7 @@ class PnoteNew:
     'on_bt_send_clicked': self.on_bt_send_clicked, \
     'on_edit_changed': self.on_edit_changed, \
     'on_bt_ro_toggled': self.on_bt_ro_toggled, \
+    'on_bt_send_button_press': self.on_bt_send_button_press, \
     'on_show_noteinfo': self.on_show_noteinfo, \
     'on_end_update': self.on_end_update, \
     'on_delete_note': self.on_delete_note, \
@@ -252,7 +253,7 @@ class PnoteNew:
             buffer.create_source_mark(None, mark_category, line_start)
 
     return False
-        
+
   def on_label_url_button_press_event(self, obj, evt, data=None):
     if evt.button == 1:
       self.app.clipboards.add_info(self.url.get_text() )
@@ -324,7 +325,7 @@ class PnoteNew:
     self.add_tag_to_table(tagn, '', '', 'off', m1, m2)
 
   def on_bt_send_clicked(self, o=None): send_note_as_mail(self)
-  
+
   def on_run_as_script(self):
     f = NamedTemporaryFile(delete=False)
     buf = self.content.get_buffer()
@@ -489,8 +490,8 @@ class PnoteNew:
             buffer.set_highlight_syntax(True)
             buffer.set_language(language)
         else: print("Can not find language {0}".format(filename))
-    
-      
+
+
   def build_flags_menu(self):
     list_flags = get_config_key('data', 'list_flags', 'TODO<|>IMPORTANT<|>URGENT').split('<|>')
     menu_flags  = gtk.Menu()
@@ -567,6 +568,10 @@ class PnoteNew:
       self.content.set_cursor_visible(True)
 
   def on_edit_changed(self, o=None, d=None): self.content.get_buffer().set_modified(True)
+
+  def on_bt_send_button_press(self, obj, evt, data=None):
+    if evt.button == 3:
+        save_to_webnote(self)
 
   def on_bt_format_button_press(self, obj, evt, data=None):
     if evt.button == 1:
@@ -669,7 +674,7 @@ class PnoteNew:
   def print_note(self, o):
       import sourceview
       sourceview.print_cb(None, self.content)
-  
+
   def on_end_update(self, o=None):
     if not self.start_time == 0:
       _length_in_sec = int(time.time()) - self.start_time

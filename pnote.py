@@ -71,7 +71,7 @@ class pnote:
     self.list_popen = [] # List forked process in Run Script
     self.imapconn = dict()
     self.is_checking_mail = None
-
+    self.wsession = None
     dbpathstr = get_config_key('data', 'db_paths', 'None')
     if not dbpathstr == 'None':
       i = 0
