@@ -84,8 +84,10 @@ def save_to_webnote(note=None):
     texbuf = note.content.get_buffer()
     tex = texbuf.get_text(texbuf.get_start_iter(), texbuf.get_end_iter() )
     if note.title.get_text() == '': title = tex[0:50].split(os.linesep)[0].replace("\r",' ')
+    else: title = note.title.get_text()
     data = { 'action': 'save_newnote',
             'id': 0,
+	    'title': title,
             'datelog': note.datelog.get_text(),
             'flags': note.flags.get_text(),
             'content': tex.replace("\n", "<br/>"),
@@ -93,7 +95,6 @@ def save_to_webnote(note=None):
             'ngroup': 'default',
             'permission': 0, 
             'savenote': 'Save'
-
     }
     res = session.post(webnote_url, data)
     print res.status_code
