@@ -97,13 +97,10 @@ def save_to_webnote(note=None,note_id=None, db=None):
             'permission': 0, 
             'savenote': 'Save'
     }
-    print data
     res = session.post(webnote_url, data)
-    print res.status_code
-    print res.content
-
-
-
+    if not res.status_code == 302: 
+	message_box("Some error happened. html response code: '%s'\nresponse content: '%s'. You may need to try again" % ( res.status_code ,res.content ))
+	note.app.wsession = None # reset it just in case the session is invalid		
 def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
     #forked_to_sendmail = get_config_key('data', 'forked_to_sendmail', 'yes')
     if note == None: print "Need to pass me a note"; return
