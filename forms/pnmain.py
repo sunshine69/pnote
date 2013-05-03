@@ -267,11 +267,21 @@ class pnmain:
         if no_error:
           self.app.dbcon.commit()
           message_box('pnote - success', 'Operation completed successfuly')
-        
-    # Add MORE Funtion to process here
     
-      
+    def do_save_to_webnote(obj=None):
+    	list_notes = self.get_list_notes_from_selection()
+      	for item in list_notes:
+        	tmpk = item[0]+str(item[1])
+        	if tmpk in self.app.note_list: mynote = self.app.note_list[tmpk]
+        	else: mynote = pnote_new.PnoteNew(self.app, item[1], item[0])
+		save_to_webnote(mynote)
+
+    # Add MORE Funtion to process here
+    # end  
     menu = gtk.Menu()
+    menuitem0 = gtk.MenuItem("Save to webnote")
+    menuitem0.connect('activate', do_save_to_webnote)
+    menu.append(menuitem0); menuitem0.show()
     menuitem1 = gtk.MenuItem("Display total time spent")
     menuitem1.connect('activate', calculate_total_time_spent)
     menu.append(menuitem1); menuitem1.show()

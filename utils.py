@@ -60,7 +60,7 @@ def get_text_from_user(title='Input text', msg = 'Enter text:', default_txt = ''
     d.destroy()
     return retval
 
-def save_to_webnote(note=None):
+def save_to_webnote(note=None,note_id=None, db=None):
     try: import requests
     except:
         message_box("Error", "This feature need python module 'requests'. Install it first")
@@ -97,6 +97,7 @@ def save_to_webnote(note=None):
             'permission': 0, 
             'savenote': 'Save'
     }
+    print data
     res = session.post(webnote_url, data)
     print res.status_code
     print res.content
