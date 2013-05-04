@@ -91,7 +91,7 @@ def save_to_webnote(note=None,note_id=None, db=None):
             'datelog': note.datelog.get_text(),
 	    'timestamp': note.timestamp,
             'flags': note.flags.get_text(),
-            'content': tex.replace("\n", "<br/>"),
+            'content': "<pre>%s</pre>" % tex,
             'url': note.url.get_text(),
             'ngroup': 'default',
             'permission': 0, 
