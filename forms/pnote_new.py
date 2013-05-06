@@ -609,8 +609,12 @@ class PnoteNew:
     if not inputstr == '':
         cmd = get_text_from_user("Command", "Enter command to process: ", "perl -ne ", int(get_config_key('data', 'dialog_entercommand_size', '350') ) )
         if not cmd == None:
-            p1 = subprocess.Popen(shlex.split(cmd), stdin = subprocess.PIPE, stdout = subprocess.PIPE )
-            result = p1.communicate(inputstr)[0]
+            #p1 = subprocess.Popen(shlex.split(cmd), stdin = subprocess.PIPE, stdout = subprocess.PIPE )
+            # result = p1.communicate(inputstr)[0]
+	    c, result, e = run_cmd(cmd)
+	    if not c == 0: 
+	    	message_box("Error", "Error running external command. '%s'" % e )
+		return
             if d == 'NEW_NOTE':
                 new_note = PnoteNew(self.app, None, self.dbname)
                 new_note.content.get_buffer().set_text(result)
