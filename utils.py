@@ -83,6 +83,7 @@ def save_to_webnote(note=None,note_id=None, db=None):
     session = None
     if not note.app.wsession:
         note.app.wsession = requests.Session()
+	note.app.wsession.verify = False
 	session = note.app.wsession
         webnote_username = get_config_key('data','webnote_username','')
         if webnote_username == '': webnote_username = get_text_from_user('Username required','Enter webnote username: ')
