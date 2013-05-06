@@ -611,10 +611,11 @@ class PnoteNew:
         if not cmd == None:
             #p1 = subprocess.Popen(shlex.split(cmd), stdin = subprocess.PIPE, stdout = subprocess.PIPE )
             # result = p1.communicate(inputstr)[0]
-	    c, result, e = run_cmd(cmd)
+	    c, result, e = run_cmd(cmd,inputstr)
 	    if not c == 0: 
-	    	message_box("Error", "Error running external command. '%s'" % e )
+	    	message_box("Error", "Error running external command\n '%s'" % e )
 		return
+	    print "DEBUG: %s" % result
             if d == 'NEW_NOTE':
                 new_note = PnoteNew(self.app, None, self.dbname)
                 new_note.content.get_buffer().set_text(result)
