@@ -16,6 +16,20 @@ except: pass
 
 CONFIGDIR = '.pnote'
 
+def run_cmd(cmd,sendtxt=None, sshcmd=None):
+    DEBUG = False
+    if sshcmd: cmd1 = "%s '%s'" % (sshcmd, cmd)
+    else: cmd1 = cmd
+    if DEBUG:
+        cmd2 = re.sub('root:([^\s])', 'root:xxxxx', cmd1) # suppress the root password printout
+        syslog.syslog(cmd2)
+    popen = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    if sendtxt: output, err = popen.communicate(sendtxt)
+    else: output, err = popen.communicate()
+    code = popen.returncode
+    return (code, output[0:-1], err)
+
+
 def get_text_from_user(title='Input text', msg = 'Enter text:', default_txt = '', size = -1, show_char = True, completion = True, search_dlg = None):
     # search_dlg_obj is any window object that has the show_all() method and then when it is closed, return a string. So when we are at the text entry, press Ctrl+f will show this dlg
     d = gtk.Dialog(title, None, 0, (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT, gtk.STOCK_OK, gtk.RESPONSE_ACCEPT) )
@@ -69,12 +83,13 @@ def save_to_webnote(note=None,note_id=None, db=None):
     session = None
     if not note.app.wsession:
         note.app.wsession = requests.Session()
+	note.app.wsession.verify = False
 	session = note.app.wsession
         webnote_username = get_config_key('data','webnote_username','')
         if webnote_username == '': webnote_username = get_text_from_user('Username required','Enter webnote username: ')
         webnote_password = get_config_key('data','webnote_password','')
         if webnote_password == '': webnote_password = get_text_from_user('Password required','Enter webnote password', show_char=False, completion = False, default_txt = 'none')
-        res = session.post(webnote_url, params={'username': webnote_username,'action':'do_login', 'login': 'Login','password':webnote_password} )
+        res = session.post(webnote_url, data={'username': webnote_username,'action':'do_login', 'login': 'Login','password':webnote_password} )
         if not res.status_code == 200:
             message_box("Error", "Error login to webnote. Check password/username")
 	    note.app.wsession = None
