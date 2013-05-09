@@ -91,7 +91,7 @@ def save_to_webnote(note=None,note_id=None, db=None):
         if webnote_password == '': webnote_password = get_text_from_user('Password required','Enter webnote password', show_char=False, completion = False, default_txt = 'none')
         res = session.post(webnote_url, data={'username': webnote_username,'action':'do_login', 'login': 'Login','password':webnote_password} )
         if not res.status_code == 200:
-            message_box("Error", "Error login to webnote. Check password/username")
+            message_box('Notice','Error login to webnote. Check password/username')
 	    note.app.wsession = None
             return
     else: session = note.app.wsession
@@ -112,9 +112,10 @@ def save_to_webnote(note=None,note_id=None, db=None):
             'permission': 0, 
             'savenote': 'Save'
     }
-    res = session.post(webnote_url, data)
-    if not res.status_code == 302: 
-	message_box("Some error happened. html response code: '%s'\nresponse content: '%s'. You may need to try again" % ( res.status_code ,res.content ))
+    res = session.post(webnote_url, data=data)
+    print res.status_code 
+    if not res.status_code == 200: 
+	message_box('Error',"Some error happened. html response code: '%s'\nresponse content: '%s'. You may need to try again" % ( res.status_code ,res.content ))
 	note.app.wsession = None # reset it just in case the session is invalid		
 def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
     #forked_to_sendmail = get_config_key('data', 'forked_to_sendmail', 'yes')
