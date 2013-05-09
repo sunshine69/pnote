@@ -90,7 +90,7 @@ def save_to_webnote(note=None,note_id=None, db=None):
         webnote_password = get_config_key('data','webnote_password','')
         if webnote_password == '': webnote_password = get_text_from_user('Password required','Enter webnote password', show_char=False, completion = False, default_txt = 'none')
         res = session.post(webnote_url, data={'username': webnote_username,'action':'do_login', 'login': 'Login','password':webnote_password} )
-        if not res.status_code == 200:
+        if not res.content.find('Webnote Login') == -1:
             message_box('Notice','Error login to webnote. Check password/username')
 	    note.app.wsession = None
             return
@@ -110,6 +110,7 @@ def save_to_webnote(note=None,note_id=None, db=None):
             'url': note.url.get_text(),
             'ngroup': 'default',
             'permission': 0, 
+	    'is_ajax': 1,
             'savenote': 'Save'
     }
     res = session.post(webnote_url, data=data)
