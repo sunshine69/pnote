@@ -74,6 +74,8 @@ class PnoteNew:
     'on_bt_send_button_press': self.on_bt_send_button_press, \
     'on_show_noteinfo': self.on_show_noteinfo, \
     'on_end_update': self.on_end_update, \
+    'on_print': self.print_note, \
+    'do_webnote_sync': self.do_webnote_sync, \
     'on_delete_note': self.on_delete_note, \
     'on_filter_selection': self.on_filter_selection, \
     'on_filter_selection_newnote': lambda o: self.on_filter_selection(o, 'NEW_NOTE') ,\
@@ -669,14 +671,20 @@ class PnoteNew:
     elif evt.button == 3:
       pmenu = self.wTree.get_widget('menu_update')
       # buggy. The second right click pmenu is not cleanly destroyed so it contains the below menuitem and it add it again! no way to work around so far but harmless anyway (user will see several 'Print note' in the note session :-)
-      if gtksourceview2:
-            menuitem = gtk.MenuItem('Print note')
-            menuitem.connect('activate', self.print_note)
-            pmenu.append(menuitem)
-            menuitem.show()
+      #if gtksourceview2:
+      #      menuitem = gtk.MenuItem('Print note')
+      #      menuitem.connect('activate', self.print_note)
+      #      pmenu.append(menuitem)
+      #      menuitem.show()
       pmenu.popup(None, None, None, evt.button, evt.time, data=None)
+  
+  def do_webnote_sync(self,o):
+  	save_to_webnote(self, pull=True)
 
   def print_note(self, o):
+      if not gtksourceview2:
+      	message_box('Error','This requires gtksourceview2 module')
+	return
       import sourceview
       sourceview.print_cb(None, self.content)
 

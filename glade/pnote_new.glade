@@ -445,6 +445,14 @@
         <signal name="activate" handler="do_insert_from"/>
       </widget>
     </child>
+    <child>
+      <widget class="GtkMenuItem" id="menuitem100">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Sync from webnote</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="do_webnote_sync"/>
+      </widget>
+    </child>
 
     <child>
       <widget class="GtkMenuItem" id="menuitem2">
@@ -494,6 +502,15 @@
         <signal name="activate" handler="on_end_update"/>
       </widget>
     </child>
+    <child>
+      <widget class="GtkMenuItem" id="menuitem3">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Print</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_print"/>
+      </widget>
+    </child>
+
 
   </widget>
   <widget class="GtkMenu" id="menu_search">

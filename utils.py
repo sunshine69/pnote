@@ -74,7 +74,7 @@ def get_text_from_user(title='Input text', msg = 'Enter text:', default_txt = ''
     d.destroy()
     return retval
 
-def save_to_webnote(note=None,note_id=None, db=None):
+def save_to_webnote(note=None,pull=None):
     try: import requests
     except:
         message_box("Error", "This feature need python module 'requests'. Install it first")
@@ -96,28 +96,43 @@ def save_to_webnote(note=None,note_id=None, db=None):
             return
     else: session = note.app.wsession
 
-    texbuf = note.content.get_buffer()
-    tex = texbuf.get_text(texbuf.get_start_iter(), texbuf.get_end_iter() )
-    if note.title.get_text() == '': title = tex[0:50].split(os.linesep)[0].replace("\r",' ')
-    else: title = note.title.get_text()
-    data = { 'action': 'save_newnote',
-            'id': 0,
-	    'title': title,
-            'datelog': note.datelog.get_text(),
-	    'timestamp': note.timestamp,
-            'flags': note.flags.get_text(),
-            'content': "<pre>%s</pre>" % tex,
-            'url': note.url.get_text(),
-            'ngroup': 'default',
-            'permission': 0, 
-	    'is_ajax': 1,
-            'savenote': 'Save'
-    }
-    res = session.post(webnote_url, data=data)
-    print res.status_code 
-    if not res.status_code == 200: 
-	message_box('Error',"Some error happened. html response code: '%s'\nresponse content: '%s'. You may need to try again" % ( res.status_code ,res.content ))
-	note.app.wsession = None # reset it just in case the session is invalid		
+    if not pull:
+	    texbuf = note.content.get_buffer()
+	    tex = texbuf.get_text(texbuf.get_start_iter(), texbuf.get_end_iter() )
+	    if not tex.startswith('<pre>'): tex = "<pre>%s" % tex
+	    if not tex.endswith('</pre>'): tex = "%s</pre>" % tex
+	    if note.title.get_text() == '': title = tex[0:50].split(os.linesep)[0].replace("\r",' ')
+	    else: title = note.title.get_text()
+	    data = { 'action': 'save_newnote',
+		    'id': 0,
+		    'title': title,
+		    'datelog': note.datelog.get_text(),
+		    'timestamp': note.timestamp,
+		    'flags': note.flags.get_text(),
+		    'content': tex,
+		    'url': note.url.get_text(),
+		    'ngroup': 'default',
+		    'permission': 0, 
+		    'is_ajax': 1,
+		    'savenote': 'Save'
+	    }
+	    res = session.post(webnote_url, data=data)
+	    print res.status_code 
+	    if not res.status_code == 200: 
+		message_box('Error',"Some error happened. html response code: '%s'\nresponse content: '%s'. You may need to try again" % ( res.status_code ,res.content ))
+		note.app.wsession = None # reset it just in case the session is invalid		
+    else: # We pull the note from webnote
+    	title = note.title.get_text()
+	if not title == '':
+		res = session.get(webnote_url, params={'action': 'pullnote','title': title })
+		if res.status_code == 200: note.content.get_buffer().set_text(res.content)
+		elif res.status_code == 403:
+			note.app.wsession = None
+			message_box('Error','%s. You may just need to retry so I will relogin' % res.content)
+		else:   message_box('Error','Server said: %s. Error code: %s' % (res.content, res.status_code) )
+			
+	else: message_box('Error', 'You can only pull existing note with title')
+
 def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):
     #forked_to_sendmail = get_config_key('data', 'forked_to_sendmail', 'yes')
     if note == None: print "Need to pass me a note"; return
