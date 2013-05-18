@@ -114,9 +114,9 @@ class PnoteNew:
     datelog = self.datelog = self.wTree.get_widget('datelog')
     flags = self.flags = self.wTree.get_widget('flags')
     content = self.wTree.get_widget('content')
+    self.scroll = self.wTree.get_widget('scrolledwindow1')
     if gtksourceview2:
-        scroll = self.wTree.get_widget('scrolledwindow1')
-        scroll.remove(content)
+        self.scroll.remove(content)
         view = gtksourceview2.View()
         view.set_tab_width(4)
         view.set_insert_spaces_instead_of_tabs(True)
@@ -129,7 +129,7 @@ class PnoteNew:
         #buff.connect('changed', self.update_cursor_position, view)
         view.connect('button-press-event', self.button_press_cb)
         view.set_buffer(buff)
-        scroll.add(view)
+        self.scroll.add(view)
         content = view
         buff.begin_not_undoable_action()
     else:
@@ -442,7 +442,26 @@ class PnoteNew:
         except: output[urlpath] = [pos]
     return cPickle.dumps(output, cPickle.HIGHEST_PROTOCOL)
 
-  def on_pnote_new_key_press_event(self,o=None, e=None ):
+  def on_pnote_new_key_press_event(self,o=None, e=None):
+    if self.readonly == 1: # TODO
+        print "d"
+        do_emit = None
+        if e.state & gtk.gdk.SHIFT_MASK:
+            if gtk.gdk.keyval_name(e.keyval) == 'space':
+                do_emit = 65365
+        else:
+            if gtk.gdk.keyval_name(e.keyval) == 'space':
+                do_emit = 65366
+        if do_emit: # All these not work. We may need to use gtk.ScrolledWindow.set_hadjustment, see http://www.pygtk.org/docs/pygtk/class-gtkscrolledwindow.html#method-gtkscrolledwindow--set-hadjustment and https://developer.gnome.org/pygtk/stable/class-gtkadjustment.html
+            event = gtk.gdk.Event(gtk.gdk.KEY_PRESS)
+            print "d1"
+            event.keyval = do_emit
+            #event.state = gtk.gdk.CONTROL_MASK
+            event.time = 0
+            self.scroll.emit('key_press_event', event)
+            # 32 space 65366 Page_Down  65365 Page_Up
+            return
+
     if e.state & gtk.gdk.CONTROL_MASK:
       if gtk.gdk.keyval_name(e.keyval) == 'f':
         try: self.note_search.w.present()
@@ -451,7 +470,7 @@ class PnoteNew:
           self.note_search.w.show_all()
       elif gtk.gdk.keyval_name(e.keyval) == 'h':
         msg = "What, you need help? :-)\nJust use your common sense, hover the mouse to each small button on the right to see what it does and right click for menu, etc.\nCtrl+f to search text within the note. Press F3 to search again\nThe export, print function not implemented yet, I will do later\nBest luck"
-        message_box('Oh my god', msg)
+        message_box('Oh my god :-)', msg)
         return True
     elif gtk.gdk.keyval_name(e.keyval) == 'F3':
       try: self.note_search.do_search()
@@ -614,7 +633,7 @@ class PnoteNew:
             #p1 = subprocess.Popen(shlex.split(cmd), stdin = subprocess.PIPE, stdout = subprocess.PIPE )
             # result = p1.communicate(inputstr)[0]
 	    c, result, e = run_cmd(cmd,inputstr)
-	    if not c == 0: 
+	    if not c == 0:
 	    	message_box("Error", "Error running external command\n '%s'" % e )
 		return
 	    print "DEBUG: %s" % result
@@ -677,7 +696,7 @@ class PnoteNew:
       #      pmenu.append(menuitem)
       #      menuitem.show()
       pmenu.popup(None, None, None, evt.button, evt.time, data=None)
-  
+
   def do_webnote_sync(self,o):
   	save_to_webnote(self, pull=True)
 
