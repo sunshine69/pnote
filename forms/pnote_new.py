@@ -444,23 +444,28 @@ class PnoteNew:
 
   def on_pnote_new_key_press_event(self,o=None, e=None):
     if self.readonly == 1: # TODO
-        print "d"
-        do_emit = None
+        do_adj = None
         if e.state & gtk.gdk.SHIFT_MASK:
             if gtk.gdk.keyval_name(e.keyval) == 'space':
-                do_emit = 65365
+                do_adj = 'up' #65365
         else:
             if gtk.gdk.keyval_name(e.keyval) == 'space':
-                do_emit = 65366
-        if do_emit: # All these not work. We may need to use gtk.ScrolledWindow.set_hadjustment, see http://www.pygtk.org/docs/pygtk/class-gtkscrolledwindow.html#method-gtkscrolledwindow--set-hadjustment and https://developer.gnome.org/pygtk/stable/class-gtkadjustment.html
-            event = gtk.gdk.Event(gtk.gdk.KEY_PRESS)
-            print "d1"
-            event.keyval = do_emit
-            #event.state = gtk.gdk.CONTROL_MASK
-            event.time = 0
-            self.scroll.emit('key_press_event', event)
+                do_adj = 'down' #65366
+        if do_adj: # All these not work. We may need to use gtk.ScrolledWindow.set_hadjustment, see http://www.pygtk.org/docs/pygtk/class-gtkscrolledwindow.html#method-gtkscrolledwindow--set-hadjustment and https://developer.gnome.org/pygtk/stable/class-gtkadjustment.html
+	    adj = self.scroll.get_vadjustment()
+	    pgs, val = adj.get_page_size(), adj.get_value()
+	    if do_adj == 'up':
+	    	newval = val - pgs
+	    	newval = adj.lower if newval < adj.lower else newval
+	    else:
+	    	newval = val + pgs
+		newval = adj.upper if newval > adj.upper else newval
+	    adj.set_value(newval)
+	    #self.scroll.props.vadjustment.value = newval same as the above line
+	    self.content.place_cursor_onscreen() # if not call this it does not work as the next time get value it got the wrong old one
+	    #adj = None
             # 32 space 65366 Page_Down  65365 Page_Up
-            return
+            return True # If not return true from event handler it will create beep in console !
 
     if e.state & gtk.gdk.CONTROL_MASK:
       if gtk.gdk.keyval_name(e.keyval) == 'f':
