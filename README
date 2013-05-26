@@ -115,8 +115,7 @@ A sync B
 - A update these notes.
 - lastsyncfrom is used to detect conflict and popup the merge dialog. (both update the note with diffrent time)
 
+** UPDATE 20130527
 
-
-
-
+New feature added. You can now to upload the note into webnote and sync the note from webnote. Webnote is my webnote server thus you can take note, search etc... The url is https://note.inxuanthuy.com/ - if anyone is interested to have an account please email me.
 
