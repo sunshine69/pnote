@@ -422,6 +422,8 @@ class pnmain:
       if (keyword.startswith(r'^')):
           # Execute arbitrary sql
           sqlcmd = keyword[1:]
+      elif (keyword.startswith(r'sql:')):
+      	  sqlcmd = keyword[4:]
       elif keyword.startswith('FLAGS:'):
         mykeys = keyword[5:].split(':')
         mykeys = [ x for x in mykeys if not x == '' ]
