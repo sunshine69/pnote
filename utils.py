@@ -89,7 +89,8 @@ def save_to_webnote(note=None,pull=None):
         if webnote_username == '': webnote_username = get_text_from_user('Username required','Enter webnote username: ')
         webnote_password = get_config_key('data','webnote_password','')
         if webnote_password == '': webnote_password = get_text_from_user('Password required','Enter webnote password', show_char=False, completion = False, default_txt = 'none')
-        res = session.post(webnote_url, data={'username': webnote_username,'action':'do_login', 'login': 'Login','password':webnote_password} )
+        password, totp_number = webnote_password.split(':')
+        res = session.post(webnote_url, data={'username': webnote_username,'action':'do_login', 'login': 'Login','password':password, 'totp_number':totp_number} )
         if not res.content.find('Webnote Login') == -1:
             message_box('Notice','Error login to webnote. Check password/username')
 	    note.app.wsession = None
@@ -112,15 +113,15 @@ def save_to_webnote(note=None,pull=None):
 		    'content': tex,
 		    'url': note.url.get_text(),
 		    'ngroup': 'default',
-		    'permission': 0, 
+		    'permission': 0,
 		    'is_ajax': 1,
 		    'savenote': 'Save'
 	    }
 	    res = session.post(webnote_url, data=data)
-	    print res.status_code 
-	    if not res.status_code == 200: 
+	    print res.status_code
+	    if not res.status_code == 200:
 		message_box('Error',"Some error happened. html response code: '%s'\nresponse content: '%s'. You may need to try again" % ( res.status_code ,res.content ))
-		note.app.wsession = None # reset it just in case the session is invalid		
+		note.app.wsession = None # reset it just in case the session is invalid
     else: # We pull the note from webnote
     	title = note.title.get_text()
 	if not title == '':
@@ -130,7 +131,7 @@ def save_to_webnote(note=None,pull=None):
 			note.app.wsession = None
 			message_box('Error','%s. You may just need to retry so I will relogin' % res.content)
 		else:   message_box('Error','Server said: %s. Error code: %s' % (res.content, res.status_code) )
-			
+
 	else: message_box('Error', 'You can only pull existing note with title')
 
 def send_note_as_mail(note=None, mail_from = '', to='', subject = ''):

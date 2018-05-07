@@ -41,8 +41,8 @@ class pnote:
 
     import signal
     def handler(signum, data=None):
-        print 'Signal handler called with signal', signum
-        print 'Finalizing main loop'
+        print ('Signal handler called with signal', signum)
+        print ('Finalizing main loop')
         self.do_exit()
 
     signal.signal(signal.SIGINT, handler)
@@ -147,7 +147,7 @@ class pnote:
           PopUpNotification(_msg, callback = lambda: self.show_main().display_new_mail(_data)  )
         if locking: gtk.gdk.threads_leave()
 
-    except Exception, e: print "DEBUG pnmain.checkmail",e
+    except Exception as e: print("DEBUG pnmain.checkmail",e)
     return True
 
   def load_list_imap_acct(self, connect=False, server = None, locking = True):
@@ -174,9 +174,9 @@ class pnote:
             if key.find('yahoo') != -1: conn.xatom('ID ("GUID" "1")')
             (retcode, capabilities) = conn.login(_logname, _pass1)
             self.imapconn[key] = conn
-          except Exception, e:
-            print sys.exc_info()[1]
-            print "DEBUG", e
+          except Exception as e:
+            print( sys.exc_info()[1])
+            print("DEBUG", e)
             _msg += "\nLogin to imap server error. Server: " + key + "\nsystem msg: "
 
   def change_passwd(self):
@@ -213,7 +213,7 @@ class pnote:
   def show_main(self, obj=None, data=None):
     try: self.pnmain.w.present() # use w.window.show() in the FAQ not working
     except:
-      print "Create new pnmain"
+      print( "Create new pnmain")
       self.pnmain = pnmain.pnmain(self.dbpath, self)
       self.pnmain.w.show_all()
     return self.pnmain
@@ -224,7 +224,7 @@ class pnote:
     """
     if self.dbcon != None: return self.dbcon
     try:
-      print "dbpath is '%s'"       % self.dbpath
+      print("dbpath is '%s'"       % self.dbpath)
       dbcon = sqlite3.connect(self.dbpath)
       #dbc = dbcon.cursor()
       dbcon.row_factory = sqlite3.Row
@@ -232,11 +232,11 @@ class pnote:
       if len(self.dbpaths) > 1:
         for dbname in dict.keys(self.dbpaths):
           if not dbname == 'main':
-                  print "attach sub database file '%s'" % dbname
+                  print("attach sub database file '%s'" % dbname)
                   dbcon.execute("attach database (?) as (?)", (self.dbpaths[dbname], dbname ))
       self.dbcon = dbcon
       return dbcon
-    except Exception , e: print e; return False
+    except Exception as e: print( e ); return False
 
   def icon_popup_menu(self, status_icon, button, activate_time, data=None):
     # popup menu
@@ -319,10 +319,10 @@ class pnote:
 if __name__ == "__main__":
   try:
      dbpath = sys.argv[1]
-     print "Using database file ", dbpath
+     print( "Using database file ", dbpath)
      app = pnote(dbpath)
-  except Exception , e:
-    print e
+  except Exception as e:
+    print( e )
     app = pnote()
 
   app.show_main()

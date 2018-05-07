@@ -11,4 +11,4 @@ dll
 *backup
 *.bak
 *.old
-
+*.swp
