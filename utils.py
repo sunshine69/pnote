@@ -100,8 +100,8 @@ def save_to_webnote(note=None,pull=None):
     if not pull:
 	    texbuf = note.content.get_buffer()
 	    tex = texbuf.get_text(texbuf.get_start_iter(), texbuf.get_end_iter() )
-	    if not tex.startswith('<pre>'): tex = "<pre>%s" % tex
-	    if not tex.endswith('</pre>'): tex = "%s</pre>" % tex
+	    #if not tex.startswith('<pre>'): tex = "<pre>%s" % tex
+	    #if not tex.endswith('</pre>'): tex = "%s</pre>" % tex
 	    if note.title.get_text() == '': title = tex[0:50].split(os.linesep)[0].replace("\r",' ')
 	    else: title = note.title.get_text()
 	    data = { 'action': 'save_newnote',
@@ -115,6 +115,7 @@ def save_to_webnote(note=None,pull=None):
 		    'ngroup': 'default',
 		    'permission': 0,
 		    'is_ajax': 1,
+            'raw_editor': 1,
 		    'savenote': 'Save'
 	    }
 	    res = session.post(webnote_url, data=data)

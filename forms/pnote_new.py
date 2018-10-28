@@ -681,7 +681,7 @@ class PnoteNew:
     if evt.button == 1:
       if self.start_time == 0: self.start_time = int(time.time())
       start_date = time.strftime("%A %d %B %Y %H:%M:%S")
-      tex = "\n=======================\nUpdate: %s" % start_date
+      tex = "\n*Update: %s*" % start_date
       buf = self.content.get_buffer()
       s = buf.get_iter_at_mark(buf.get_insert() )
       m1 = buf.create_mark(None, s, True )
@@ -718,7 +718,7 @@ class PnoteNew:
       period = "%02d:%02d" % divmod(_length_in_sec, 60)
       self.time_spent += _length_in_sec
       end_date = time.strftime("%A %d %B %Y %H:%M:%S")
-      tex = "\nEnd Update: %s\nLength(min): %s" % (end_date , period )
+      tex = "\n*End Update: %s*\n*Length(min): %s*" % (end_date , period )
       buf = self.content.get_buffer()
       s = buf.get_iter_at_mark(buf.get_insert() )
       m1 = buf.create_mark(None, s, True )
